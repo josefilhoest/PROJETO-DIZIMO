@@ -1,13 +1,20 @@
 import { Sequelize } from "sequelize";
 
 const sequelize = new Sequelize(
-  "dizimo",
-  "root",
-  "Saopaulo2430@",
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
   {
-    host: "localhost",
-    dialect: "mariadb",
-    logging: false
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    dialect: "mysql",
+    logging: false,
+
+    dialectOptions: {
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    },
   }
 );
 

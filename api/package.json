@@ -4,6 +4,7 @@
   "description": "",
   "type": "module",
   "main": "server.js",
+  "start": "node server.js",
   "scripts": {
     "dev": "node --watch server.js"
   },
@@ -14,6 +15,7 @@
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "mariadb": "^3.5.3",
+    "mysql2": "^3.23.3",
     "sequelize": "^6.37.8"
   }
 }

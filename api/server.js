@@ -31,9 +31,11 @@ try {
 
   console.log("Tabelas sincronizadas com sucesso!");
 
-  app.listen(8080, () => {
-    console.log("Servidor rodando em http://localhost:8080");
-  });
+  const PORT = process.env.PORT || 8080;
+
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
+});
 } catch (error) {
   console.error("Erro ao iniciar o servidor:");
   console.error(error);
