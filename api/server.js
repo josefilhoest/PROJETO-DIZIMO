@@ -5,6 +5,7 @@ import Dizimista from "./models/Dizimista.js";
 import dizimistaRoutes from "./routes/dizimistaRoutes.js";
 import RegistroMensal from "./models/RegistroMensal.js";
 import registroMensalRoutes from "./routes/registroMensalRoutes.js";
+import executarSeed from "./seedDizimistas.js";
 
 
 const app = express();
@@ -14,6 +15,24 @@ app.use(express.json());
 
 app.use("/api/dizimistas", dizimistaRoutes);
 app.use("/api/registros", registroMensalRoutes);
+
+app.get("/seed-dizimistas", async (req, res) => {
+  try {
+    const resultado = await executarSeed();
+
+    res.json({
+      mensagem: "Seed executado com sucesso!",
+      resultado,
+    });
+  } catch (erro) {
+    console.error("Erro ao executar seed:", erro);
+
+    res.status(500).json({
+      mensagem: "Erro ao executar seed.",
+      erro: erro.message,
+    });
+  }
+});
 
 
 app.get("/", (req, res) => {

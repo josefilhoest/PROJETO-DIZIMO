@@ -161,61 +161,50 @@ const calcularFolha = (numero) => {
 };
 
 async function executarSeed() {
-  try {
-    console.log("Conectando ao banco de dados...");
+  console.log("Conectando ao banco de dados...");
 
-    await sequelize.authenticate();
+  await sequelize.authenticate();
 
-    console.log("Banco conectado.");
+  console.log("Banco conectado.");
 
-    for (const [numero, nome] of pessoas) {
-      const folha = calcularFolha(numero);
+  let cadastrados = 0;
+  let atualizados = 0;
 
-      const existente = await Dizimista.findOne({
-        where: {
-          numero: numero,
-        },
+  for (const [numero, nome] of pessoas) {
+    const folha = calcularFolha(numero);
+
+    const existente = await Dizimista.findOne({
+      where: {
+        numero: numero,
+      },
+    });
+
+    if (existente) {
+      await existente.update({
+        nome: nome,
+        folha: folha,
       });
 
-      if (existente) {
-        await existente.update({
-          nome: nome,
-          folha: folha,
-        });
+      atualizados++;
+    } else {
+      await Dizimista.create({
+        numero: numero,
+        folha: folha,
+        nome: nome,
+        valor: 0,
+      });
 
-        console.log(
-          `Atualizado: ${numero} - ${nome}`
-        );
-      } else {
-        await Dizimista.create({
-          numero: numero,
-          folha: folha,
-          nome: nome,
-          valor: 0,
-        });
-
-        console.log(
-          `Cadastrado: ${numero} - ${nome}`
-        );
-      }
+      cadastrados++;
     }
-
-    console.log("");
-    console.log("======================================");
-    console.log(
-      "137 dizimistas cadastrados/atualizados com sucesso!"
-    );
-    console.log("======================================");
-  } catch (erro) {
-    console.error("");
-    console.error("Erro ao executar o seed:");
-    console.error(erro);
-  } finally {
-    await sequelize.close();
-
-    console.log("");
-    console.log("Conexão com o banco encerrada.");
   }
+
+  console.log("Seed concluído com sucesso.");
+
+  return {
+    total: pessoas.length,
+    cadastrados,
+    atualizados,
+  };
 }
 
-executarSeed();
+export default executarSeed;
