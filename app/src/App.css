@@ -708,476 +708,470 @@ tfoot td:nth-child(3) {
     font-size: 13px;
     margin: 1px;
   }
+}
 
-  /* =====================================================
-   CONFIGURAÇÃO A4
-   ===================================================== */
 
-  @page {
-    size: A4 portrait;
-    margin: 6mm 8mm;
-  }
 
-  /* =====================================================
+
+/* =====================================================
    IMPRESSÃO
    ===================================================== */
 
-  @media print {
+@media print {
 
-    @page {
-      size: A4 portrait;
-      margin: 10mm 8mm;
-    }
+  @page {
+    size: A4 portrait;
+    margin: 10mm 8mm;
+  }
 
-    html,
-    body {
-      width: 100% !important;
-      margin: 0 !important;
-      padding: 0 !important;
+  html,
+  body {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
 
-      background: #ffffff !important;
-      color: #000000 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
 
-      font-family: "Times New Roman", serif !important;
+    font-family: "Times New Roman", serif !important;
 
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 
-    * {
-      box-sizing: border-box !important;
-    }
+  * {
+    box-sizing: border-box !important;
+  }
 
-    /* =========================================
+  /* =========================================
      CONTAINER PRINCIPAL
      ========================================= */
 
-    .container,
-    .registro {
-      width: 100% !important;
-      max-width: none !important;
+  .container,
+  .registro {
+    width: 100% !important;
+    max-width: none !important;
 
-      margin: 0 !important;
-      padding: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 
-      background: #ffffff !important;
-    }
+    background: #ffffff !important;
+  }
 
-    /* =========================================
+  /* =========================================
      ESCONDER ELEMENTOS DA TELA
      ========================================= */
 
-    .titulo-sistema,
-    .formulario,
-    .acoes-ficha,
-    .btn-editar,
-    .btn-excluir,
-    .btn-salvar,
-    .btn-cancelar,
-    button {
-      display: none !important;
-    }
+  .titulo-sistema,
+  .formulario,
+  .acoes-ficha,
+  .btn-editar,
+  .btn-excluir,
+  .btn-salvar,
+  .btn-cancelar,
+  button {
+    display: none !important;
+  }
 
-    /* =========================================
+  /* =========================================
      CAMPOS TELA / IMPRESSÃO
      ========================================= */
 
-    .campo-tela {
-      display: none !important;
-    }
+  .campo-tela {
+    display: none !important;
+  }
 
-    .campo-impressao {
-      display: inline-block !important;
+  .campo-impressao {
+    display: inline-block !important;
 
-      color: #000000 !important;
+    color: #000000 !important;
 
-      font-family: "Times New Roman", serif !important;
-      font-size: 10px !important;
-    }
+    font-family: "Times New Roman", serif !important;
+    font-size: 10px !important;
+  }
 
-    .linha-assinatura {
-      display: block !important;
+  .linha-assinatura {
+    display: block !important;
 
-      width: 100% !important;
-      height: 16px !important;
+    width: 100% !important;
+    height: 16px !important;
 
-      border-bottom: 1px solid #000000 !important;
-    }
+    border-bottom: 1px solid #000000 !important;
+  }
 
-    /* =========================================
+  /* =========================================
      CABEÇALHO
      ========================================= */
 
-    .cabecalho-ficha {
-      width: 100% !important;
+  .cabecalho-ficha {
+    width: 100% !important;
 
-      margin: 0 auto 4mm !important;
-      padding: 0 !important;
+    margin: 0 auto 4mm !important;
+    padding: 0 !important;
 
-      background: #ffffff !important;
+    background: #ffffff !important;
 
-      box-shadow: none !important;
-      border: none !important;
-      border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
 
-      text-align: center !important;
+    text-align: center !important;
 
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
-    }
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
 
-    .cabecalho-ficha h1 {
-      margin: 0 !important;
-      padding: 0 !important;
+  .cabecalho-ficha h1 {
+    margin: 0 !important;
+    padding: 0 !important;
 
-      font-family: "Times New Roman", serif !important;
-      font-size: 13px !important;
-      font-weight: bold !important;
+    font-family: "Times New Roman", serif !important;
+    font-size: 13px !important;
+    font-weight: bold !important;
 
-      line-height: 1.15 !important;
-    }
+    line-height: 1.15 !important;
+  }
 
-    .cabecalho-ficha h2 {
-      margin: 2px 0 0 !important;
-      padding: 0 !important;
+  .cabecalho-ficha h2 {
+    margin: 2px 0 0 !important;
+    padding: 0 !important;
 
-      font-family: "Times New Roman", serif !important;
-      font-size: 11px !important;
-      font-weight: bold !important;
+    font-family: "Times New Roman", serif !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
 
-      line-height: 1.15 !important;
-    }
+    line-height: 1.15 !important;
+  }
 
-    .cabecalho-ficha h3 {
-      margin: 2px 0 0 !important;
-      padding: 0 !important;
+  .cabecalho-ficha h3 {
+    margin: 2px 0 0 !important;
+    padding: 0 !important;
 
-      font-family: "Times New Roman", serif !important;
-      font-size: 10px !important;
-      font-weight: bold !important;
+    font-family: "Times New Roman", serif !important;
+    font-size: 10px !important;
+    font-weight: bold !important;
 
-      line-height: 1.15 !important;
-    }
+    line-height: 1.15 !important;
+  }
 
-    /* =========================================
+  /* =========================================
      COMUNIDADE E DATA
      ========================================= */
 
-    .dados-ficha {
-      width: 100% !important;
+  .dados-ficha {
+    width: 100% !important;
 
-      display: flex !important;
-      flex-direction: row !important;
+    display: flex !important;
+    flex-direction: row !important;
 
-      justify-content: space-between !important;
-      align-items: center !important;
+    justify-content: space-between !important;
+    align-items: center !important;
 
-      gap: 10px !important;
+    gap: 10px !important;
 
-      margin-top: 3mm !important;
-    }
+    margin-top: 3mm !important;
+  }
 
-    .dados-ficha label {
-      display: flex !important;
-      flex-direction: row !important;
+  .dados-ficha label {
+    display: flex !important;
+    flex-direction: row !important;
 
-      align-items: center !important;
+    align-items: center !important;
 
-      gap: 4px !important;
+    gap: 4px !important;
 
-      color: #000000 !important;
+    color: #000000 !important;
 
-      font-family: "Times New Roman", serif !important;
-      font-size: 9.5px !important;
-    }
+    font-family: "Times New Roman", serif !important;
+    font-size: 9.5px !important;
+  }
 
-    .dados-ficha input {
-      width: auto !important;
+  .dados-ficha input {
+    width: auto !important;
 
-      margin: 0 !important;
-      padding: 0 2px !important;
+    margin: 0 !important;
+    padding: 0 2px !important;
 
-      border: none !important;
-      border-bottom: 1px solid #000000 !important;
-      border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid #000000 !important;
+    border-radius: 0 !important;
 
-      background: transparent !important;
-      color: #000000 !important;
+    background: transparent !important;
+    color: #000000 !important;
 
-      font-family: "Times New Roman", serif !important;
-      font-size: 9.5px !important;
-    }
+    font-family: "Times New Roman", serif !important;
+    font-size: 9.5px !important;
+  }
 
-    /* =========================================
+  /* =========================================
      FOLHAS
      ========================================= */
 
-    .folha {
-      width: 100% !important;
+  .folha {
+    width: 100% !important;
 
-      margin: 0 auto !important;
-      padding: 3mm 0 0 !important;
+    margin: 0 auto !important;
+    padding: 3mm 0 0 !important;
 
-      background: #ffffff !important;
+    background: #ffffff !important;
 
-      box-shadow: none !important;
-      border-radius: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
 
-      overflow: visible !important;
+    overflow: visible !important;
 
-      page-break-inside: auto !important;
-      break-inside: auto !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
 
-      page-break-before: auto !important;
-      break-before: auto !important;
-    }
+    page-break-before: auto !important;
+    break-before: auto !important;
+  }
 
-    /*
+  /*
     Cada nova folha começa em nova página,
     mas sem forçar comportamento excessivo.
   */
 
-    .folha+.folha {
-      page-break-before: always !important;
-      break-before: page !important;
-    }
+  .folha+.folha {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
 
-    /* =========================================
+  /* =========================================
      TÍTULO DA FOLHA
      ========================================= */
 
-    .folha h3 {
-      width: 100% !important;
+  .folha h3 {
+    width: 100% !important;
 
-      margin: 0 auto 4px !important;
-      padding: 3px 0 !important;
+    margin: 0 auto 4px !important;
+    padding: 3px 0 !important;
 
-      background: #ffffff !important;
-      color: #000000 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
 
-      border: 1px solid #000000 !important;
+    border: 1px solid #000000 !important;
 
-      text-align: center !important;
+    text-align: center !important;
 
-      font-family: "Times New Roman", serif !important;
-      font-size: 11px !important;
-      font-weight: bold !important;
+    font-family: "Times New Roman", serif !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
 
-      line-height: 1.1 !important;
+    line-height: 1.1 !important;
 
-      page-break-after: avoid !important;
-      break-after: avoid !important;
-    }
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
 
-    /* =========================================
+  /* =========================================
      TABELA
      ========================================= */
 
-    table {
-      width: 100% !important;
-      min-width: 0 !important;
+  table {
+    width: 100% !important;
+    min-width: 0 !important;
 
-      margin: 0 auto !important;
+    margin: 0 auto !important;
 
-      border-collapse: collapse !important;
-      table-layout: fixed !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
 
-      color: #000000 !important;
+    color: #000000 !important;
 
-      font-family: "Times New Roman", serif !important;
-      font-size: 9.5px !important;
-    }
+    font-family: "Times New Roman", serif !important;
+    font-size: 9.5px !important;
+  }
 
-    thead {
-      display: table-header-group !important;
-    }
+  thead {
+    display: table-header-group !important;
+  }
 
-    tbody {
-      display: table-row-group !important;
-    }
+  tbody {
+    display: table-row-group !important;
+  }
 
-    tfoot {
-      display: table-row-group !important;
-    }
+  tfoot {
+    display: table-row-group !important;
+  }
 
-    tr {
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
-    }
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
 
-    th,
-    td {
-      border: 1px solid #000000 !important;
+  th,
+  td {
+    border: 1px solid #000000 !important;
 
-      background: #ffffff !important;
-      color: #000000 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
 
-      padding: 2.5px 4px !important;
+    padding: 2.5px 4px !important;
 
-      font-family: "Times New Roman", serif !important;
-      font-size: 9.5px !important;
+    font-family: "Times New Roman", serif !important;
+    font-size: 9.5px !important;
 
-      line-height: 1.1 !important;
+    line-height: 1.1 !important;
 
-      vertical-align: middle !important;
-    }
+    vertical-align: middle !important;
+  }
 
-    th {
-      font-weight: bold !important;
-      text-align: center !important;
-    }
+  th {
+    font-weight: bold !important;
+    text-align: center !important;
+  }
 
-    /* =========================================
+  /* =========================================
      COLUNAS
      NOME | Nº | VALOR
      ========================================= */
 
-    th:nth-child(1),
-    td:nth-child(1) {
-      width: 70% !important;
-      text-align: left !important;
-    }
+  th:nth-child(1),
+  td:nth-child(1) {
+    width: 70% !important;
+    text-align: left !important;
+  }
 
-    th:nth-child(2),
-    td:nth-child(2) {
-      width: 12% !important;
-      text-align: center !important;
-    }
+  th:nth-child(2),
+  td:nth-child(2) {
+    width: 12% !important;
+    text-align: center !important;
+  }
 
-    th:nth-child(3),
-    td:nth-child(3) {
-      width: 18% !important;
-      text-align: right !important;
-    }
+  th:nth-child(3),
+  td:nth-child(3) {
+    width: 18% !important;
+    text-align: right !important;
+  }
 
-    /* AÇÕES NÃO IMPRIMEM */
+  /* AÇÕES NÃO IMPRIMEM */
 
-    th:nth-child(4),
-    td:nth-child(4) {
-      display: none !important;
-    }
+  th:nth-child(4),
+  td:nth-child(4) {
+    display: none !important;
+  }
 
-    /* =========================================
+  /* =========================================
      TOTAL DA FOLHA
      ========================================= */
 
-    tfoot tr {
-      display: table-row !important;
-    }
+  tfoot tr {
+    display: table-row !important;
+  }
 
-    tfoot td {
-      display: table-cell !important;
+  tfoot td {
+    display: table-cell !important;
 
-      padding: 3px 5px !important;
+    padding: 3px 5px !important;
 
-      background: #ffffff !important;
-      color: #000000 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
 
-      font-family: "Times New Roman", serif !important;
-      font-size: 9.5px !important;
-      font-weight: bold !important;
-    }
+    font-family: "Times New Roman", serif !important;
+    font-size: 9.5px !important;
+    font-weight: bold !important;
+  }
 
-    tfoot strong {
-      color: #000000 !important;
+  tfoot strong {
+    color: #000000 !important;
 
-      font-family: "Times New Roman", serif !important;
-      font-size: 9.5px !important;
-      font-weight: bold !important;
-    }
+    font-family: "Times New Roman", serif !important;
+    font-size: 9.5px !important;
+    font-weight: bold !important;
+  }
 
-    /* =========================================
+  /* =========================================
      RESUMO GERAL
      ========================================= */
 
-    .resumo-geral {
-      display: block !important;
+  .resumo-geral {
+    display: block !important;
 
-      width: 100% !important;
+    width: 100% !important;
 
-      margin: 5mm auto 0 !important;
+    margin: 5mm auto 0 !important;
 
-      background: #ffffff !important;
+    background: #ffffff !important;
 
-      border: 1px solid #000000 !important;
-      border-radius: 0 !important;
+    border: 1px solid #000000 !important;
+    border-radius: 0 !important;
 
-      box-shadow: none !important;
+    box-shadow: none !important;
 
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
-    }
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
 
-    .resumo-geral div {
-      display: flex !important;
+  .resumo-geral div {
+    display: flex !important;
 
-      justify-content: space-between !important;
-      align-items: center !important;
+    justify-content: space-between !important;
+    align-items: center !important;
 
-      padding: 3px 6px !important;
+    padding: 3px 6px !important;
 
-      border-bottom: 1px solid #000000 !important;
+    border-bottom: 1px solid #000000 !important;
 
-      font-family: "Times New Roman", serif !important;
-      font-size: 9.5px !important;
-    }
+    font-family: "Times New Roman", serif !important;
+    font-size: 9.5px !important;
+  }
 
-    .resumo-geral div:last-child {
-      border-bottom: none !important;
-    }
+  .resumo-geral div:last-child {
+    border-bottom: none !important;
+  }
 
-    .resumo-geral span,
-    .resumo-geral strong {
-      display: inline !important;
+  .resumo-geral span,
+  .resumo-geral strong {
+    display: inline !important;
 
-      color: #000000 !important;
+    color: #000000 !important;
 
-      font-family: "Times New Roman", serif !important;
-      font-size: 9.5px !important;
-      font-weight: bold !important;
-    }
+    font-family: "Times New Roman", serif !important;
+    font-size: 9.5px !important;
+    font-weight: bold !important;
+  }
 
-    /* =========================================
+  /* =========================================
      ASSINATURAS
      ========================================= */
 
-    .assinaturas {
-      width: 100% !important;
+  .assinaturas {
+    width: 100% !important;
 
-      margin: 6mm auto 0 !important;
-      padding: 0 !important;
+    margin: 6mm auto 0 !important;
+    padding: 0 !important;
 
-      background: #ffffff !important;
+    background: #ffffff !important;
 
-      border-radius: 0 !important;
-      box-shadow: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
 
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
-    }
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
 
-    .campo-assinatura {
-      margin-bottom: 5mm !important;
-    }
+  .campo-assinatura {
+    margin-bottom: 5mm !important;
+  }
 
-    .campo-assinatura label {
-      display: block !important;
+  .campo-assinatura label {
+    display: block !important;
 
-      margin-bottom: 2px !important;
+    margin-bottom: 2px !important;
 
-      color: #000000 !important;
+    color: #000000 !important;
 
-      font-family: "Times New Roman", serif !important;
-      font-size: 9.5px !important;
-      font-weight: bold !important;
-    }
+    font-family: "Times New Roman", serif !important;
+    font-size: 9.5px !important;
+    font-weight: bold !important;
+  }
 
-    /* =========================================
+  /* =========================================
      NÃO MOSTRAR URL DE LINKS
      ========================================= */
 
-    a::after {
-      content: "" !important;
-    }
+  a::after {
+    content: "" !important;
   }
 }
