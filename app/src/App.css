@@ -1149,6 +1149,16 @@ tfoot td:nth-child(3) {
     font-weight: bold !important;
   }
 
+  .folha table tbody tr td.nome-dizimista {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    line-height: 1 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
   /* =========================================
      ASSINATURAS
      ========================================= */

@@ -117,12 +117,11 @@ function Tabela() {
     const calcularFolha = (numero) => {
         const n = Number(numero);
 
-        if (n >= 1 && n <= 40) return 1;
-        if (n >= 41 && n <= 80) return 2;
-        if (n >= 81 && n <= 120) return 3;
-        if (n >= 121 && n <= 137) return 4;
+        if (!n || n < 1) {
+            return null;
+        }
 
-        return null;
+        return Math.ceil(n / 40);
     };
 
     // =====================================================
@@ -135,7 +134,7 @@ function Tabela() {
         const folha = calcularFolha(formulario.numero);
 
         if (!folha) {
-            alert("O número deve estar entre 1 e 137.");
+            alert("O número deve ser maior que 0.");
             return;
         }
 
@@ -250,57 +249,41 @@ function Tabela() {
     // SEPARAR DIZIMISTAS POR FOLHA
     // =====================================================
 
-    const folha1 = dizimistas.filter(
-        (dizimista) => Number(dizimista.folha) === 1
+    const totalFolhas = Math.max(
+        1,
+        ...dizimistas.map((dizimista) => Number(dizimista.folha) || 1)
     );
 
-    const folha2 = dizimistas.filter(
-        (dizimista) => Number(dizimista.folha) === 2
+    const folhas = Array.from(
+        { length: totalFolhas },
+        (_, index) => index + 1
     );
 
-    const folha3 = dizimistas.filter(
-        (dizimista) => Number(dizimista.folha) === 3
-    );
-
-    const folha4 = dizimistas.filter(
-        (dizimista) => Number(dizimista.folha) === 4
-    );
-
-    // =====================================================
+    // ---------------------------------------------
     // CALCULAR TOTAL
-    // =====================================================
+    // ---------------------------------------------
 
     const calcularTotal = (lista) => {
         return lista.reduce((total, dizimista) => {
-            return total + Number(dizimista.valor);
+            return total + Number(dizimista.valor || 0);
         }, 0);
     };
 
-    // =====================================================
-    // TOTAL DE CADA FOLHA
-    // =====================================================
-
-    const totalFolha1 = calcularTotal(folha1);
-    const totalFolha2 = calcularTotal(folha2);
-    const totalFolha3 = calcularTotal(folha3);
-    const totalFolha4 = calcularTotal(folha4);
-
-    // =====================================================
+    // ---------------------------------------------
     // TOTAL GERAL
-    // =====================================================
+    // ---------------------------------------------
 
-    const totalGeral =
-        totalFolha1 +
-        totalFolha2 +
-        totalFolha3 +
-        totalFolha4;
+    const totalGeral = calcularTotal(dizimistas);
 
-    // =====================================================
+    // ---------------------------------------------
     // DIVISÃO 50%
-    // =====================================================
+    // ---------------------------------------------
 
     const paroquia = totalGeral / 2;
     const comunidade = totalGeral / 2;
+
+
+
 
     // =====================================================
     // FORMATAR VALOR
@@ -346,7 +329,7 @@ function Tabela() {
                         ) : (
                             lista.map((dizimista) => (
                                 <tr key={dizimista.id}>
-                                    <td>{dizimista.nome}</td>
+                                    <td className="nome-dizimista">{dizimista.nome}</td>
 
                                     <td>
                                         {String(dizimista.numero).padStart(2, "0")}
@@ -473,7 +456,6 @@ function Tabela() {
                     name="numero"
                     placeholder="Número"
                     min="1"
-                    max="137"
                     value={formulario.numero}
                     onChange={alterarCampo}
                     required
@@ -522,15 +504,13 @@ function Tabela() {
 
             {/* FOLHAS */}
 
-            {renderizarFolha(1, folha1)}
+            {folhas.map((numeroFolha) => {
+                const dizimistasDaFolha = dizimistas.filter(
+                    (dizimista) => Number(dizimista.folha) === numeroFolha
+                );
 
-            {renderizarFolha(2, folha2)}
-
-            {renderizarFolha(3, folha3)}
-
-            {renderizarFolha(4, folha4)}
-
-            {/* RESUMO GERAL */}
+                return renderizarFolha(numeroFolha, dizimistasDaFolha);
+            })}
 
             <div className="resumo-geral">
                 <div>
