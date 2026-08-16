@@ -20,4 +20,12 @@ O projeto permite cadastrar, editar, excluir e organizar dizimistas por folhas, 
 ### Frontend
 
 ```text
-https://projeto-dizimo-app.onrender.com
+[🔗 Acessar aplicação](https://projeto-dizimo-app.onrender.com)
+
+### API
+
+[🔗 Acessar API](https://projeto-dizimo.onrender.com)
+
+Exemplo de endpoint:
+
+[🔗 Listar dizimistas](https://projeto-dizimo.onrender.com/api/dizimistas)
