@@ -16,6 +16,16 @@ const RegistroMensal = sequelize.define(
       defaultValue: "Palmeira",
     },
 
+    comunidadeId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+
+      references: {
+        model: "comunidades",
+        key: "id",
+      },
+    },
+
     data: {
       type: DataTypes.DATEONLY,
       allowNull: true,

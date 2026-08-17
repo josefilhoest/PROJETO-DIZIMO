@@ -1,8 +1,25 @@
 import RegistroMensal from "../models/RegistroMensal.js";
 
+
+// ========================================
+// LISTAR REGISTROS DE UMA COMUNIDADE
+// ========================================
+
 export const listarRegistros = async (req, res) => {
   try {
+    const { comunidadeId } = req.query;
+
+    if (!comunidadeId) {
+      return res.status(400).json({
+        erro: "comunidadeId é obrigatório",
+      });
+    }
+
     const registros = await RegistroMensal.findAll({
+      where: {
+        comunidadeId,
+      },
+
       order: [["data", "DESC"]],
     });
 
@@ -16,15 +33,32 @@ export const listarRegistros = async (req, res) => {
   }
 };
 
+
+// ========================================
+// BUSCAR REGISTRO POR ID
+// ========================================
+
 export const buscarRegistroPorId = async (req, res) => {
   try {
     const { id } = req.params;
+    const { comunidadeId } = req.query;
 
-    const registro = await RegistroMensal.findByPk(id);
+    if (!comunidadeId) {
+      return res.status(400).json({
+        erro: "comunidadeId é obrigatório",
+      });
+    }
+
+    const registro = await RegistroMensal.findOne({
+      where: {
+        id,
+        comunidadeId,
+      },
+    });
 
     if (!registro) {
       return res.status(404).json({
-        erro: "Registro mensal não encontrado",
+        erro: "Registro mensal não encontrado nesta comunidade",
       });
     }
 
@@ -38,18 +72,31 @@ export const buscarRegistroPorId = async (req, res) => {
   }
 };
 
+
+// ========================================
+// CRIAR REGISTRO
+// ========================================
+
 export const criarRegistro = async (req, res) => {
   try {
     const {
       comunidade,
+      comunidadeId,
       data,
       equipe_comunidade,
       conferido_em,
       responsavel_paroquia,
     } = req.body;
 
+    if (!comunidadeId) {
+      return res.status(400).json({
+        erro: "comunidadeId é obrigatório",
+      });
+    }
+
     const novoRegistro = await RegistroMensal.create({
       comunidade,
+      comunidadeId,
       data: data || null,
       equipe_comunidade,
       conferido_em: conferido_em || null,
@@ -66,23 +113,40 @@ export const criarRegistro = async (req, res) => {
   }
 };
 
+
+// ========================================
+// ATUALIZAR REGISTRO
+// ========================================
+
 export const atualizarRegistro = async (req, res) => {
   try {
     const { id } = req.params;
 
     const {
       comunidade,
+      comunidadeId,
       data,
       equipe_comunidade,
       conferido_em,
       responsavel_paroquia,
     } = req.body;
 
-    const registro = await RegistroMensal.findByPk(id);
+    if (!comunidadeId) {
+      return res.status(400).json({
+        erro: "comunidadeId é obrigatório",
+      });
+    }
+
+    const registro = await RegistroMensal.findOne({
+      where: {
+        id,
+        comunidadeId,
+      },
+    });
 
     if (!registro) {
       return res.status(404).json({
-        erro: "Registro mensal não encontrado",
+        erro: "Registro mensal não encontrado nesta comunidade",
       });
     }
 
@@ -104,15 +168,32 @@ export const atualizarRegistro = async (req, res) => {
   }
 };
 
+
+// ========================================
+// REMOVER REGISTRO
+// ========================================
+
 export const removerRegistro = async (req, res) => {
   try {
     const { id } = req.params;
+    const { comunidadeId } = req.query;
 
-    const registro = await RegistroMensal.findByPk(id);
+    if (!comunidadeId) {
+      return res.status(400).json({
+        erro: "comunidadeId é obrigatório",
+      });
+    }
+
+    const registro = await RegistroMensal.findOne({
+      where: {
+        id,
+        comunidadeId,
+      },
+    });
 
     if (!registro) {
       return res.status(404).json({
-        erro: "Registro mensal não encontrado",
+        erro: "Registro mensal não encontrado nesta comunidade",
       });
     }
 
