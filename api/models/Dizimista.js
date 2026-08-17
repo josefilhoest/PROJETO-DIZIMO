@@ -13,7 +13,7 @@ const Dizimista = sequelize.define(
     numero: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      unique: true,
+      // NÃO usar unique: true aqui
     },
 
     folha: {
@@ -32,10 +32,28 @@ const Dizimista = sequelize.define(
       allowNull: false,
       defaultValue: 0,
     },
+
+    comunidadeId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+
+      references: {
+        model: "comunidades",
+        key: "id",
+      },
+    },
   },
   {
     tableName: "dizimistas",
     timestamps: true,
+
+    indexes: [
+      {
+        unique: true,
+        fields: ["comunidadeId", "numero"],
+        name: "uq_dizimistas_comunidade_numero",
+      },
+    ],
   }
 );
 
