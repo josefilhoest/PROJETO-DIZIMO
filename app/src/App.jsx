@@ -18,6 +18,7 @@ function App() {
     }
   });
 
+
   const sair = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("usuario");
@@ -54,7 +55,7 @@ function App() {
         </button>
       </div>
 
-      <Tabela />
+      <Tabela usuario={usuario} />
     </div>
   );
 }

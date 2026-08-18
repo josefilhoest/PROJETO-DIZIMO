@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api/api";
 
-function Tabela() {
+function Tabela({ usuario }) {
     // =====================================================
     // ESTADOS
     // =====================================================
@@ -17,7 +17,7 @@ function Tabela() {
 
     const [registroMensal, setRegistroMensal] = useState({
         id: null,
-        comunidade: "",
+        comunidade: usuario?.comunidadeNome || "",
         data: "",
         equipe_comunidade: "",
         conferido_em: "",
@@ -26,6 +26,7 @@ function Tabela() {
 
     // =====================================================
     // CARREGAR DIZIMISTAS
+    // A comunidade é identificada pelo token JWT.
     // =====================================================
 
     const carregarDizimistas = async () => {
@@ -35,6 +36,10 @@ function Tabela() {
             setDizimistas(resposta.data);
         } catch (erro) {
             console.error("Erro ao carregar dizimistas:", erro);
+
+            if (erro.response?.status === 401) {
+                alert("Sua sessão expirou. Faça login novamente.");
+            }
         }
     };
 
@@ -51,25 +56,48 @@ function Tabela() {
 
                 setRegistroMensal({
                     id: registro.id,
-                    comunidade: registro.comunidade || "",
+
+                    // O nome vindo do usuário logado tem prioridade.
+                    comunidade:
+                        usuario?.comunidadeNome ||
+                        registro.comunidade ||
+                        "",
+
                     data: registro.data || "",
+
                     equipe_comunidade:
                         registro.equipe_comunidade || "",
-                    conferido_em: registro.conferido_em || "",
+
+                    conferido_em:
+                        registro.conferido_em || "",
+
                     responsavel_paroquia:
                         registro.responsavel_paroquia || "",
                 });
+            } else {
+                // Se ainda não existir ficha mensal,
+                // mantém automaticamente a comunidade do usuário.
+                setRegistroMensal((registroAtual) => ({
+                    ...registroAtual,
+
+                    comunidade:
+                        usuario?.comunidadeNome || "",
+                }));
             }
         } catch (erro) {
             console.error(
                 "Erro ao carregar registro mensal:",
                 erro
             );
+
+            if (erro.response?.status === 401) {
+                alert("Sua sessão expirou. Faça login novamente.");
+            }
         }
     };
 
     // =====================================================
-    // CARREGAR DADOS AO ABRIR A PÁGINA
+    // CARREGAR DADOS AO ABRIR A TELA
     // =====================================================
 
     useEffect(() => {
@@ -78,7 +106,21 @@ function Tabela() {
     }, []);
 
     // =====================================================
-    // ALTERAR CAMPOS DO FORMULÁRIO
+    // ATUALIZAR O NOME DA COMUNIDADE
+    // CASO O USUÁRIO MUDE/SEJA CARREGADO
+    // =====================================================
+
+    useEffect(() => {
+        if (usuario?.comunidadeNome) {
+            setRegistroMensal((registroAtual) => ({
+                ...registroAtual,
+                comunidade: usuario.comunidadeNome,
+            }));
+        }
+    }, [usuario]);
+
+    // =====================================================
+    // ALTERAR CAMPOS DO FORMULÁRIO DE DIZIMISTA
     // =====================================================
 
     const alterarCampo = (evento) => {
@@ -91,11 +133,17 @@ function Tabela() {
     };
 
     // =====================================================
-    // ALTERAR CAMPOS DO REGISTRO MENSAL
+    // ALTERAR CAMPOS DA FICHA MENSAL
     // =====================================================
 
     const alterarRegistroMensal = (evento) => {
         const { name, value } = evento.target;
+
+        // Segurança extra:
+        // comunidade não deve ser alterada manualmente.
+        if (name === "comunidade") {
+            return;
+        }
 
         setRegistroMensal((registroAtual) => ({
             ...registroAtual,
@@ -117,21 +165,22 @@ function Tabela() {
     };
 
     // =====================================================
-    // CALCULAR FOLHA AUTOMATICAMENTE
+    // CALCULAR FOLHA
+    // 40 PESSOAS POR FOLHA
     // =====================================================
 
     const calcularFolha = (numero) => {
-        const n = Number(numero);
+        const numeroConvertido = Number(numero);
 
-        if (!n || n < 1) {
+        if (!numeroConvertido || numeroConvertido < 1) {
             return null;
         }
 
-        return Math.ceil(n / 40);
+        return Math.ceil(numeroConvertido / 40);
     };
 
     // =====================================================
-    // SALVAR OU EDITAR DIZIMISTA
+    // SALVAR / EDITAR DIZIMISTA
     // =====================================================
 
     const salvarDizimista = async (evento) => {
@@ -144,11 +193,18 @@ function Tabela() {
             return;
         }
 
+        const nomeLimpo = formulario.nome.trim();
+
+        if (!nomeLimpo) {
+            alert("Informe o nome do dizimista.");
+            return;
+        }
+
         const dados = {
             numero: Number(formulario.numero),
             folha,
-            nome: formulario.nome.trim(),
-            valor: Number(formulario.valor),
+            nome: nomeLimpo,
+            valor: Number(formulario.valor || 0),
         };
 
         try {
@@ -180,16 +236,13 @@ function Tabela() {
             }
 
             if (erro.response?.status === 401) {
-                alert(
-                    "Sua sessão expirou. Faça login novamente."
-                );
-
+                alert("Sua sessão expirou. Faça login novamente.");
                 return;
             }
 
             alert(
                 erro.response?.data?.erro ||
-                "Não foi possível salvar o registro."
+                "Não foi possível salvar o dizimista."
             );
         }
     };
@@ -244,16 +297,13 @@ function Tabela() {
             );
 
             if (erro.response?.status === 401) {
-                alert(
-                    "Sua sessão expirou. Faça login novamente."
-                );
-
+                alert("Sua sessão expirou. Faça login novamente.");
                 return;
             }
 
             alert(
                 erro.response?.data?.erro ||
-                "Não foi possível excluir o registro."
+                "Não foi possível excluir o dizimista."
             );
         }
     };
@@ -264,27 +314,29 @@ function Tabela() {
 
     const salvarRegistroMensal = async () => {
         try {
+            if (!usuario?.comunidadeNome) {
+                alert(
+                    "Não foi possível identificar a comunidade do usuário."
+                );
+                return;
+            }
+
             const dados = {
-                comunidade: registroMensal.comunidade.trim(),
-                data: registroMensal.data || null,
+                // Nunca usamos um valor digitado pelo usuário.
+                comunidade: usuario.comunidadeNome,
+
+                data:
+                    registroMensal.data || null,
 
                 equipe_comunidade:
-                    registroMensal.equipe_comunidade,
+                    registroMensal.equipe_comunidade.trim(),
 
                 conferido_em:
                     registroMensal.conferido_em || null,
 
                 responsavel_paroquia:
-                    registroMensal.responsavel_paroquia,
+                    registroMensal.responsavel_paroquia.trim(),
             };
-
-            if (!dados.comunidade) {
-                alert(
-                    "Informe o nome da comunidade antes de salvar a ficha."
-                );
-
-                return;
-            }
 
             if (registroMensal.id) {
                 const resposta = await api.put(
@@ -294,16 +346,21 @@ function Tabela() {
 
                 setRegistroMensal({
                     id: resposta.data.id,
+
                     comunidade:
-                        resposta.data.comunidade || "",
-                    data: resposta.data.data || "",
+                        usuario.comunidadeNome,
+
+                    data:
+                        resposta.data.data || "",
+
                     equipe_comunidade:
                         resposta.data.equipe_comunidade || "",
+
                     conferido_em:
                         resposta.data.conferido_em || "",
+
                     responsavel_paroquia:
-                        resposta.data.responsavel_paroquia ||
-                        "",
+                        resposta.data.responsavel_paroquia || "",
                 });
             } else {
                 const resposta = await api.post(
@@ -313,16 +370,21 @@ function Tabela() {
 
                 setRegistroMensal({
                     id: resposta.data.id,
+
                     comunidade:
-                        resposta.data.comunidade || "",
-                    data: resposta.data.data || "",
+                        usuario.comunidadeNome,
+
+                    data:
+                        resposta.data.data || "",
+
                     equipe_comunidade:
                         resposta.data.equipe_comunidade || "",
+
                     conferido_em:
                         resposta.data.conferido_em || "",
+
                     responsavel_paroquia:
-                        resposta.data.responsavel_paroquia ||
-                        "",
+                        resposta.data.responsavel_paroquia || "",
                 });
             }
 
@@ -336,10 +398,7 @@ function Tabela() {
             );
 
             if (erro.response?.status === 401) {
-                alert(
-                    "Sua sessão expirou. Faça login novamente."
-                );
-
+                alert("Sua sessão expirou. Faça login novamente.");
                 return;
             }
 
@@ -351,7 +410,7 @@ function Tabela() {
     };
 
     // =====================================================
-    // SEPARAR DIZIMISTAS POR FOLHA
+    // TOTAL DE FOLHAS
     // =====================================================
 
     const totalFolhas = Math.max(
@@ -375,12 +434,8 @@ function Tabela() {
 
     const calcularTotal = (lista) => {
         return lista.reduce(
-            (total, dizimista) => {
-                return (
-                    total +
-                    Number(dizimista.valor || 0)
-                );
-            },
+            (total, dizimista) =>
+                total + Number(dizimista.valor || 0),
             0
         );
     };
@@ -396,16 +451,18 @@ function Tabela() {
     // DIVISÃO 50%
     // =====================================================
 
-    const paroquia = totalGeral / 2;
+    const totalParoquia =
+        totalGeral / 2;
 
-    const comunidade = totalGeral / 2;
+    const totalComunidade =
+        totalGeral / 2;
 
     // =====================================================
-    // FORMATAR VALOR
+    // FORMATAR DINHEIRO
     // =====================================================
 
     const formatarDinheiro = (valor) => {
-        return Number(valor).toLocaleString(
+        return Number(valor || 0).toLocaleString(
             "pt-BR",
             {
                 style: "currency",
@@ -415,14 +472,15 @@ function Tabela() {
     };
 
     // =====================================================
-    // RENDERIZAR CADA FOLHA
+    // RENDERIZAR UMA FOLHA
     // =====================================================
 
     const renderizarFolha = (
         numeroFolha,
         lista
     ) => {
-        const total = calcularTotal(lista);
+        const totalFolha =
+            calcularTotal(lista);
 
         return (
             <section
@@ -441,11 +499,8 @@ function Tabela() {
                     <thead>
                         <tr>
                             <th>Nome</th>
-
                             <th>Nº</th>
-
                             <th>Valor</th>
-
                             <th>Ações</th>
                         </tr>
                     </thead>
@@ -521,7 +576,7 @@ function Tabela() {
                             <td>
                                 <strong>
                                     {formatarDinheiro(
-                                        total
+                                        totalFolha
                                     )}
                                 </strong>
                             </td>
@@ -535,14 +590,14 @@ function Tabela() {
     };
 
     // =====================================================
-    // RETURN PRINCIPAL
+    // RETURN
     // =====================================================
 
     return (
         <div className="registro">
-            {/* ========================================= */}
-            {/* CABEÇALHO */}
-            {/* ========================================= */}
+            {/* =========================================
+          CABEÇALHO DA FICHA
+      ========================================= */}
 
             <header className="cabecalho-ficha">
                 <h1>
@@ -569,14 +624,16 @@ function Tabela() {
                             value={
                                 registroMensal.comunidade
                             }
-                            onChange={
-                                alterarRegistroMensal
-                            }
-                            placeholder="Nome da comunidade"
+
+                            /*
+                              O usuário não pode trocar manualmente
+                              a comunidade vinculada à sua conta.
+                            */
+                            readOnly
                         />
 
                         <span className="campo-impressao">
-                            ______________________________
+                            {registroMensal.comunidade}
                         </span>
                     </label>
 
@@ -602,9 +659,9 @@ function Tabela() {
                 </div>
             </header>
 
-            {/* ========================================= */}
-            {/* FORMULÁRIO DE DIZIMISTA */}
-            {/* ========================================= */}
+            {/* =========================================
+          FORMULÁRIO DIZIMISTA
+      ========================================= */}
 
             <form
                 onSubmit={salvarDizimista}
@@ -660,9 +717,9 @@ function Tabela() {
                 )}
             </form>
 
-            {/* ========================================= */}
-            {/* FOLHAS */}
-            {/* ========================================= */}
+            {/* =========================================
+          FOLHAS
+      ========================================= */}
 
             {folhas.map(
                 (numeroFolha) => {
@@ -681,9 +738,9 @@ function Tabela() {
                 }
             )}
 
-            {/* ========================================= */}
-            {/* RESUMO GERAL */}
-            {/* ========================================= */}
+            {/* =========================================
+          RESUMO GERAL
+      ========================================= */}
 
             <div className="resumo-geral">
                 <div>
@@ -705,7 +762,7 @@ function Tabela() {
 
                     <strong>
                         {formatarDinheiro(
-                            paroquia
+                            totalParoquia
                         )}
                     </strong>
                 </div>
@@ -717,15 +774,15 @@ function Tabela() {
 
                     <strong>
                         {formatarDinheiro(
-                            comunidade
+                            totalComunidade
                         )}
                     </strong>
                 </div>
             </div>
 
-            {/* ========================================= */}
-            {/* ASSINATURAS */}
-            {/* ========================================= */}
+            {/* =========================================
+          ASSINATURAS
+      ========================================= */}
 
             <section className="assinaturas">
                 <div className="campo-assinatura">
@@ -793,9 +850,9 @@ function Tabela() {
                 </div>
             </section>
 
-            {/* ========================================= */}
-            {/* BOTÕES DA FICHA */}
-            {/* ========================================= */}
+            {/* =========================================
+          BOTÕES DA FICHA
+      ========================================= */}
 
             <div className="acoes-ficha">
                 <button

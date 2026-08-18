@@ -1,6 +1,8 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+
 import Usuario from "../models/Usuario.js";
+import Comunidade from "../models/Comunidade.js";
 
 // ========================================
 // CADASTRAR USUÁRIO
@@ -19,6 +21,15 @@ export const cadastrarUsuario = async (req, res) => {
     if (!nome || !email || !senha || !comunidadeId) {
       return res.status(400).json({
         erro: "Nome, email, senha e comunidadeId são obrigatórios",
+      });
+    }
+
+    // Confere se a comunidade existe
+    const comunidade = await Comunidade.findByPk(comunidadeId);
+
+    if (!comunidade) {
+      return res.status(404).json({
+        erro: "Comunidade não encontrada",
       });
     }
 
@@ -46,12 +57,14 @@ export const cadastrarUsuario = async (req, res) => {
 
     res.status(201).json({
       mensagem: "Usuário cadastrado com sucesso",
+
       usuario: {
         id: novoUsuario.id,
         nome: novoUsuario.nome,
         email: novoUsuario.email,
         perfil: novoUsuario.perfil,
         comunidadeId: novoUsuario.comunidadeId,
+        comunidadeNome: comunidade.nome,
       },
     });
   } catch (error) {
@@ -106,6 +119,17 @@ export const login = async (req, res) => {
       });
     }
 
+    // Busca a comunidade vinculada ao usuário
+    const comunidade = await Comunidade.findByPk(
+      usuario.comunidadeId
+    );
+
+    if (!comunidade) {
+      return res.status(404).json({
+        erro: "Comunidade vinculada ao usuário não encontrada",
+      });
+    }
+
     const token = jwt.sign(
       {
         usuarioId: usuario.id,
@@ -129,6 +153,7 @@ export const login = async (req, res) => {
         email: usuario.email,
         perfil: usuario.perfil,
         comunidadeId: usuario.comunidadeId,
+        comunidadeNome: comunidade.nome,
       },
     });
   } catch (error) {
