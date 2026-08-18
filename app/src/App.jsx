@@ -1,6 +1,9 @@
 import { useState } from "react";
+
 import Tabela from "./components/Tabela";
 import Login from "./components/Login";
+import CadastroComunidade from "./components/CadastroComunidade";
+
 import "./App.css";
 
 function App() {
@@ -18,20 +21,42 @@ function App() {
     }
   });
 
+  const [telaAcesso, setTelaAcesso] = useState("login");
 
   const sair = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("usuario");
 
     setUsuario(null);
+    setTelaAcesso("login");
   };
 
-  // Se não estiver logado, mostra a tela de login
+  // ========================================
+  // USUÁRIO NÃO LOGADO
+  // ========================================
+
   if (!usuario) {
+    if (telaAcesso === "cadastro") {
+      return (
+        <CadastroComunidade
+          onVoltar={() => setTelaAcesso("login")}
+        />
+      );
+    }
+
     return (
-      <Login onLogin={setUsuario} />
+      <Login
+        onLogin={setUsuario}
+        onCadastrarComunidade={() =>
+          setTelaAcesso("cadastro")
+        }
+      />
     );
   }
+
+  // ========================================
+  // USUÁRIO LOGADO
+  // ========================================
 
   return (
     <div className="container">

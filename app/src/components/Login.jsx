@@ -1,7 +1,7 @@
 import { useState } from "react";
 import api from "../api/api";
 
-function Login({ onLogin }) {
+function Login({ onLogin, onCadastrarComunidade }) {
     const [email, setEmail] = useState("");
     const [senha, setSenha] = useState("");
     const [mostrarSenha, setMostrarSenha] = useState(false);
@@ -185,6 +185,7 @@ function Login({ onLogin }) {
                         ) : (
                             <>
                                 <span>Entrar no sistema</span>
+
                                 <span
                                     className="btn-login-seta"
                                     aria-hidden="true"
@@ -193,6 +194,14 @@ function Login({ onLogin }) {
                                 </span>
                             </>
                         )}
+                    </button>
+
+                    <button
+                        type="button"
+                        className="btn-cadastrar-comunidade"
+                        onClick={onCadastrarComunidade}
+                    >
+                        Cadastrar minha comunidade
                     </button>
                 </form>
 

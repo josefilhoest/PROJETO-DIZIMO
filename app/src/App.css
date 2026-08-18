@@ -1954,3 +1954,245 @@ tfoot td:nth-child(3) {
     font-size: 11px;
   }
 }
+
+/* =====================================================
+   CADASTRO DE COMUNIDADE
+===================================================== */
+
+.cadastro-comunidade-card {
+  max-width: 560px;
+  padding-top: 38px;
+  padding-bottom: 32px;
+}
+
+/* Deixa o topo um pouco mais compacto no cadastro */
+.cadastro-comunidade-card .login-topo {
+  margin-bottom: 26px;
+}
+
+.cadastro-comunidade-card .login-icone {
+  width: 68px;
+  height: 68px;
+  margin-bottom: 14px;
+  border-radius: 19px;
+}
+
+.cadastro-comunidade-card .login-cruz {
+  font-size: 34px;
+}
+
+.cadastro-comunidade-card h1 {
+  font-size: 32px;
+}
+
+/* =====================================================
+   INPUTS DIRETOS DO CADASTRO
+===================================================== */
+
+.cadastro-comunidade-card .login-grupo>input {
+  width: 100%;
+  height: 52px;
+
+  padding: 0 15px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #d7dde4;
+  border-radius: 13px;
+
+  outline: none;
+
+  background: #ffffff;
+  color: #111827;
+
+  font-size: 15px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.cadastro-comunidade-card .login-grupo>input::placeholder {
+  color: #a0a8b1;
+}
+
+.cadastro-comunidade-card .login-grupo>input:hover {
+  border-color: #bbc4ce;
+}
+
+.cadastro-comunidade-card .login-grupo>input:focus {
+  border-color: #198754;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 0 0 4px rgba(25, 135, 84, 0.11);
+
+  transform: translateY(-1px);
+}
+
+/* =====================================================
+   ESPAÇAMENTO DO FORMULÁRIO DE CADASTRO
+===================================================== */
+
+.cadastro-comunidade-card .login-form {
+  gap: 17px;
+}
+
+/* =====================================================
+   BOTÃO CADASTRAR MINHA COMUNIDADE
+   TELA DE LOGIN
+===================================================== */
+
+.btn-cadastrar-comunidade {
+  width: 100%;
+  min-height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #cfd8d3;
+  border-radius: 12px;
+
+  background: #f4f7f5;
+  color: #176b45;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.btn-cadastrar-comunidade:hover {
+  background: #eaf5ef;
+  border-color: #198754;
+
+  box-shadow:
+    0 8px 18px rgba(25, 135, 84, 0.10);
+
+  transform: translateY(-1px);
+
+  opacity: 1;
+}
+
+/* =====================================================
+   BOTÃO VOLTAR PARA LOGIN
+===================================================== */
+
+.btn-voltar-login {
+  width: 100%;
+  min-height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+
+  background: #f7f8f9;
+  color: #4b5563;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.btn-voltar-login:hover {
+  background: #eef2f0;
+  border-color: #cbd5cf;
+  color: #176b45;
+
+  transform: translateY(-1px);
+
+  opacity: 1;
+}
+
+/* =====================================================
+   MENSAGEM DE SUCESSO DO CADASTRO
+===================================================== */
+
+.cadastro-sucesso {
+  margin: 0 0 22px;
+
+  padding: 14px 16px;
+
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+
+  background: #f0fdf4;
+  color: #166534;
+
+  animation: aparecerErro 0.28s ease;
+}
+
+.cadastro-sucesso strong {
+  display: block;
+
+  margin-bottom: 4px;
+
+  font-size: 14px;
+}
+
+.cadastro-sucesso p {
+  margin: 0;
+
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* =====================================================
+   RESPONSIVIDADE DO CADASTRO
+===================================================== */
+
+@media (max-width: 600px) {
+
+  .cadastro-comunidade-card {
+    max-width: 100%;
+
+    padding:
+      30px 20px 24px;
+  }
+
+  .cadastro-comunidade-card h1 {
+    font-size: 27px;
+  }
+
+  .cadastro-comunidade-card .login-topo {
+    margin-bottom: 23px;
+  }
+
+  .cadastro-comunidade-card .login-form {
+    gap: 15px;
+  }
+
+  .cadastro-comunidade-card .login-grupo>input,
+  .cadastro-comunidade-card .login-input-wrapper input {
+    height: 49px;
+
+    font-size: 14px;
+  }
+
+  .btn-cadastrar-comunidade,
+  .btn-voltar-login {
+    min-height: 46px;
+
+    font-size: 13px;
+  }
+}
