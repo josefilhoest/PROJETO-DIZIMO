@@ -1,12 +1,16 @@
+import "dotenv/config";
+
 import express from "express";
 import cors from "cors";
 import sequelize from "./database/database.js";
 
 import Dizimista from "./models/Dizimista.js";
 import dizimistaRoutes from "./routes/dizimistaRoutes.js";
+import Usuario from "./models/Usuario.js";
 
 import RegistroMensal from "./models/RegistroMensal.js";
 import registroMensalRoutes from "./routes/registroMensalRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
 
@@ -15,6 +19,7 @@ app.use(express.json());
 
 app.use("/api/dizimistas", dizimistaRoutes);
 app.use("/api/registros", registroMensalRoutes);
+app.use("/api/auth", authRoutes);
 
 app.get("/", (req, res) => {
   res.json({

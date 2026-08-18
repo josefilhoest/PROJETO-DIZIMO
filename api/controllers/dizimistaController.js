@@ -1,19 +1,12 @@
 import Dizimista from "../models/Dizimista.js";
 
-
 // ========================================
-// LISTAR DIZIMISTAS DE UMA COMUNIDADE
+// LISTAR DIZIMISTAS DA COMUNIDADE LOGADA
 // ========================================
 
 export const listarDizimistas = async (req, res) => {
   try {
-    const { comunidadeId } = req.query;
-
-    if (!comunidadeId) {
-      return res.status(400).json({
-        erro: "comunidadeId é obrigatório",
-      });
-    }
+    const comunidadeId = req.usuario.comunidadeId;
 
     const dizimistas = await Dizimista.findAll({
       where: {
@@ -24,9 +17,8 @@ export const listarDizimistas = async (req, res) => {
     });
 
     res.json(dizimistas);
-
   } catch (error) {
-    console.error(error);
+    console.error("Erro ao listar dizimistas:", error);
 
     res.status(500).json({
       erro: "Erro ao listar dizimistas",
@@ -34,29 +26,20 @@ export const listarDizimistas = async (req, res) => {
   }
 };
 
-
 // ========================================
 // CRIAR DIZIMISTA
 // ========================================
 
 export const criarDizimista = async (req, res) => {
   try {
+    const comunidadeId = req.usuario.comunidadeId;
 
     const {
       numero,
       folha,
       nome,
       valor,
-      comunidadeId,
     } = req.body;
-
-
-    if (!comunidadeId) {
-      return res.status(400).json({
-        erro: "comunidadeId é obrigatório",
-      });
-    }
-
 
     const novoDizimista = await Dizimista.create({
       numero,
@@ -66,22 +49,15 @@ export const criarDizimista = async (req, res) => {
       comunidadeId,
     });
 
-
     res.status(201).json(novoDizimista);
-
   } catch (error) {
+    console.error("Erro ao cadastrar dizimista:", error);
 
-    console.error(error);
-
-
-    // número repetido dentro da mesma comunidade
     if (error.name === "SequelizeUniqueConstraintError") {
-
       return res.status(409).json({
         erro: "Já existe um dizimista com esse número nesta comunidade",
       });
     }
-
 
     res.status(500).json({
       erro: "Erro ao cadastrar dizimista",
@@ -89,14 +65,13 @@ export const criarDizimista = async (req, res) => {
   }
 };
 
-
 // ========================================
 // ATUALIZAR DIZIMISTA
 // ========================================
 
 export const atualizarDizimista = async (req, res) => {
-
   try {
+    const comunidadeId = req.usuario.comunidadeId;
 
     const { id } = req.params;
 
@@ -105,35 +80,20 @@ export const atualizarDizimista = async (req, res) => {
       folha,
       nome,
       valor,
-      comunidadeId,
     } = req.body;
 
-
-    if (!comunidadeId) {
-      return res.status(400).json({
-        erro: "comunidadeId é obrigatório",
-      });
-    }
-
-
     const dizimista = await Dizimista.findOne({
-
       where: {
         id,
         comunidadeId,
       },
-
     });
 
-
     if (!dizimista) {
-
       return res.status(404).json({
         erro: "Dizimista não encontrado nesta comunidade",
       });
-
     }
-
 
     await dizimista.update({
       numero,
@@ -142,22 +102,15 @@ export const atualizarDizimista = async (req, res) => {
       valor,
     });
 
-
     res.json(dizimista);
-
   } catch (error) {
-
-    console.error(error);
-
+    console.error("Erro ao atualizar dizimista:", error);
 
     if (error.name === "SequelizeUniqueConstraintError") {
-
       return res.status(409).json({
         erro: "Já existe um dizimista com esse número nesta comunidade",
       });
-
     }
-
 
     res.status(500).json({
       erro: "Erro ao atualizar dizimista",
@@ -165,63 +118,39 @@ export const atualizarDizimista = async (req, res) => {
   }
 };
 
-
 // ========================================
 // REMOVER DIZIMISTA
 // ========================================
 
 export const removerDizimista = async (req, res) => {
-
   try {
+    const comunidadeId = req.usuario.comunidadeId;
 
     const { id } = req.params;
 
-    const { comunidadeId } = req.query;
-
-
-    if (!comunidadeId) {
-
-      return res.status(400).json({
-        erro: "comunidadeId é obrigatório",
-      });
-
-    }
-
-
     const dizimista = await Dizimista.findOne({
-
       where: {
         id,
         comunidadeId,
       },
-
     });
 
-
     if (!dizimista) {
-
       return res.status(404).json({
         erro: "Dizimista não encontrado nesta comunidade",
       });
-
     }
 
-
     await dizimista.destroy();
-
 
     res.json({
       mensagem: "Dizimista removido com sucesso",
     });
-
-
   } catch (error) {
-
-    console.error(error);
+    console.error("Erro ao remover dizimista:", error);
 
     res.status(500).json({
       erro: "Erro ao remover dizimista",
     });
-
   }
 };

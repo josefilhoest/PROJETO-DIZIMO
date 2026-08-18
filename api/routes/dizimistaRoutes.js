@@ -7,11 +7,16 @@ import {
   removerDizimista,
 } from "../controllers/dizimistaController.js";
 
+import { autenticar } from "../middlewares/authMiddleware.js";
+
 const router = Router();
 
-router.get("/", listarDizimistas);
-router.post("/", criarDizimista);
-router.put("/:id", atualizarDizimista);
-router.delete("/:id", removerDizimista);
+router.get("/", autenticar, listarDizimistas);
+
+router.post("/", autenticar, criarDizimista);
+
+router.put("/:id", autenticar, atualizarDizimista);
+
+router.delete("/:id", autenticar, removerDizimista);
 
 export default router;
