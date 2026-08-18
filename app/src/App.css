@@ -781,6 +781,10 @@ tfoot td:nth-child(3) {
     display: none !important;
   }
 
+  .usuario-logado {
+    display: none !important;
+  }
+
   .campo-impressao {
     display: inline-block !important;
 
@@ -1200,5 +1204,753 @@ tfoot td:nth-child(3) {
 
   a::after {
     content: "" !important;
+  }
+}
+
+/* =====================================================
+   LOGIN - VERSÃO PREMIUM REFINADA
+===================================================== */
+
+.login-container {
+  min-height: 100vh;
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 28px;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(circle at 15% 20%,
+      rgba(25, 135, 84, 0.18),
+      transparent 32%),
+    radial-gradient(circle at 85% 85%,
+      rgba(13, 110, 253, 0.08),
+      transparent 30%),
+    linear-gradient(135deg,
+      #edf5f0 0%,
+      #f7faf8 50%,
+      #eef2f6 100%);
+}
+
+/* =====================================================
+   DECORAÇÕES DO FUNDO
+===================================================== */
+
+.login-decoracao {
+  position: absolute;
+
+  border-radius: 50%;
+
+  filter: blur(2px);
+
+  pointer-events: none;
+
+  animation: flutuarLogin 8s ease-in-out infinite;
+}
+
+.login-decoracao-1 {
+  width: 360px;
+  height: 360px;
+
+  top: -140px;
+  left: -100px;
+
+  background:
+    linear-gradient(135deg,
+      rgba(25, 135, 84, 0.14),
+      rgba(32, 201, 151, 0.05));
+}
+
+.login-decoracao-2 {
+  width: 300px;
+  height: 300px;
+
+  right: -90px;
+  bottom: -120px;
+
+  background:
+    linear-gradient(135deg,
+      rgba(13, 110, 253, 0.06),
+      rgba(25, 135, 84, 0.10));
+
+  animation-delay: 2s;
+}
+
+/* =====================================================
+   CARD PRINCIPAL
+===================================================== */
+
+.login-card {
+  width: 100%;
+  max-width: 520px;
+
+  position: relative;
+  z-index: 2;
+
+  padding: 48px 44px 34px;
+
+  border-radius: 26px;
+
+  background:
+    rgba(255, 255, 255, 0.95);
+
+  border:
+    1px solid rgba(255, 255, 255, 0.88);
+
+  backdrop-filter: blur(14px);
+
+  box-shadow:
+    0 30px 70px rgba(15, 23, 42, 0.12),
+    0 8px 22px rgba(15, 23, 42, 0.07);
+
+  overflow: hidden;
+
+  animation:
+    aparecerLogin 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* LINHA SUPERIOR */
+
+.login-card::before {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 6px;
+
+  background:
+    linear-gradient(90deg,
+      #157347,
+      #198754,
+      #20c997);
+}
+
+/* =====================================================
+   TOPO DO LOGIN
+===================================================== */
+
+.login-topo {
+  text-align: center;
+
+  margin-bottom: 34px;
+}
+
+/* ÍCONE */
+
+.login-icone {
+  width: 82px;
+  height: 82px;
+
+  margin:
+    4px auto 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  position: relative;
+
+  border-radius: 22px;
+
+  background:
+    linear-gradient(145deg,
+      #1d925d,
+      #12663d);
+
+  box-shadow:
+    0 14px 30px rgba(25, 135, 84, 0.28);
+
+  transform: rotate(-3deg);
+}
+
+.login-icone::after {
+  content: "";
+
+  position: absolute;
+
+  inset: 5px;
+
+  border-radius: 18px;
+
+  border:
+    1px solid rgba(255, 255, 255, 0.26);
+}
+
+.login-cruz {
+  color: #ffffff;
+
+  font-size: 40px;
+  font-weight: 700;
+
+  line-height: 1;
+
+  transform: rotate(3deg);
+}
+
+/* ETIQUETA */
+
+.login-etiqueta {
+  display: inline-block;
+
+  margin-bottom: 12px;
+
+  padding: 7px 13px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(25, 135, 84, 0.10);
+
+  color: #157347;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  letter-spacing: 1.3px;
+}
+
+/* TÍTULO */
+
+.login-card h1 {
+  margin: 0;
+
+  color: #17212b;
+
+  font-size: 36px;
+  font-weight: 800;
+
+  letter-spacing: -0.8px;
+}
+
+/* SUBTÍTULO */
+
+.login-subtitulo {
+  margin:
+    10px 0 0;
+
+  color: #697386;
+
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* =====================================================
+   FORMULÁRIO
+===================================================== */
+
+.login-form {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 24px;
+}
+
+.login-grupo {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 9px;
+}
+
+.login-grupo label {
+  color: #374151;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* =====================================================
+   INPUTS
+===================================================== */
+
+.login-input-wrapper {
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+}
+
+.login-input-icone {
+  position: absolute;
+
+  left: 15px;
+
+  z-index: 2;
+
+  color: #73808c;
+
+  font-size: 16px;
+
+  pointer-events: none;
+}
+
+.login-input-wrapper input {
+  width: 100%;
+  height: 54px;
+
+  padding:
+    0 50px 0 44px;
+
+  box-sizing: border-box;
+
+  border:
+    1px solid #d7dde4;
+
+  border-radius: 13px;
+
+  outline: none;
+
+  background:
+    #ffffff;
+
+  color:
+    #111827;
+
+  font-size: 15px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.login-input-wrapper input::placeholder {
+  color: #a0a8b1;
+}
+
+.login-input-wrapper input:hover {
+  border-color: #bbc4ce;
+}
+
+.login-input-wrapper input:focus {
+  border-color: #198754;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 0 0 4px rgba(25, 135, 84, 0.11);
+
+  transform:
+    translateY(-1px);
+}
+
+/* =====================================================
+   BOTÃO MOSTRAR SENHA
+===================================================== */
+
+.btn-mostrar-senha {
+  position: absolute;
+
+  right: 8px;
+
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+
+  border-radius: 9px;
+
+  background: transparent;
+
+  cursor: pointer;
+
+  font-size: 18px;
+
+  opacity: 0.72;
+
+  transition:
+    background 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.btn-mostrar-senha:hover {
+  background:
+    rgba(25, 135, 84, 0.08);
+
+  opacity: 1;
+
+  transform:
+    scale(1.04);
+}
+
+/* =====================================================
+   BOTÃO ENTRAR
+===================================================== */
+
+.btn-login {
+  width: 100%;
+  height: 56px;
+
+  margin-top: 4px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  border: none;
+
+  border-radius: 13px;
+
+  background:
+    linear-gradient(135deg,
+      #198754,
+      #146c43);
+
+  color: #ffffff;
+
+  font-size: 16px;
+  font-weight: 800;
+
+  letter-spacing: 0.15px;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 12px 25px rgba(25, 135, 84, 0.24);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.btn-login:hover {
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 16px 30px rgba(25, 135, 84, 0.30);
+
+  filter:
+    brightness(1.04);
+}
+
+.btn-login:active {
+  transform:
+    translateY(0);
+}
+
+.btn-login:disabled {
+  opacity: 0.65;
+
+  cursor:
+    not-allowed;
+
+  transform: none;
+
+  box-shadow: none;
+}
+
+.btn-login-seta {
+  font-size: 20px;
+
+  transition:
+    transform 0.2s ease;
+}
+
+.btn-login:hover .btn-login-seta {
+  transform:
+    translateX(4px);
+}
+
+/* =====================================================
+   MENSAGEM DE ERRO
+===================================================== */
+
+.login-erro {
+  display: flex;
+
+  align-items:
+    flex-start;
+
+  gap: 11px;
+
+  margin:
+    0 0 22px;
+
+  padding:
+    14px 15px;
+
+  border:
+    1px solid #fecaca;
+
+  border-radius:
+    12px;
+
+  background:
+    #fff5f5;
+
+  color:
+    #991b1b;
+
+  animation:
+    aparecerErro 0.28s ease;
+}
+
+.login-erro-icone {
+  flex-shrink: 0;
+
+  width: 26px;
+  height: 26px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background:
+    #dc2626;
+
+  color:
+    #ffffff;
+
+  font-size:
+    13px;
+
+  font-weight:
+    800;
+}
+
+.login-erro strong {
+  display: block;
+
+  margin-bottom: 3px;
+
+  font-size: 14px;
+}
+
+.login-erro p {
+  margin: 0;
+
+  font-size: 13px;
+
+  line-height: 1.45;
+}
+
+/* =====================================================
+   SEPARADOR
+===================================================== */
+
+.login-separador {
+  display: flex;
+
+  align-items: center;
+
+  margin:
+    28px 0 20px;
+}
+
+.login-separador span {
+  width: 100%;
+  height: 1px;
+
+  background:
+    linear-gradient(90deg,
+      transparent,
+      #e1e5ea,
+      transparent);
+}
+
+/* =====================================================
+   RODAPÉ
+===================================================== */
+
+.login-rodape {
+  text-align: center;
+}
+
+.login-rodape p {
+  margin: 0;
+
+  color: #59636f;
+
+  font-size: 13px;
+
+  font-weight: 700;
+}
+
+.login-rodape span {
+  display: block;
+
+  margin-top: 4px;
+
+  color: #9aa3ad;
+
+  font-size: 12px;
+}
+
+/* =====================================================
+   LOADING
+===================================================== */
+
+.login-spinner {
+  width: 18px;
+  height: 18px;
+
+  border:
+    2px solid rgba(255, 255, 255, 0.35);
+
+  border-top-color:
+    #ffffff;
+
+  border-radius: 50%;
+
+  animation:
+    girarLogin 0.8s linear infinite;
+}
+
+/* =====================================================
+   ANIMAÇÕES
+===================================================== */
+
+@keyframes aparecerLogin {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(20px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0) scale(1);
+  }
+}
+
+@keyframes aparecerErro {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+}
+
+@keyframes girarLogin {
+  to {
+    transform:
+      rotate(360deg);
+  }
+}
+
+@keyframes flutuarLogin {
+
+  0%,
+  100% {
+    transform:
+      translateY(0) translateX(0);
+  }
+
+  50% {
+    transform:
+      translateY(12px) translateX(6px);
+  }
+}
+
+/* =====================================================
+   RESPONSIVIDADE DO LOGIN
+===================================================== */
+
+@media (max-width: 600px) {
+  .login-container {
+    padding: 16px;
+  }
+
+  .login-card {
+    max-width: 100%;
+
+    padding:
+      36px 22px 28px;
+
+    border-radius:
+      19px;
+  }
+
+  .login-icone {
+    width: 66px;
+    height: 66px;
+
+    margin-bottom: 15px;
+
+    border-radius: 18px;
+  }
+
+  .login-cruz {
+    font-size: 32px;
+  }
+
+  .login-etiqueta {
+    font-size: 10px;
+
+    padding:
+      6px 10px;
+  }
+
+  .login-card h1 {
+    font-size: 28px;
+  }
+
+  .login-subtitulo {
+    font-size: 13px;
+  }
+
+  .login-topo {
+    margin-bottom: 28px;
+  }
+
+  .login-form {
+    gap: 20px;
+  }
+
+  .login-input-wrapper input {
+    height: 50px;
+
+    font-size: 14px;
+  }
+
+  .btn-login {
+    height: 52px;
+
+    font-size: 15px;
+  }
+
+  .login-rodape p {
+    font-size: 12px;
+  }
+
+  .login-rodape span {
+    font-size: 11px;
   }
 }

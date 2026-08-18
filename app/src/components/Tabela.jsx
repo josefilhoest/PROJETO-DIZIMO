@@ -1,15 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api/api";
 
-// =====================================================
-// COMUNIDADE ATUAL
-// =====================================================
-
-// TEMPORÁRIO:
-// Palmeira = comunidadeId 1
-// Futuramente esse valor virá automaticamente do login.
-const COMUNIDADE_ID = 1;
-
 function Tabela() {
     // =====================================================
     // ESTADOS
@@ -26,7 +17,7 @@ function Tabela() {
 
     const [registroMensal, setRegistroMensal] = useState({
         id: null,
-        comunidade: "Palmeira",
+        comunidade: "",
         data: "",
         equipe_comunidade: "",
         conferido_em: "",
@@ -39,11 +30,7 @@ function Tabela() {
 
     const carregarDizimistas = async () => {
         try {
-            const resposta = await api.get("/dizimistas", {
-                params: {
-                    comunidadeId: COMUNIDADE_ID,
-                },
-            });
+            const resposta = await api.get("/dizimistas");
 
             setDizimistas(resposta.data);
         } catch (erro) {
@@ -57,11 +44,7 @@ function Tabela() {
 
     const carregarRegistroMensal = async () => {
         try {
-            const resposta = await api.get("/registros", {
-                params: {
-                    comunidadeId: COMUNIDADE_ID,
-                },
-            });
+            const resposta = await api.get("/registros");
 
             if (resposta.data.length > 0) {
                 const registro = resposta.data[0];
@@ -70,13 +53,18 @@ function Tabela() {
                     id: registro.id,
                     comunidade: registro.comunidade || "",
                     data: registro.data || "",
-                    equipe_comunidade: registro.equipe_comunidade || "",
+                    equipe_comunidade:
+                        registro.equipe_comunidade || "",
                     conferido_em: registro.conferido_em || "",
-                    responsavel_paroquia: registro.responsavel_paroquia || "",
+                    responsavel_paroquia:
+                        registro.responsavel_paroquia || "",
                 });
             }
         } catch (erro) {
-            console.error("Erro ao carregar registro mensal:", erro);
+            console.error(
+                "Erro ao carregar registro mensal:",
+                erro
+            );
         }
     };
 
@@ -96,10 +84,10 @@ function Tabela() {
     const alterarCampo = (evento) => {
         const { name, value } = evento.target;
 
-        setFormulario({
-            ...formulario,
+        setFormulario((formularioAtual) => ({
+            ...formularioAtual,
             [name]: value,
-        });
+        }));
     };
 
     // =====================================================
@@ -109,10 +97,10 @@ function Tabela() {
     const alterarRegistroMensal = (evento) => {
         const { name, value } = evento.target;
 
-        setRegistroMensal({
-            ...registroMensal,
+        setRegistroMensal((registroAtual) => ({
+            ...registroAtual,
             [name]: value,
-        });
+        }));
     };
 
     // =====================================================
@@ -156,17 +144,19 @@ function Tabela() {
             return;
         }
 
-        try {
-            const dados = {
-                numero: Number(formulario.numero),
-                folha,
-                nome: formulario.nome,
-                valor: Number(formulario.valor),
-                comunidadeId: COMUNIDADE_ID,
-            };
+        const dados = {
+            numero: Number(formulario.numero),
+            folha,
+            nome: formulario.nome.trim(),
+            valor: Number(formulario.valor),
+        };
 
+        try {
             if (formulario.id) {
-                await api.put(`/dizimistas/${formulario.id}`, dados);
+                await api.put(
+                    `/dizimistas/${formulario.id}`,
+                    dados
+                );
             } else {
                 await api.post("/dizimistas", dados);
             }
@@ -175,12 +165,23 @@ function Tabela() {
 
             await carregarDizimistas();
         } catch (erro) {
-            console.error("Erro ao salvar dizimista:", erro);
+            console.error(
+                "Erro ao salvar dizimista:",
+                erro
+            );
 
             if (erro.response?.status === 409) {
                 alert(
                     erro.response?.data?.erro ||
                     "Já existe um dizimista com esse número nesta comunidade."
+                );
+
+                return;
+            }
+
+            if (erro.response?.status === 401) {
+                alert(
+                    "Sua sessão expirou. Faça login novamente."
                 );
 
                 return;
@@ -228,18 +229,27 @@ function Tabela() {
             "Tem certeza que deseja excluir este registro?"
         );
 
-        if (!confirmar) return;
+        if (!confirmar) {
+            return;
+        }
 
         try {
-            await api.delete(`/dizimistas/${id}`, {
-                params: {
-                    comunidadeId: COMUNIDADE_ID,
-                },
-            });
+            await api.delete(`/dizimistas/${id}`);
 
             await carregarDizimistas();
         } catch (erro) {
-            console.error("Erro ao excluir dizimista:", erro);
+            console.error(
+                "Erro ao excluir dizimista:",
+                erro
+            );
+
+            if (erro.response?.status === 401) {
+                alert(
+                    "Sua sessão expirou. Faça login novamente."
+                );
+
+                return;
+            }
 
             alert(
                 erro.response?.data?.erro ||
@@ -255,31 +265,83 @@ function Tabela() {
     const salvarRegistroMensal = async () => {
         try {
             const dados = {
-                comunidade: registroMensal.comunidade,
-                comunidadeId: COMUNIDADE_ID,
+                comunidade: registroMensal.comunidade.trim(),
                 data: registroMensal.data || null,
-                equipe_comunidade: registroMensal.equipe_comunidade,
-                conferido_em: registroMensal.conferido_em || null,
-                responsavel_paroquia: registroMensal.responsavel_paroquia,
+
+                equipe_comunidade:
+                    registroMensal.equipe_comunidade,
+
+                conferido_em:
+                    registroMensal.conferido_em || null,
+
+                responsavel_paroquia:
+                    registroMensal.responsavel_paroquia,
             };
 
+            if (!dados.comunidade) {
+                alert(
+                    "Informe o nome da comunidade antes de salvar a ficha."
+                );
+
+                return;
+            }
+
             if (registroMensal.id) {
-                await api.put(
+                const resposta = await api.put(
                     `/registros/${registroMensal.id}`,
                     dados
                 );
-            } else {
-                const resposta = await api.post("/registros", dados);
 
                 setRegistroMensal({
-                    ...registroMensal,
                     id: resposta.data.id,
+                    comunidade:
+                        resposta.data.comunidade || "",
+                    data: resposta.data.data || "",
+                    equipe_comunidade:
+                        resposta.data.equipe_comunidade || "",
+                    conferido_em:
+                        resposta.data.conferido_em || "",
+                    responsavel_paroquia:
+                        resposta.data.responsavel_paroquia ||
+                        "",
+                });
+            } else {
+                const resposta = await api.post(
+                    "/registros",
+                    dados
+                );
+
+                setRegistroMensal({
+                    id: resposta.data.id,
+                    comunidade:
+                        resposta.data.comunidade || "",
+                    data: resposta.data.data || "",
+                    equipe_comunidade:
+                        resposta.data.equipe_comunidade || "",
+                    conferido_em:
+                        resposta.data.conferido_em || "",
+                    responsavel_paroquia:
+                        resposta.data.responsavel_paroquia ||
+                        "",
                 });
             }
 
-            alert("Dados da ficha salvos com sucesso!");
+            alert(
+                "Dados da ficha salvos com sucesso!"
+            );
         } catch (erro) {
-            console.error("Erro ao salvar dados da ficha:", erro);
+            console.error(
+                "Erro ao salvar dados da ficha:",
+                erro
+            );
+
+            if (erro.response?.status === 401) {
+                alert(
+                    "Sua sessão expirou. Faça login novamente."
+                );
+
+                return;
+            }
 
             alert(
                 erro.response?.data?.erro ||
@@ -295,12 +357,15 @@ function Tabela() {
     const totalFolhas = Math.max(
         1,
         ...dizimistas.map(
-            (dizimista) => Number(dizimista.folha) || 1
+            (dizimista) =>
+                Number(dizimista.folha) || 1
         )
     );
 
     const folhas = Array.from(
-        { length: totalFolhas },
+        {
+            length: totalFolhas,
+        },
         (_, index) => index + 1
     );
 
@@ -309,22 +374,30 @@ function Tabela() {
     // =====================================================
 
     const calcularTotal = (lista) => {
-        return lista.reduce((total, dizimista) => {
-            return total + Number(dizimista.valor || 0);
-        }, 0);
+        return lista.reduce(
+            (total, dizimista) => {
+                return (
+                    total +
+                    Number(dizimista.valor || 0)
+                );
+            },
+            0
+        );
     };
 
     // =====================================================
     // TOTAL GERAL
     // =====================================================
 
-    const totalGeral = calcularTotal(dizimistas);
+    const totalGeral =
+        calcularTotal(dizimistas);
 
     // =====================================================
     // DIVISÃO 50%
     // =====================================================
 
     const paroquia = totalGeral / 2;
+
     const comunidade = totalGeral / 2;
 
     // =====================================================
@@ -332,31 +405,47 @@ function Tabela() {
     // =====================================================
 
     const formatarDinheiro = (valor) => {
-        return Number(valor).toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-        });
+        return Number(valor).toLocaleString(
+            "pt-BR",
+            {
+                style: "currency",
+                currency: "BRL",
+            }
+        );
     };
 
     // =====================================================
     // RENDERIZAR CADA FOLHA
     // =====================================================
 
-    const renderizarFolha = (numeroFolha, lista) => {
+    const renderizarFolha = (
+        numeroFolha,
+        lista
+    ) => {
         const total = calcularTotal(lista);
 
         return (
-            <section className="folha" key={numeroFolha}>
+            <section
+                className="folha"
+                key={numeroFolha}
+            >
                 <h3>
-                    FOLHA {String(numeroFolha).padStart(2, "0")}
+                    FOLHA{" "}
+                    {String(numeroFolha).padStart(
+                        2,
+                        "0"
+                    )}
                 </h3>
 
                 <table>
                     <thead>
                         <tr>
                             <th>Nome</th>
+
                             <th>Nº</th>
+
                             <th>Valor</th>
+
                             <th>Ações</th>
                         </tr>
                     </thead>
@@ -376,14 +465,15 @@ function Tabela() {
                                     </td>
 
                                     <td>
-                                        {String(dizimista.numero).padStart(
-                                            2,
-                                            "0"
-                                        )}
+                                        {String(
+                                            dizimista.numero
+                                        ).padStart(2, "0")}
                                     </td>
 
                                     <td>
-                                        {formatarDinheiro(dizimista.valor)}
+                                        {formatarDinheiro(
+                                            dizimista.valor
+                                        )}
                                     </td>
 
                                     <td>
@@ -393,7 +483,9 @@ function Tabela() {
                                             title="Editar"
                                             aria-label="Editar"
                                             onClick={() =>
-                                                editarDizimista(dizimista)
+                                                editarDizimista(
+                                                    dizimista
+                                                )
                                             }
                                         >
                                             ✏️
@@ -405,7 +497,9 @@ function Tabela() {
                                             title="Excluir"
                                             aria-label="Excluir"
                                             onClick={() =>
-                                                excluirDizimista(dizimista.id)
+                                                excluirDizimista(
+                                                    dizimista.id
+                                                )
                                             }
                                         >
                                             🗑️
@@ -419,12 +513,16 @@ function Tabela() {
                     <tfoot>
                         <tr>
                             <td colSpan="2">
-                                <strong>TOTAL DA FOLHA</strong>
+                                <strong>
+                                    TOTAL DA FOLHA
+                                </strong>
                             </td>
 
                             <td>
                                 <strong>
-                                    {formatarDinheiro(total)}
+                                    {formatarDinheiro(
+                                        total
+                                    )}
                                 </strong>
                             </td>
 
@@ -442,16 +540,23 @@ function Tabela() {
 
     return (
         <div className="registro">
+            {/* ========================================= */}
             {/* CABEÇALHO */}
+            {/* ========================================= */}
 
             <header className="cabecalho-ficha">
                 <h1>
-                    PARÓQUIA NOSSA SENHORA DA PENHA – SUCATINGA
+                    PARÓQUIA NOSSA SENHORA DA PENHA –
+                    SUCATINGA
                 </h1>
 
-                <h2>PASTORAL DA PARTILHA</h2>
+                <h2>
+                    PASTORAL DA PARTILHA
+                </h2>
 
-                <h3>REGISTRO MENSAL DA PARTILHA</h3>
+                <h3>
+                    REGISTRO MENSAL DA PARTILHA
+                </h3>
 
                 <div className="dados-ficha">
                     <label>
@@ -461,8 +566,13 @@ function Tabela() {
                             className="campo-tela"
                             type="text"
                             name="comunidade"
-                            value={registroMensal.comunidade}
-                            onChange={alterarRegistroMensal}
+                            value={
+                                registroMensal.comunidade
+                            }
+                            onChange={
+                                alterarRegistroMensal
+                            }
+                            placeholder="Nome da comunidade"
                         />
 
                         <span className="campo-impressao">
@@ -477,8 +587,12 @@ function Tabela() {
                             className="campo-tela"
                             type="date"
                             name="data"
-                            value={registroMensal.data}
-                            onChange={alterarRegistroMensal}
+                            value={
+                                registroMensal.data
+                            }
+                            onChange={
+                                alterarRegistroMensal
+                            }
                         />
 
                         <span className="campo-impressao">
@@ -488,7 +602,9 @@ function Tabela() {
                 </div>
             </header>
 
+            {/* ========================================= */}
             {/* FORMULÁRIO DE DIZIMISTA */}
+            {/* ========================================= */}
 
             <form
                 onSubmit={salvarDizimista}
@@ -544,54 +660,78 @@ function Tabela() {
                 )}
             </form>
 
+            {/* ========================================= */}
             {/* FOLHAS */}
+            {/* ========================================= */}
 
-            {folhas.map((numeroFolha) => {
-                const dizimistasDaFolha =
-                    dizimistas.filter(
-                        (dizimista) =>
-                            Number(dizimista.folha) === numeroFolha
+            {folhas.map(
+                (numeroFolha) => {
+                    const dizimistasDaFolha =
+                        dizimistas.filter(
+                            (dizimista) =>
+                                Number(
+                                    dizimista.folha
+                                ) === numeroFolha
+                        );
+
+                    return renderizarFolha(
+                        numeroFolha,
+                        dizimistasDaFolha
                     );
+                }
+            )}
 
-                return renderizarFolha(
-                    numeroFolha,
-                    dizimistasDaFolha
-                );
-            })}
-
+            {/* ========================================= */}
             {/* RESUMO GERAL */}
+            {/* ========================================= */}
 
             <div className="resumo-geral">
                 <div>
-                    <span>TOTAL GERAL</span>
+                    <span>
+                        TOTAL GERAL
+                    </span>
 
                     <strong>
-                        {formatarDinheiro(totalGeral)}
+                        {formatarDinheiro(
+                            totalGeral
+                        )}
                     </strong>
                 </div>
 
                 <div>
-                    <span>PARÓQUIA (50%)</span>
+                    <span>
+                        PARÓQUIA (50%)
+                    </span>
 
                     <strong>
-                        {formatarDinheiro(paroquia)}
+                        {formatarDinheiro(
+                            paroquia
+                        )}
                     </strong>
                 </div>
 
                 <div>
-                    <span>COMUNIDADE (50%)</span>
+                    <span>
+                        COMUNIDADE (50%)
+                    </span>
 
                     <strong>
-                        {formatarDinheiro(comunidade)}
+                        {formatarDinheiro(
+                            comunidade
+                        )}
                     </strong>
                 </div>
             </div>
 
+            {/* ========================================= */}
             {/* ASSINATURAS */}
+            {/* ========================================= */}
 
             <section className="assinaturas">
                 <div className="campo-assinatura">
-                    <label>Equipe da Comunidade:</label>
+                    <label>
+                        Equipe da Comunidade:
+                    </label>
 
                     <input
                         className="campo-tela"
@@ -600,7 +740,9 @@ function Tabela() {
                         value={
                             registroMensal.equipe_comunidade
                         }
-                        onChange={alterarRegistroMensal}
+                        onChange={
+                            alterarRegistroMensal
+                        }
                         placeholder="Nome / assinatura"
                     />
 
@@ -608,14 +750,20 @@ function Tabela() {
                 </div>
 
                 <div className="campo-assinatura">
-                    <label>Conferido em:</label>
+                    <label>
+                        Conferido em:
+                    </label>
 
                     <input
                         className="campo-tela"
                         type="date"
                         name="conferido_em"
-                        value={registroMensal.conferido_em}
-                        onChange={alterarRegistroMensal}
+                        value={
+                            registroMensal.conferido_em
+                        }
+                        onChange={
+                            alterarRegistroMensal
+                        }
                     />
 
                     <span className="campo-impressao">
@@ -624,7 +772,9 @@ function Tabela() {
                 </div>
 
                 <div className="campo-assinatura">
-                    <label>Responsável da Paróquia:</label>
+                    <label>
+                        Responsável da Paróquia:
+                    </label>
 
                     <input
                         className="campo-tela"
@@ -633,7 +783,9 @@ function Tabela() {
                         value={
                             registroMensal.responsavel_paroquia
                         }
-                        onChange={alterarRegistroMensal}
+                        onChange={
+                            alterarRegistroMensal
+                        }
                         placeholder="Nome / assinatura"
                     />
 
@@ -641,13 +793,17 @@ function Tabela() {
                 </div>
             </section>
 
+            {/* ========================================= */}
             {/* BOTÕES DA FICHA */}
+            {/* ========================================= */}
 
             <div className="acoes-ficha">
                 <button
                     type="button"
                     className="btn-salvar-ficha"
-                    onClick={salvarRegistroMensal}
+                    onClick={
+                        salvarRegistroMensal
+                    }
                 >
                     Salvar dados da ficha
                 </button>
@@ -655,7 +811,9 @@ function Tabela() {
                 <button
                     type="button"
                     className="btn-imprimir"
-                    onClick={() => window.print()}
+                    onClick={() =>
+                        window.print()
+                    }
                 >
                     🖨️ Imprimir ficha
                 </button>
