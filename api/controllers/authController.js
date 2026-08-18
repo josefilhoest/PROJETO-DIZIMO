@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+import sequelize from "../database/database.js";
 import Usuario from "../models/Usuario.js";
 import Comunidade from "../models/Comunidade.js";
 
@@ -72,6 +73,134 @@ export const cadastrarUsuario = async (req, res) => {
 
     res.status(500).json({
       erro: "Erro ao cadastrar usuário",
+    });
+  }
+};
+
+// ========================================
+// CADASTRAR NOVA COMUNIDADE
+// ========================================
+
+export const cadastrarComunidade = async (req, res) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    const {
+      nomeComunidade,
+      paroquia,
+      cidade,
+      nomeResponsavel,
+      email,
+      senha,
+    } = req.body;
+
+    // ========================================
+    // VALIDAR CAMPOS OBRIGATÓRIOS
+    // ========================================
+
+    if (
+      !nomeComunidade ||
+      !nomeResponsavel ||
+      !email ||
+      !senha
+    ) {
+      await transaction.rollback();
+
+      return res.status(400).json({
+        erro: "Nome da comunidade, responsável, email e senha são obrigatórios",
+      });
+    }
+
+    // ========================================
+    // VERIFICAR EMAIL DUPLICADO
+    // ========================================
+
+    const usuarioExistente = await Usuario.findOne({
+      where: {
+        email,
+      },
+      transaction,
+    });
+
+    if (usuarioExistente) {
+      await transaction.rollback();
+
+      return res.status(409).json({
+        erro: "Já existe um usuário cadastrado com este email",
+      });
+    }
+
+    // ========================================
+    // CRIAR COMUNIDADE
+    // ========================================
+
+    const novaComunidade = await Comunidade.create(
+      {
+        nome: nomeComunidade,
+        paroquia: paroquia || null,
+        cidade: cidade || null,
+        ativa: true,
+      },
+      {
+        transaction,
+      }
+    );
+
+    // ========================================
+    // CRIPTOGRAFAR SENHA
+    // ========================================
+
+    const senhaCriptografada = await bcrypt.hash(senha, 10);
+
+    // ========================================
+    // CRIAR ADMINISTRADOR DA COMUNIDADE
+    // ========================================
+
+    const novoUsuario = await Usuario.create(
+      {
+        nome: nomeResponsavel,
+        email,
+        senha: senhaCriptografada,
+        perfil: "ADMIN_COMUNIDADE",
+        comunidadeId: novaComunidade.id,
+        ativo: true,
+      },
+      {
+        transaction,
+      }
+    );
+
+    // ========================================
+    // CONFIRMAR TRANSACTION
+    // ========================================
+
+    await transaction.commit();
+
+    return res.status(201).json({
+      mensagem: "Comunidade cadastrada com sucesso",
+
+      comunidade: {
+        id: novaComunidade.id,
+        nome: novaComunidade.nome,
+        paroquia: novaComunidade.paroquia,
+        cidade: novaComunidade.cidade,
+      },
+
+      usuario: {
+        id: novoUsuario.id,
+        nome: novoUsuario.nome,
+        email: novoUsuario.email,
+        perfil: novoUsuario.perfil,
+        comunidadeId: novoUsuario.comunidadeId,
+      },
+    });
+  } catch (error) {
+    await transaction.rollback();
+
+    console.error("Erro ao cadastrar comunidade:", error);
+
+    return res.status(500).json({
+      erro: "Erro ao cadastrar comunidade",
     });
   }
 };
