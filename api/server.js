@@ -11,6 +11,7 @@ import Usuario from "./models/Usuario.js";
 import RegistroMensal from "./models/RegistroMensal.js";
 import registroMensalRoutes from "./routes/registroMensalRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use("/api/dizimistas", dizimistaRoutes);
 app.use("/api/registros", registroMensalRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/", (req, res) => {
   res.json({
