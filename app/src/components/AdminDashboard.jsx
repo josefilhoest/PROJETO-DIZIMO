@@ -58,6 +58,30 @@ function AdminDashboard() {
         setUsuarioAlterandoLicenca,
     ] = useState(null);
 
+    const [
+        mostrarFormularioUsuario,
+        setMostrarFormularioUsuario,
+    ] = useState(false);
+
+    const [novoUsuario, setNovoUsuario] =
+        useState({
+            nome: "",
+            email: "",
+            senha: "",
+            perfil: "ADMIN_COMUNIDADE",
+            licencaStatus: "ATIVA",
+        });
+
+    const [
+        cadastrandoUsuario,
+        setCadastrandoUsuario,
+    ] = useState(false);
+
+    const [
+        mensagemUsuario,
+        setMensagemUsuario,
+    ] = useState("");
+
     // ========================================
     // ESTADOS DE COMUNIDADES
     // ========================================
@@ -186,6 +210,91 @@ function AdminDashboard() {
             );
         } finally {
             setCarregandoComunidades(false);
+        }
+    };
+
+    // ========================================
+    // ALTERAR CAMPOS DO NOVO USUÁRIO
+    // ========================================
+
+    const alterarCampoNovoUsuario = (event) => {
+        const { name, value } = event.target;
+
+        setNovoUsuario((dadosAtuais) => ({
+            ...dadosAtuais,
+            [name]: value,
+        }));
+    };
+
+    // ========================================
+    // CADASTRAR NOVO USUÁRIO
+    // ========================================
+
+    const cadastrarNovoUsuario = async (event) => {
+        event.preventDefault();
+
+        try {
+            setCadastrandoUsuario(true);
+            setErroUsuarios("");
+            setMensagemUsuario("");
+
+            const resposta = await api.post(
+                "/admin/usuarios",
+                {
+                    nome: novoUsuario.nome.trim(),
+                    email: novoUsuario.email
+                        .trim()
+                        .toLowerCase(),
+                    senha: novoUsuario.senha,
+                    perfil: "ADMIN_COMUNIDADE",
+                    licencaStatus:
+                        novoUsuario.licencaStatus,
+                }
+            );
+
+            setNovoUsuario({
+                nome: "",
+                email: "",
+                senha: "",
+                perfil: "ADMIN_COMUNIDADE",
+                licencaStatus: "ATIVA",
+            });
+
+            setMostrarFormularioUsuario(false);
+
+            setMensagemUsuario(
+                resposta.data?.mensagem ||
+                "Usuário cadastrado com sucesso."
+            );
+
+            await carregarUsuarios();
+
+            setResumo((resumoAtual) => {
+                if (!resumoAtual) {
+                    return resumoAtual;
+                }
+
+                return {
+                    ...resumoAtual,
+                    totalUsuarios:
+                        (resumoAtual.totalUsuarios ?? 0) + 1,
+                    usuariosAtivos:
+                        (resumoAtual.usuariosAtivos ?? 0) + 1,
+                };
+            });
+        } catch (error) {
+            console.error(
+                "Erro ao cadastrar usuário:",
+                error
+            );
+
+            const mensagem =
+                error.response?.data?.erro ||
+                "Não foi possível cadastrar o usuário.";
+
+            setErroUsuarios(mensagem);
+        } finally {
+            setCadastrandoUsuario(false);
         }
     };
 
@@ -766,7 +875,148 @@ function AdminDashboard() {
             {aba === "usuarios" && (
                 <div className="admin-secao">
 
-                    <h3>Usuários e Licenças</h3>
+                    <div className="admin-secao-cabecalho">
+                        <h3>Usuários e Licenças</h3>
+
+                        <button
+                            type="button"
+                            className="btn-novo-usuario"
+                            disabled={cadastrandoUsuario}
+                            onClick={() => {
+                                setMostrarFormularioUsuario(
+                                    !mostrarFormularioUsuario
+                                );
+                                setErroUsuarios("");
+                                setMensagemUsuario("");
+                            }}
+                        >
+                            {mostrarFormularioUsuario
+                                ? "Cancelar"
+                                : "+ Novo Usuário"}
+                        </button>
+                    </div>
+
+                    {mensagemUsuario && (
+                        <p className="admin-sucesso">
+                            {mensagemUsuario}
+                        </p>
+                    )}
+
+                    {mostrarFormularioUsuario && (
+                        <form
+                            className="admin-form-usuario"
+                            onSubmit={cadastrarNovoUsuario}
+                        >
+                            <h4>Cadastrar Novo Usuário</h4>
+
+                            <div className="admin-form-grid">
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="novo-usuario-nome">
+                                        Nome
+                                    </label>
+                                    <input
+                                        id="novo-usuario-nome"
+                                        name="nome"
+                                        type="text"
+                                        placeholder="Nome do usuário"
+                                        value={novoUsuario.nome}
+                                        onChange={alterarCampoNovoUsuario}
+                                        disabled={cadastrandoUsuario}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="novo-usuario-email">
+                                        E-mail
+                                    </label>
+                                    <input
+                                        id="novo-usuario-email"
+                                        name="email"
+                                        type="email"
+                                        placeholder="email@exemplo.com"
+                                        value={novoUsuario.email}
+                                        onChange={alterarCampoNovoUsuario}
+                                        disabled={cadastrandoUsuario}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="novo-usuario-senha">
+                                        Senha inicial
+                                    </label>
+                                    <input
+                                        id="novo-usuario-senha"
+                                        name="senha"
+                                        type="password"
+                                        placeholder="Mínimo de 6 caracteres"
+                                        minLength={6}
+                                        value={novoUsuario.senha}
+                                        onChange={alterarCampoNovoUsuario}
+                                        disabled={cadastrandoUsuario}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="novo-usuario-perfil">
+                                        Perfil
+                                    </label>
+                                    <select
+                                        id="novo-usuario-perfil"
+                                        name="perfil"
+                                        value={novoUsuario.perfil}
+                                        onChange={alterarCampoNovoUsuario}
+                                        disabled
+                                    >
+                                        <option value="ADMIN_COMUNIDADE">
+                                            Administrador de Comunidade
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="novo-usuario-licenca">
+                                        Licença
+                                    </label>
+                                    <select
+                                        id="novo-usuario-licenca"
+                                        name="licencaStatus"
+                                        value={
+                                            novoUsuario.licencaStatus
+                                        }
+                                        onChange={
+                                            alterarCampoNovoUsuario
+                                        }
+                                        disabled={cadastrandoUsuario}
+                                    >
+                                        <option value="ATIVA">
+                                            ATIVA
+                                        </option>
+                                        <option value="BLOQUEADA">
+                                            BLOQUEADA
+                                        </option>
+                                    </select>
+                                </div>
+
+                            </div>
+
+                            <div className="admin-form-acoes">
+                                <button
+                                    type="submit"
+                                    className="btn-salvar-usuario"
+                                    disabled={cadastrandoUsuario}
+                                >
+                                    {cadastrandoUsuario
+                                        ? "Cadastrando..."
+                                        : "Cadastrar Usuário"}
+                                </button>
+                            </div>
+
+                        </form>
+                    )}
 
                     {carregandoUsuarios && (
                         <p>

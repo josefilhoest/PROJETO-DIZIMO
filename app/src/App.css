@@ -2256,6 +2256,58 @@ tfoot td:nth-child(3) {
 }
 
 /* ========================================
+   CABEÇALHO DAS SEÇÕES ADMIN
+======================================== */
+
+.admin-secao-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.admin-secao-cabecalho h3 {
+  margin: 0;
+}
+
+/* ========================================
+   BOTÃO NOVO USUÁRIO
+======================================== */
+
+.btn-novo-usuario {
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-novo-usuario:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.btn-novo-usuario:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 600px) {
+  .admin-secao-cabecalho {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-novo-usuario {
+    width: 100%;
+  }
+}
+
+/* ========================================
    TABELA ADMINISTRATIVA
 ======================================== */
 
@@ -2568,4 +2620,89 @@ tfoot td:nth-child(3) {
 .btn-ativar-usuario:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* ========================================
+   FORMULÁRIO NOVO USUÁRIO
+======================================== */
+
+.admin-form-usuario {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #dbe1e8;
+  border-radius: 10px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+}
+
+.admin-form-usuario h4 {
+  margin-top: 0;
+  margin-bottom: 18px;
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.admin-form-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-form-campo label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-form-campo input,
+.admin-form-campo select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.admin-form-campo input:focus,
+.admin-form-campo select:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.admin-form-acoes {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-salvar-usuario {
+  border: none;
+  background: #16a34a;
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-salvar-usuario:hover {
+  background: #15803d;
+}
+
+@media (max-width: 600px) {
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-form-acoes {
+    justify-content: stretch;
+  }
+
+  .btn-salvar-usuario {
+    width: 100%;
+  }
 }

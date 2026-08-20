@@ -1,13 +1,13 @@
 import { Router } from "express";
 
 import { autenticar } from "../middlewares/authMiddleware.js";
-
 import { somenteSuperAdmin } from "../middlewares/adminMiddleware.js";
 
 import {
   listarComunidades,
   alterarStatusComunidade,
   listarUsuarios,
+  cadastrarUsuarioAdmin,
   alterarStatusUsuario,
   alterarLicencaUsuario,
   resumoDashboard,
@@ -62,6 +62,17 @@ router.get(
   autenticar,
   somenteSuperAdmin,
   listarUsuarios
+);
+
+// ========================================
+// CADASTRAR NOVO USUÁRIO
+// ========================================
+
+router.post(
+  "/usuarios",
+  autenticar,
+  somenteSuperAdmin,
+  cadastrarUsuarioAdmin
 );
 
 // ========================================

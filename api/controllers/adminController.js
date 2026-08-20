@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import Comunidade from "../models/Comunidade.js";
 import Usuario from "../models/Usuario.js";
 import Dizimista from "../models/Dizimista.js";
@@ -92,13 +93,11 @@ export const alterarStatusComunidade = async (
     }
 
     comunidade.ativa = ativa;
-
     await comunidade.save();
 
     return res.status(200).json({
       mensagem:
         "Status da comunidade atualizado com sucesso.",
-
       comunidade: {
         id: comunidade.id,
         nome: comunidade.nome,
@@ -137,7 +136,6 @@ export const listarUsuarios = async (req, res) => {
         "licencaStatus",
         "createdAt",
       ],
-
       order: [["nome", "ASC"]],
     });
 
@@ -155,11 +153,9 @@ export const listarUsuarios = async (req, res) => {
           email: usuario.email,
           perfil: usuario.perfil,
           comunidadeId: usuario.comunidadeId,
-
           comunidadeNome: comunidade
             ? comunidade.nome
             : null,
-
           ativo: usuario.ativo,
           licencaStatus: usuario.licencaStatus,
           createdAt: usuario.createdAt,
@@ -181,6 +177,119 @@ export const listarUsuarios = async (req, res) => {
 };
 
 // ========================================
+// CADASTRAR NOVO USUÁRIO PELO SUPER ADMIN
+// ========================================
+
+export const cadastrarUsuarioAdmin = async (
+  req,
+  res
+) => {
+  try {
+    const {
+      nome,
+      email,
+      senha,
+      licencaStatus = "ATIVA",
+    } = req.body;
+
+    const nomeLimpo = nome?.trim();
+    const emailLimpo = email
+      ?.trim()
+      .toLowerCase();
+
+    if (!nomeLimpo || !emailLimpo || !senha) {
+      return res.status(400).json({
+        erro:
+          "Nome, e-mail e senha são obrigatórios.",
+      });
+    }
+
+    if (senha.length < 6) {
+      return res.status(400).json({
+        erro:
+          "A senha deve ter pelo menos 6 caracteres.",
+      });
+    }
+
+    const statusPermitidos = [
+      "ATIVA",
+      "BLOQUEADA",
+    ];
+
+    if (
+      !statusPermitidos.includes(licencaStatus)
+    ) {
+      return res.status(400).json({
+        erro: "Status de licença inválido.",
+      });
+    }
+
+    const usuarioExistente =
+      await Usuario.findOne({
+        where: {
+          email: emailLimpo,
+        },
+      });
+
+    if (usuarioExistente) {
+      return res.status(409).json({
+        erro:
+          "Já existe um usuário cadastrado com este e-mail.",
+      });
+    }
+
+    const senhaHash = await bcrypt.hash(
+      senha,
+      10
+    );
+
+    const novoUsuario = await Usuario.create({
+      nome: nomeLimpo,
+      email: emailLimpo,
+      senha: senhaHash,
+
+      // O SUPER_ADMIN do sistema não é criado
+      // por este formulário.
+      perfil: "ADMIN_COMUNIDADE",
+
+      // O comprador nasce sem comunidade.
+      // Ele criará a própria comunidade depois.
+      comunidadeId: null,
+
+      ativo: true,
+      licencaStatus,
+    });
+
+    return res.status(201).json({
+      mensagem:
+        "Usuário cadastrado com sucesso.",
+      usuario: {
+        id: novoUsuario.id,
+        nome: novoUsuario.nome,
+        email: novoUsuario.email,
+        perfil: novoUsuario.perfil,
+        comunidadeId:
+          novoUsuario.comunidadeId,
+        comunidadeNome: null,
+        ativo: novoUsuario.ativo,
+        licencaStatus:
+          novoUsuario.licencaStatus,
+        createdAt: novoUsuario.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Erro ao cadastrar usuário:",
+      error
+    );
+
+    return res.status(500).json({
+      erro: "Erro ao cadastrar usuário.",
+    });
+  }
+};
+
+// ========================================
 // ALTERAR STATUS DO USUÁRIO
 // ========================================
 
@@ -192,20 +301,12 @@ export const alterarStatusUsuario = async (
     const { id } = req.params;
     const { ativo } = req.body;
 
-    // ----------------------------------------
-    // VALIDAR CAMPO RECEBIDO
-    // ----------------------------------------
-
     if (typeof ativo !== "boolean") {
       return res.status(400).json({
         erro:
           "O campo 'ativo' deve ser true ou false.",
       });
     }
-
-    // ----------------------------------------
-    // BUSCAR USUÁRIO
-    // ----------------------------------------
 
     const usuario = await Usuario.findByPk(id);
 
@@ -214,10 +315,6 @@ export const alterarStatusUsuario = async (
         erro: "Usuário não encontrado.",
       });
     }
-
-    // ----------------------------------------
-    // PROTEGER O PRÓPRIO SUPER_ADMIN
-    // ----------------------------------------
 
     if (
       Number(usuario.id) ===
@@ -229,18 +326,12 @@ export const alterarStatusUsuario = async (
       });
     }
 
-    // ----------------------------------------
-    // ALTERAR STATUS
-    // ----------------------------------------
-
     usuario.ativo = ativo;
-
     await usuario.save();
 
     return res.status(200).json({
       mensagem:
         "Status do usuário atualizado com sucesso.",
-
       usuario: {
         id: usuario.id,
         nome: usuario.nome,
@@ -281,7 +372,9 @@ export const alterarLicencaUsuario = async (
       "BLOQUEADA",
     ];
 
-    if (!statusPermitidos.includes(licencaStatus)) {
+    if (
+      !statusPermitidos.includes(licencaStatus)
+    ) {
       return res.status(400).json({
         erro: "Status de licença inválido.",
       });
@@ -295,7 +388,6 @@ export const alterarLicencaUsuario = async (
       });
     }
 
-    // Impede alteração da própria licença
     if (
       Number(usuario.id) ===
       Number(req.usuario.usuarioId)
@@ -307,13 +399,11 @@ export const alterarLicencaUsuario = async (
     }
 
     usuario.licencaStatus = licencaStatus;
-
     await usuario.save();
 
     return res.status(200).json({
       mensagem:
         "Status da licença atualizado com sucesso.",
-
       usuario: {
         id: usuario.id,
         nome: usuario.nome,
