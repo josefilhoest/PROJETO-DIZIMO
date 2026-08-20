@@ -56,14 +56,13 @@ export const listarComunidades = async (req, res) => {
 // ALTERAR STATUS DA COMUNIDADE
 // ========================================
 
-export const alterarStatusComunidade = async (req, res) => {
+export const alterarStatusComunidade = async (
+  req,
+  res
+) => {
   try {
     const { id } = req.params;
     const { ativa } = req.body;
-
-    // ----------------------------------------
-    // VALIDAR CAMPO RECEBIDO
-    // ----------------------------------------
 
     if (typeof ativa !== "boolean") {
       return res.status(400).json({
@@ -71,10 +70,6 @@ export const alterarStatusComunidade = async (req, res) => {
           "O campo 'ativa' deve ser true ou false.",
       });
     }
-
-    // ----------------------------------------
-    // BUSCAR COMUNIDADE
-    // ----------------------------------------
 
     const comunidade = await Comunidade.findByPk(id);
 
@@ -84,10 +79,8 @@ export const alterarStatusComunidade = async (req, res) => {
       });
     }
 
-    // ----------------------------------------
-    // PROTEGER A COMUNIDADE DO SUPER_ADMIN
-    // ----------------------------------------
-
+    // Impede o SUPER_ADMIN de desativar
+    // a própria comunidade
     if (
       Number(comunidade.id) ===
       Number(req.usuario.comunidadeId)
@@ -97,10 +90,6 @@ export const alterarStatusComunidade = async (req, res) => {
           "Você não pode alterar o status da sua própria comunidade.",
       });
     }
-
-    // ----------------------------------------
-    // ALTERAR STATUS
-    // ----------------------------------------
 
     comunidade.ativa = ativa;
 
@@ -192,10 +181,97 @@ export const listarUsuarios = async (req, res) => {
 };
 
 // ========================================
+// ALTERAR STATUS DO USUÁRIO
+// ========================================
+
+export const alterarStatusUsuario = async (
+  req,
+  res
+) => {
+  try {
+    const { id } = req.params;
+    const { ativo } = req.body;
+
+    // ----------------------------------------
+    // VALIDAR CAMPO RECEBIDO
+    // ----------------------------------------
+
+    if (typeof ativo !== "boolean") {
+      return res.status(400).json({
+        erro:
+          "O campo 'ativo' deve ser true ou false.",
+      });
+    }
+
+    // ----------------------------------------
+    // BUSCAR USUÁRIO
+    // ----------------------------------------
+
+    const usuario = await Usuario.findByPk(id);
+
+    if (!usuario) {
+      return res.status(404).json({
+        erro: "Usuário não encontrado.",
+      });
+    }
+
+    // ----------------------------------------
+    // PROTEGER O PRÓPRIO SUPER_ADMIN
+    // ----------------------------------------
+
+    if (
+      Number(usuario.id) ===
+      Number(req.usuario.usuarioId)
+    ) {
+      return res.status(403).json({
+        erro:
+          "Você não pode alterar o status do próprio usuário.",
+      });
+    }
+
+    // ----------------------------------------
+    // ALTERAR STATUS
+    // ----------------------------------------
+
+    usuario.ativo = ativo;
+
+    await usuario.save();
+
+    return res.status(200).json({
+      mensagem:
+        "Status do usuário atualizado com sucesso.",
+
+      usuario: {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        perfil: usuario.perfil,
+        comunidadeId: usuario.comunidadeId,
+        ativo: usuario.ativo,
+        licencaStatus: usuario.licencaStatus,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Erro ao alterar status do usuário:",
+      error
+    );
+
+    return res.status(500).json({
+      erro:
+        "Erro ao alterar status do usuário.",
+    });
+  }
+};
+
+// ========================================
 // ALTERAR STATUS DA LICENÇA
 // ========================================
 
-export const alterarLicencaUsuario = async (req, res) => {
+export const alterarLicencaUsuario = async (
+  req,
+  res
+) => {
   try {
     const { id } = req.params;
     const { licencaStatus } = req.body;
@@ -219,6 +295,7 @@ export const alterarLicencaUsuario = async (req, res) => {
       });
     }
 
+    // Impede alteração da própria licença
     if (
       Number(usuario.id) ===
       Number(req.usuario.usuarioId)
@@ -264,7 +341,10 @@ export const alterarLicencaUsuario = async (req, res) => {
 // RESUMO DO DASHBOARD SUPER ADMIN
 // ========================================
 
-export const resumoDashboard = async (req, res) => {
+export const resumoDashboard = async (
+  req,
+  res
+) => {
   try {
     const totalComunidades =
       await Comunidade.count();

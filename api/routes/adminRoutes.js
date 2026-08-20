@@ -8,6 +8,7 @@ import {
   listarComunidades,
   alterarStatusComunidade,
   listarUsuarios,
+  alterarStatusUsuario,
   alterarLicencaUsuario,
   resumoDashboard,
 } from "../controllers/adminController.js";
@@ -61,6 +62,17 @@ router.get(
   autenticar,
   somenteSuperAdmin,
   listarUsuarios
+);
+
+// ========================================
+// ALTERAR STATUS DE UM USUÁRIO
+// ========================================
+
+router.patch(
+  "/usuarios/:id/status",
+  autenticar,
+  somenteSuperAdmin,
+  alterarStatusUsuario
 );
 
 // ========================================

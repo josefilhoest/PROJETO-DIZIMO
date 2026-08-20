@@ -2341,7 +2341,7 @@ tfoot td:nth-child(3) {
 /* Ações */
 .admin-tabela th:nth-child(7),
 .admin-tabela td:nth-child(7) {
-  width: 11%;
+  width: 18%;
   text-align: center;
 }
 
@@ -2521,4 +2521,51 @@ tfoot td:nth-child(3) {
 .admin-tabela-comunidades td:nth-child(7) {
   width: 15%;
   text-align: center;
+}
+
+/* ========================================
+   AÇÕES DO USUÁRIO
+======================================== */
+
+.admin-acoes-usuario {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.btn-desativar-usuario,
+.btn-ativar-usuario {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-desativar-usuario {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.btn-desativar-usuario:hover {
+  background: #ffedd5;
+}
+
+.btn-ativar-usuario {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.btn-ativar-usuario:hover {
+  background: #bbf7d0;
+}
+
+.btn-desativar-usuario:disabled,
+.btn-ativar-usuario:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

@@ -49,8 +49,13 @@ function AdminDashboard() {
     ] = useState("");
 
     const [
-        usuarioAlterando,
-        setUsuarioAlterando,
+        usuarioAlterandoStatus,
+        setUsuarioAlterandoStatus,
+    ] = useState(null);
+
+    const [
+        usuarioAlterandoLicenca,
+        setUsuarioAlterandoLicenca,
     ] = useState(null);
 
     // ========================================
@@ -203,7 +208,6 @@ function AdminDashboard() {
                 }
             );
 
-            // Atualiza a tabela imediatamente
             setComunidades((comunidadesAtuais) =>
                 comunidadesAtuais.map(
                     (comunidade) =>
@@ -216,21 +220,17 @@ function AdminDashboard() {
                 )
             );
 
-            // Atualiza também o card da visão geral
             setResumo((resumoAtual) => {
                 if (!resumoAtual) {
                     return resumoAtual;
                 }
 
-                const diferenca = novoStatus
-                    ? 1
-                    : -1;
-
                 return {
                     ...resumoAtual,
+
                     comunidadesAtivas:
                         resumoAtual.comunidadesAtivas +
-                        diferenca,
+                        (novoStatus ? 1 : -1),
                 };
             });
         } catch (error) {
@@ -292,6 +292,103 @@ function AdminDashboard() {
     };
 
     // ========================================
+    // ALTERAR STATUS DO USUÁRIO
+    // ========================================
+
+    const alterarStatusUsuario = async (
+        usuarioId,
+        novoStatus
+    ) => {
+        try {
+            setUsuarioAlterandoStatus(usuarioId);
+            setErroUsuarios("");
+
+            await api.patch(
+                `/admin/usuarios/${usuarioId}/status`,
+                {
+                    ativo: novoStatus,
+                }
+            );
+
+            setUsuarios((usuariosAtuais) =>
+                usuariosAtuais.map((usuario) =>
+                    usuario.id === usuarioId
+                        ? {
+                            ...usuario,
+                            ativo: novoStatus,
+                        }
+                        : usuario
+                )
+            );
+
+            setResumo((resumoAtual) => {
+                if (!resumoAtual) {
+                    return resumoAtual;
+                }
+
+                return {
+                    ...resumoAtual,
+
+                    usuariosAtivos:
+                        resumoAtual.usuariosAtivos +
+                        (novoStatus ? 1 : -1),
+                };
+            });
+        } catch (error) {
+            console.error(
+                "Erro ao alterar status do usuário:",
+                error
+            );
+
+            const mensagem =
+                error.response?.data?.erro ||
+                "Não foi possível alterar o status do usuário.";
+
+            setErroUsuarios(mensagem);
+        } finally {
+            setUsuarioAlterandoStatus(null);
+        }
+    };
+
+    // ========================================
+    // DESATIVAR USUÁRIO
+    // ========================================
+
+    const desativarUsuario = (usuario) => {
+        const confirmar = window.confirm(
+            `Deseja realmente desativar o usuário "${usuario.nome}"?`
+        );
+
+        if (!confirmar) {
+            return;
+        }
+
+        alterarStatusUsuario(
+            usuario.id,
+            false
+        );
+    };
+
+    // ========================================
+    // REATIVAR USUÁRIO
+    // ========================================
+
+    const reativarUsuario = (usuario) => {
+        const confirmar = window.confirm(
+            `Deseja reativar o usuário "${usuario.nome}"?`
+        );
+
+        if (!confirmar) {
+            return;
+        }
+
+        alterarStatusUsuario(
+            usuario.id,
+            true
+        );
+    };
+
+    // ========================================
     // ALTERAR LICENÇA
     // ========================================
 
@@ -300,7 +397,7 @@ function AdminDashboard() {
         novoStatus
     ) => {
         try {
-            setUsuarioAlterando(usuarioId);
+            setUsuarioAlterandoLicenca(usuarioId);
             setErroUsuarios("");
 
             await api.patch(
@@ -333,7 +430,7 @@ function AdminDashboard() {
 
             setErroUsuarios(mensagem);
         } finally {
-            setUsuarioAlterando(null);
+            setUsuarioAlterandoLicenca(null);
         }
     };
 
@@ -400,7 +497,7 @@ function AdminDashboard() {
     }
 
     // ========================================
-    // PAINEL ADMINISTRATIVO
+    // PAINEL
     // ========================================
 
     return (
@@ -452,48 +549,36 @@ function AdminDashboard() {
 
                     <div className="admin-card">
                         <h3>Comunidades</h3>
-
                         <strong>
-                            {resumo?.totalComunidades ??
-                                0}
+                            {resumo?.totalComunidades ?? 0}
                         </strong>
                     </div>
 
                     <div className="admin-card">
-                        <h3>
-                            Comunidades Ativas
-                        </h3>
-
+                        <h3>Comunidades Ativas</h3>
                         <strong>
-                            {resumo?.comunidadesAtivas ??
-                                0}
+                            {resumo?.comunidadesAtivas ?? 0}
                         </strong>
                     </div>
 
                     <div className="admin-card">
                         <h3>Usuários</h3>
-
                         <strong>
-                            {resumo?.totalUsuarios ??
-                                0}
+                            {resumo?.totalUsuarios ?? 0}
                         </strong>
                     </div>
 
                     <div className="admin-card">
                         <h3>Usuários Ativos</h3>
-
                         <strong>
-                            {resumo?.usuariosAtivos ??
-                                0}
+                            {resumo?.usuariosAtivos ?? 0}
                         </strong>
                     </div>
 
                     <div className="admin-card">
                         <h3>Dizimistas</h3>
-
                         <strong>
-                            {resumo?.totalDizimistas ??
-                                0}
+                            {resumo?.totalDizimistas ?? 0}
                         </strong>
                     </div>
 
@@ -527,8 +612,7 @@ function AdminDashboard() {
                         !erroComunidades &&
                         comunidades.length === 0 && (
                             <p>
-                                Nenhuma comunidade
-                                encontrada.
+                                Nenhuma comunidade encontrada.
                             </p>
                         )}
 
@@ -564,7 +648,8 @@ function AdminDashboard() {
                                                         comunidade.id
                                                     ) ===
                                                     Number(
-                                                        usuarioLogado?.comunidadeId
+                                                        usuarioLogado
+                                                            ?.comunidadeId
                                                     );
 
                                                 return (
@@ -575,9 +660,7 @@ function AdminDashboard() {
                                                     >
 
                                                         <td>
-                                                            {
-                                                                comunidade.nome
-                                                            }
+                                                            {comunidade.nome}
                                                         </td>
 
                                                         <td>
@@ -601,7 +684,6 @@ function AdminDashboard() {
                                                         </td>
 
                                                         <td>
-
                                                             {comunidade.ativa ? (
                                                                 <span className="status-ativo">
                                                                     Ativa
@@ -611,7 +693,6 @@ function AdminDashboard() {
                                                                     Inativa
                                                                 </span>
                                                             )}
-
                                                         </td>
 
                                                         <td>
@@ -685,9 +766,7 @@ function AdminDashboard() {
             {aba === "usuarios" && (
                 <div className="admin-secao">
 
-                    <h3>
-                        Usuários e Licenças
-                    </h3>
+                    <h3>Usuários e Licenças</h3>
 
                     {carregandoUsuarios && (
                         <p>
@@ -732,8 +811,12 @@ function AdminDashboard() {
 
                                         {usuarios.map(
                                             (usuario) => {
-                                                const alterando =
-                                                    usuarioAlterando ===
+                                                const alterandoStatus =
+                                                    usuarioAlterandoStatus ===
+                                                    usuario.id;
+
+                                                const alterandoLicenca =
+                                                    usuarioAlterandoLicenca ===
                                                     usuario.id;
 
                                                 const ehSuperAdmin =
@@ -798,45 +881,91 @@ function AdminDashboard() {
                                                                 <span className="admin-sem-acao">
                                                                     Protegido
                                                                 </span>
-                                                            ) : usuario.licencaStatus ===
-                                                                "ATIVA" ? (
-
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn-bloquear-licenca"
-                                                                    disabled={
-                                                                        alterando
-                                                                    }
-                                                                    onClick={() =>
-                                                                        bloquearLicenca(
-                                                                            usuario
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    {alterando
-                                                                        ? "Alterando..."
-                                                                        : "Bloquear"}
-                                                                </button>
-
                                                             ) : (
+                                                                <div className="admin-acoes-usuario">
 
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn-reativar-licenca"
-                                                                    disabled={
-                                                                        alterando
-                                                                    }
-                                                                    onClick={() =>
-                                                                        reativarLicenca(
-                                                                            usuario
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    {alterando
-                                                                        ? "Alterando..."
-                                                                        : "Reativar"}
-                                                                </button>
+                                                                    {/* STATUS DO USUÁRIO */}
 
+                                                                    {usuario.ativo ? (
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn-desativar-usuario"
+                                                                            disabled={
+                                                                                alterandoStatus ||
+                                                                                alterandoLicenca
+                                                                            }
+                                                                            onClick={() =>
+                                                                                desativarUsuario(
+                                                                                    usuario
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            {alterandoStatus
+                                                                                ? "Alterando..."
+                                                                                : "Desativar"}
+                                                                        </button>
+                                                                    ) : (
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn-ativar-usuario"
+                                                                            disabled={
+                                                                                alterandoStatus ||
+                                                                                alterandoLicenca
+                                                                            }
+                                                                            onClick={() =>
+                                                                                reativarUsuario(
+                                                                                    usuario
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            {alterandoStatus
+                                                                                ? "Alterando..."
+                                                                                : "Reativar"}
+                                                                        </button>
+                                                                    )}
+
+                                                                    {/* LICENÇA */}
+
+                                                                    {usuario.licencaStatus ===
+                                                                        "ATIVA" ? (
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn-bloquear-licenca"
+                                                                            disabled={
+                                                                                alterandoStatus ||
+                                                                                alterandoLicenca
+                                                                            }
+                                                                            onClick={() =>
+                                                                                bloquearLicenca(
+                                                                                    usuario
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            {alterandoLicenca
+                                                                                ? "Alterando..."
+                                                                                : "Bloquear"}
+                                                                        </button>
+                                                                    ) : (
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn-reativar-licenca"
+                                                                            disabled={
+                                                                                alterandoStatus ||
+                                                                                alterandoLicenca
+                                                                            }
+                                                                            onClick={() =>
+                                                                                reativarLicenca(
+                                                                                    usuario
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            {alterandoLicenca
+                                                                                ? "Alterando..."
+                                                                                : "Licença"}
+                                                                        </button>
+                                                                    )}
+
+                                                                </div>
                                                             )}
 
                                                         </td>
