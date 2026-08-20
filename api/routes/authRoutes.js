@@ -6,15 +6,42 @@ import {
   login,
 } from "../controllers/authController.js";
 
+import { autenticar } from "../middlewares/authMiddleware.js";
+import { somenteSuperAdmin } from "../middlewares/adminMiddleware.js";
+
 const router = Router();
 
-router.post("/cadastrar", cadastrarUsuario);
+// ========================================
+// LOGIN
+// ROTA PÚBLICA
+// ========================================
+
+router.post(
+  "/login",
+  login
+);
+
+// ========================================
+// CADASTRAR USUÁRIO LICENCIADO
+// SOMENTE SUPER ADMIN
+// ========================================
+
+router.post(
+  "/cadastrar",
+  autenticar,
+  somenteSuperAdmin,
+  cadastrarUsuario
+);
+
+// ========================================
+// CADASTRAR A PRÓPRIA COMUNIDADE
+// USUÁRIO AUTENTICADO
+// ========================================
 
 router.post(
   "/cadastrar-comunidade",
+  autenticar,
   cadastrarComunidade
 );
-
-router.post("/login", login);
 
 export default router;

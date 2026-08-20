@@ -32,9 +32,16 @@ const Usuario = sequelize.define(
       defaultValue: "ADMIN_COMUNIDADE",
     },
 
+    // ========================================
+    // COMUNIDADE DO USUÁRIO
+    // Inicialmente pode ficar vazia.
+    // Depois que o usuário cadastrar sua comunidade,
+    // esse campo receberá o ID dela.
+    // ========================================
+
     comunidadeId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
 
       references: {
         model: "comunidades",
@@ -42,10 +49,24 @@ const Usuario = sequelize.define(
       },
     },
 
+    // ========================================
+    // USUÁRIO ATIVO / DESATIVADO
+    // ========================================
+
     ativo: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
+    },
+
+    // ========================================
+    // LICENÇA DO SISTEMA
+    // ========================================
+
+    licencaStatus: {
+      type: DataTypes.STRING(30),
+      allowNull: false,
+      defaultValue: "ATIVA",
     },
   },
   {

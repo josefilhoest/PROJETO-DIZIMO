@@ -2,11 +2,13 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 import sequelize from "../database/database.js";
+
 import Usuario from "../models/Usuario.js";
 import Comunidade from "../models/Comunidade.js";
 
 // ========================================
-// CADASTRAR USUÁRIO
+// CADASTRAR USUÁRIO LICENCIADO
+// SOMENTE O SUPER_ADMIN USA ESTA FUNÇÃO
 // ========================================
 
 export const cadastrarUsuario = async (req, res) => {
@@ -15,99 +17,15 @@ export const cadastrarUsuario = async (req, res) => {
       nome,
       email,
       senha,
-      comunidadeId,
-      perfil = "ADMIN_COMUNIDADE",
-    } = req.body;
-
-    if (!nome || !email || !senha || !comunidadeId) {
-      return res.status(400).json({
-        erro: "Nome, email, senha e comunidadeId são obrigatórios",
-      });
-    }
-
-    // Confere se a comunidade existe
-    const comunidade = await Comunidade.findByPk(comunidadeId);
-
-    if (!comunidade) {
-      return res.status(404).json({
-        erro: "Comunidade não encontrada",
-      });
-    }
-
-    const usuarioExistente = await Usuario.findOne({
-      where: {
-        email,
-      },
-    });
-
-    if (usuarioExistente) {
-      return res.status(409).json({
-        erro: "Já existe um usuário cadastrado com este email",
-      });
-    }
-
-    const senhaCriptografada = await bcrypt.hash(senha, 10);
-
-    const novoUsuario = await Usuario.create({
-      nome,
-      email,
-      senha: senhaCriptografada,
-      comunidadeId,
-      perfil,
-    });
-
-    res.status(201).json({
-      mensagem: "Usuário cadastrado com sucesso",
-
-      usuario: {
-        id: novoUsuario.id,
-        nome: novoUsuario.nome,
-        email: novoUsuario.email,
-        perfil: novoUsuario.perfil,
-        comunidadeId: novoUsuario.comunidadeId,
-        comunidadeNome: comunidade.nome,
-      },
-    });
-  } catch (error) {
-    console.error("Erro ao cadastrar usuário:", error);
-
-    res.status(500).json({
-      erro: "Erro ao cadastrar usuário",
-    });
-  }
-};
-
-// ========================================
-// CADASTRAR NOVA COMUNIDADE
-// ========================================
-
-export const cadastrarComunidade = async (req, res) => {
-  const transaction = await sequelize.transaction();
-
-  try {
-    const {
-      nomeComunidade,
-      paroquia,
-      cidade,
-      nomeResponsavel,
-      email,
-      senha,
     } = req.body;
 
     // ========================================
     // VALIDAR CAMPOS OBRIGATÓRIOS
     // ========================================
 
-    if (
-      !nomeComunidade ||
-      !nomeResponsavel ||
-      !email ||
-      !senha
-    ) {
-      await transaction.rollback();
-
+    if (!nome || !email || !senha) {
       return res.status(400).json({
-        erro: "Nome da comunidade, responsável, email e senha são obrigatórios",
+        erro: "Nome, email e senha são obrigatórios",
       });
     }
 
@@ -119,16 +37,160 @@ export const cadastrarComunidade = async (req, res) => {
       where: {
         email,
       },
-      transaction,
     });
 
     if (usuarioExistente) {
-      await transaction.rollback();
-
       return res.status(409).json({
         erro: "Já existe um usuário cadastrado com este email",
       });
     }
+
+    // ========================================
+    // CRIPTOGRAFAR SENHA
+    // ========================================
+
+    const senhaCriptografada = await bcrypt.hash(
+      senha,
+      10
+    );
+
+    // ========================================
+    // CRIAR USUÁRIO LICENCIADO
+    // ========================================
+    //
+    // IMPORTANTE:
+    // O usuário nasce sem comunidade.
+    // Depois do primeiro login ele cadastra
+    // a própria comunidade.
+    //
+    // Também não recebemos "perfil" do frontend.
+    // Isso impede alguém de tentar criar
+    // outro SUPER_ADMIN.
+    // ========================================
+
+    const novoUsuario = await Usuario.create({
+      nome,
+      email,
+      senha: senhaCriptografada,
+
+      perfil: "ADMIN_COMUNIDADE",
+
+      comunidadeId: null,
+
+      ativo: true,
+
+      licencaStatus: "ATIVA",
+    });
+
+    return res.status(201).json({
+      mensagem: "Usuário licenciado cadastrado com sucesso",
+
+      usuario: {
+        id: novoUsuario.id,
+        nome: novoUsuario.nome,
+        email: novoUsuario.email,
+        perfil: novoUsuario.perfil,
+        comunidadeId: novoUsuario.comunidadeId,
+        ativo: novoUsuario.ativo,
+        licencaStatus: novoUsuario.licencaStatus,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Erro ao cadastrar usuário:",
+      error
+    );
+
+    return res.status(500).json({
+      erro: "Erro ao cadastrar usuário",
+    });
+  }
+};
+
+// ========================================
+// CADASTRAR COMUNIDADE
+// USUÁRIO LICENCIADO CADASTRA A PRÓPRIA
+// ========================================
+
+export const cadastrarComunidade = async (req, res) => {
+  let transaction;
+
+  try {
+    // ========================================
+    // IDENTIFICAR USUÁRIO PELO TOKEN
+    // ========================================
+
+    const usuarioId = req.usuario.usuarioId;
+
+    if (!usuarioId) {
+      return res.status(401).json({
+        erro: "Usuário não identificado pelo token",
+      });
+    }
+
+    const {
+      nomeComunidade,
+      paroquia,
+      cidade,
+    } = req.body;
+
+    // ========================================
+    // VALIDAR CAMPOS
+    // ========================================
+
+    if (!nomeComunidade) {
+      return res.status(400).json({
+        erro: "Nome da comunidade é obrigatório",
+      });
+    }
+
+    // ========================================
+    // BUSCAR USUÁRIO LOGADO
+    // ========================================
+
+    const usuario = await Usuario.findByPk(usuarioId);
+
+    if (!usuario) {
+      return res.status(404).json({
+        erro: "Usuário não encontrado",
+      });
+    }
+
+    // ========================================
+    // VERIFICAR SE O USUÁRIO ESTÁ ATIVO
+    // ========================================
+
+    if (!usuario.ativo) {
+      return res.status(403).json({
+        erro: "Usuário desativado",
+      });
+    }
+
+    // ========================================
+    // VERIFICAR LICENÇA
+    // ========================================
+
+    if (usuario.licencaStatus !== "ATIVA") {
+      return res.status(403).json({
+        erro: "Licença de uso não está ativa",
+      });
+    }
+
+    // ========================================
+    // IMPEDIR MAIS DE UMA COMUNIDADE
+    // ========================================
+
+    if (usuario.comunidadeId) {
+      return res.status(409).json({
+        erro: "Este usuário já possui uma comunidade cadastrada",
+      });
+    }
+
+    // ========================================
+    // INICIAR TRANSAÇÃO
+    // ========================================
+
+    transaction = await sequelize.transaction();
 
     // ========================================
     // CRIAR COMUNIDADE
@@ -147,23 +209,12 @@ export const cadastrarComunidade = async (req, res) => {
     );
 
     // ========================================
-    // CRIPTOGRAFAR SENHA
+    // VINCULAR A COMUNIDADE AO USUÁRIO
     // ========================================
 
-    const senhaCriptografada = await bcrypt.hash(senha, 10);
-
-    // ========================================
-    // CRIAR ADMINISTRADOR DA COMUNIDADE
-    // ========================================
-
-    const novoUsuario = await Usuario.create(
+    await usuario.update(
       {
-        nome: nomeResponsavel,
-        email,
-        senha: senhaCriptografada,
-        perfil: "ADMIN_COMUNIDADE",
         comunidadeId: novaComunidade.id,
-        ativo: true,
       },
       {
         transaction,
@@ -171,7 +222,7 @@ export const cadastrarComunidade = async (req, res) => {
     );
 
     // ========================================
-    // CONFIRMAR TRANSACTION
+    // CONFIRMAR TRANSAÇÃO
     // ========================================
 
     await transaction.commit();
@@ -184,20 +235,32 @@ export const cadastrarComunidade = async (req, res) => {
         nome: novaComunidade.nome,
         paroquia: novaComunidade.paroquia,
         cidade: novaComunidade.cidade,
+        ativa: novaComunidade.ativa,
       },
 
       usuario: {
-        id: novoUsuario.id,
-        nome: novoUsuario.nome,
-        email: novoUsuario.email,
-        perfil: novoUsuario.perfil,
-        comunidadeId: novoUsuario.comunidadeId,
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        perfil: usuario.perfil,
+        comunidadeId: novaComunidade.id,
+        ativo: usuario.ativo,
+        licencaStatus: usuario.licencaStatus,
       },
     });
   } catch (error) {
-    await transaction.rollback();
+    // ========================================
+    // DESFAZER TRANSAÇÃO EM CASO DE ERRO
+    // ========================================
 
-    console.error("Erro ao cadastrar comunidade:", error);
+    if (transaction && !transaction.finished) {
+      await transaction.rollback();
+    }
+
+    console.error(
+      "Erro ao cadastrar comunidade:",
+      error
+    );
 
     return res.status(500).json({
       erro: "Erro ao cadastrar comunidade",
@@ -211,7 +274,14 @@ export const cadastrarComunidade = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email, senha } = req.body;
+    const {
+      email,
+      senha,
+    } = req.body;
+
+    // ========================================
+    // VALIDAR CAMPOS
+    // ========================================
 
     if (!email || !senha) {
       return res.status(400).json({
@@ -219,23 +289,47 @@ export const login = async (req, res) => {
       });
     }
 
+    // ========================================
+    // BUSCAR USUÁRIO
+    // ========================================
+
     const usuario = await Usuario.findOne({
       where: {
         email,
       },
     });
 
+    // Mesma mensagem para usuário inexistente
+    // ou senha errada.
     if (!usuario) {
       return res.status(401).json({
         erro: "Email ou senha inválidos",
       });
     }
 
+    // ========================================
+    // VERIFICAR USUÁRIO ATIVO
+    // ========================================
+
     if (!usuario.ativo) {
       return res.status(403).json({
         erro: "Usuário desativado",
       });
     }
+
+    // ========================================
+    // VERIFICAR LICENÇA
+    // ========================================
+
+    if (usuario.licencaStatus !== "ATIVA") {
+      return res.status(403).json({
+        erro: "Licença de uso bloqueada",
+      });
+    }
+
+    // ========================================
+    // VERIFICAR SENHA
+    // ========================================
 
     const senhaCorreta = await bcrypt.compare(
       senha,
@@ -248,16 +342,42 @@ export const login = async (req, res) => {
       });
     }
 
-    // Busca a comunidade vinculada ao usuário
-    const comunidade = await Comunidade.findByPk(
-      usuario.comunidadeId
-    );
+    // ========================================
+    // BUSCAR COMUNIDADE
+    // ========================================
+    //
+    // Um novo cliente pode ainda não possuir
+    // comunidade. Nesse caso o login continua
+    // permitido para que ele possa cadastrá-la.
+    // ========================================
 
-    if (!comunidade) {
-      return res.status(404).json({
-        erro: "Comunidade vinculada ao usuário não encontrada",
-      });
+    let comunidade = null;
+
+    if (usuario.comunidadeId) {
+      comunidade = await Comunidade.findByPk(
+        usuario.comunidadeId
+      );
+
+      if (!comunidade) {
+        return res.status(404).json({
+          erro: "Comunidade vinculada ao usuário não encontrada",
+        });
+      }
+
+      // ========================================
+      // VERIFICAR COMUNIDADE ATIVA
+      // ========================================
+
+      if (!comunidade.ativa) {
+        return res.status(403).json({
+          erro: "Comunidade desativada",
+        });
+      }
     }
+
+    // ========================================
+    // GERAR TOKEN JWT
+    // ========================================
 
     const token = jwt.sign(
       {
@@ -265,13 +385,19 @@ export const login = async (req, res) => {
         comunidadeId: usuario.comunidadeId,
         perfil: usuario.perfil,
       },
+
       process.env.JWT_SECRET,
+
       {
         expiresIn: "8h",
       }
     );
 
-    res.json({
+    // ========================================
+    // RESPOSTA DO LOGIN
+    // ========================================
+
+    return res.json({
       mensagem: "Login realizado com sucesso",
 
       token,
@@ -282,13 +408,26 @@ export const login = async (req, res) => {
         email: usuario.email,
         perfil: usuario.perfil,
         comunidadeId: usuario.comunidadeId,
-        comunidadeNome: comunidade.nome,
+
+        comunidadeNome:
+          comunidade?.nome || null,
+
+        possuiComunidade:
+          Boolean(usuario.comunidadeId),
+
+        ativo: usuario.ativo,
+
+        licencaStatus:
+          usuario.licencaStatus,
       },
     });
   } catch (error) {
-    console.error("Erro ao realizar login:", error);
+    console.error(
+      "Erro ao realizar login:",
+      error
+    );
 
-    res.status(500).json({
+    return res.status(500).json({
       erro: "Erro ao realizar login",
     });
   }

@@ -105,3 +105,43 @@ export const listarUsuarios = async (req, res) => {
     });
   }
 };
+// ========================================
+// RESUMO DO DASHBOARD SUPER ADMIN
+// ========================================
+
+export const resumoDashboard = async (req, res) => {
+  try {
+    const totalComunidades = await Comunidade.count();
+
+    const comunidadesAtivas = await Comunidade.count({
+      where: {
+        ativa: true,
+      },
+    });
+
+    const totalUsuarios = await Usuario.count();
+
+    const usuariosAtivos = await Usuario.count({
+      where: {
+        ativo: true,
+      },
+    });
+
+    const totalDizimistas = await Dizimista.count();
+
+    return res.status(200).json({
+      totalComunidades,
+      comunidadesAtivas,
+      totalUsuarios,
+      usuariosAtivos,
+      totalDizimistas,
+    });
+  } catch (error) {
+    console.error("Erro ao carregar dashboard:", error);
+
+    return res.status(500).json({
+      mensagem: "Erro ao carregar resumo do dashboard.",
+      erro: error.message,
+    });
+  }
+};

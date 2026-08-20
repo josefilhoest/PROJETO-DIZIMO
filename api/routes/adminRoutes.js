@@ -1,11 +1,13 @@
 import { Router } from "express";
 
 import { autenticar } from "../middlewares/authMiddleware.js";
+
 import { somenteSuperAdmin } from "../middlewares/adminMiddleware.js";
 
 import {
   listarComunidades,
   listarUsuarios,
+  resumoDashboard,
 } from "../controllers/adminController.js";
 
 const router = Router();
@@ -46,6 +48,17 @@ router.get(
   autenticar,
   somenteSuperAdmin,
   listarUsuarios
+);
+
+// ========================================
+// RESUMO DO DASHBOARD SUPER ADMIN
+// ========================================
+
+router.get(
+  "/dashboard",
+  autenticar,
+  somenteSuperAdmin,
+  resumoDashboard
 );
 
 export default router;
