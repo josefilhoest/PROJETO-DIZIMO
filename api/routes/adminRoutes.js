@@ -6,9 +6,10 @@ import { somenteSuperAdmin } from "../middlewares/adminMiddleware.js";
 
 import {
   listarComunidades,
+  alterarStatusComunidade,
   listarUsuarios,
-  resumoDashboard,
   alterarLicencaUsuario,
+  resumoDashboard,
 } from "../controllers/adminController.js";
 
 const router = Router();
@@ -41,6 +42,17 @@ router.get(
 );
 
 // ========================================
+// ALTERAR STATUS DE UMA COMUNIDADE
+// ========================================
+
+router.patch(
+  "/comunidades/:id/status",
+  autenticar,
+  somenteSuperAdmin,
+  alterarStatusComunidade
+);
+
+// ========================================
 // LISTAR TODOS OS USUÁRIOS
 // ========================================
 
@@ -52,17 +64,6 @@ router.get(
 );
 
 // ========================================
-// RESUMO DO DASHBOARD SUPER ADMIN
-// ========================================
-
-router.get(
-  "/dashboard",
-  autenticar,
-  somenteSuperAdmin,
-  resumoDashboard
-);
-
-// ========================================
 // ALTERAR LICENÇA DE UM USUÁRIO
 // ========================================
 
@@ -71,6 +72,17 @@ router.patch(
   autenticar,
   somenteSuperAdmin,
   alterarLicencaUsuario
+);
+
+// ========================================
+// RESUMO DO DASHBOARD SUPER ADMIN
+// ========================================
+
+router.get(
+  "/dashboard",
+  autenticar,
+  somenteSuperAdmin,
+  resumoDashboard
 );
 
 export default router;

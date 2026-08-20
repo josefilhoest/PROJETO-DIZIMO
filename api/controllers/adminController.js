@@ -53,45 +53,128 @@ export const listarComunidades = async (req, res) => {
 };
 
 // ========================================
+// ALTERAR STATUS DA COMUNIDADE
+// ========================================
+
+export const alterarStatusComunidade = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { ativa } = req.body;
+
+    // ----------------------------------------
+    // VALIDAR CAMPO RECEBIDO
+    // ----------------------------------------
+
+    if (typeof ativa !== "boolean") {
+      return res.status(400).json({
+        erro:
+          "O campo 'ativa' deve ser true ou false.",
+      });
+    }
+
+    // ----------------------------------------
+    // BUSCAR COMUNIDADE
+    // ----------------------------------------
+
+    const comunidade = await Comunidade.findByPk(id);
+
+    if (!comunidade) {
+      return res.status(404).json({
+        erro: "Comunidade não encontrada.",
+      });
+    }
+
+    // ----------------------------------------
+    // PROTEGER A COMUNIDADE DO SUPER_ADMIN
+    // ----------------------------------------
+
+    if (
+      Number(comunidade.id) ===
+      Number(req.usuario.comunidadeId)
+    ) {
+      return res.status(403).json({
+        erro:
+          "Você não pode alterar o status da sua própria comunidade.",
+      });
+    }
+
+    // ----------------------------------------
+    // ALTERAR STATUS
+    // ----------------------------------------
+
+    comunidade.ativa = ativa;
+
+    await comunidade.save();
+
+    return res.status(200).json({
+      mensagem:
+        "Status da comunidade atualizado com sucesso.",
+
+      comunidade: {
+        id: comunidade.id,
+        nome: comunidade.nome,
+        paroquia: comunidade.paroquia,
+        cidade: comunidade.cidade,
+        ativa: comunidade.ativa,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Erro ao alterar status da comunidade:",
+      error
+    );
+
+    return res.status(500).json({
+      erro:
+        "Erro ao alterar status da comunidade.",
+    });
+  }
+};
+
+// ========================================
 // LISTAR TODOS OS USUÁRIOS
 // ========================================
 
 export const listarUsuarios = async (req, res) => {
   try {
     const usuarios = await Usuario.findAll({
-     attributes: [
-  "id",
-  "nome",
-  "email",
-  "perfil",
-  "comunidadeId",
-  "ativo",
-  "licencaStatus",
-  "createdAt",
-],
+      attributes: [
+        "id",
+        "nome",
+        "email",
+        "perfil",
+        "comunidadeId",
+        "ativo",
+        "licencaStatus",
+        "createdAt",
+      ],
 
       order: [["nome", "ASC"]],
     });
 
     const resultado = await Promise.all(
       usuarios.map(async (usuario) => {
-        const comunidade = await Comunidade.findByPk(
-          usuario.comunidadeId
-        );
+        const comunidade = usuario.comunidadeId
+          ? await Comunidade.findByPk(
+              usuario.comunidadeId
+            )
+          : null;
 
         return {
-  id: usuario.id,
-  nome: usuario.nome,
-  email: usuario.email,
-  perfil: usuario.perfil,
-  comunidadeId: usuario.comunidadeId,
-  comunidadeNome: comunidade
-    ? comunidade.nome
-    : null,
-  ativo: usuario.ativo,
-  licencaStatus: usuario.licencaStatus,
-  createdAt: usuario.createdAt,
-};
+          id: usuario.id,
+          nome: usuario.nome,
+          email: usuario.email,
+          perfil: usuario.perfil,
+          comunidadeId: usuario.comunidadeId,
+
+          comunidadeNome: comunidade
+            ? comunidade.nome
+            : null,
+
+          ativo: usuario.ativo,
+          licencaStatus: usuario.licencaStatus,
+          createdAt: usuario.createdAt,
+        };
       })
     );
 
@@ -117,10 +200,6 @@ export const alterarLicencaUsuario = async (req, res) => {
     const { id } = req.params;
     const { licencaStatus } = req.body;
 
-    // ----------------------------------------
-    // VALIDAR STATUS RECEBIDO
-    // ----------------------------------------
-
     const statusPermitidos = [
       "ATIVA",
       "BLOQUEADA",
@@ -132,10 +211,6 @@ export const alterarLicencaUsuario = async (req, res) => {
       });
     }
 
-    // ----------------------------------------
-    // BUSCAR USUÁRIO
-    // ----------------------------------------
-
     const usuario = await Usuario.findByPk(id);
 
     if (!usuario) {
@@ -143,10 +218,6 @@ export const alterarLicencaUsuario = async (req, res) => {
         erro: "Usuário não encontrado.",
       });
     }
-
-    // ----------------------------------------
-    // IMPEDIR ALTERAÇÃO DA PRÓPRIA LICENÇA
-    // ----------------------------------------
 
     if (
       Number(usuario.id) ===
@@ -157,10 +228,6 @@ export const alterarLicencaUsuario = async (req, res) => {
           "Você não pode alterar a própria licença.",
       });
     }
-
-    // ----------------------------------------
-    // ALTERAR LICENÇA
-    // ----------------------------------------
 
     usuario.licencaStatus = licencaStatus;
 
@@ -192,29 +259,35 @@ export const alterarLicencaUsuario = async (req, res) => {
     });
   }
 };
+
 // ========================================
 // RESUMO DO DASHBOARD SUPER ADMIN
 // ========================================
 
 export const resumoDashboard = async (req, res) => {
   try {
-    const totalComunidades = await Comunidade.count();
+    const totalComunidades =
+      await Comunidade.count();
 
-    const comunidadesAtivas = await Comunidade.count({
-      where: {
-        ativa: true,
-      },
-    });
+    const comunidadesAtivas =
+      await Comunidade.count({
+        where: {
+          ativa: true,
+        },
+      });
 
-    const totalUsuarios = await Usuario.count();
+    const totalUsuarios =
+      await Usuario.count();
 
-    const usuariosAtivos = await Usuario.count({
-      where: {
-        ativo: true,
-      },
-    });
+    const usuariosAtivos =
+      await Usuario.count({
+        where: {
+          ativo: true,
+        },
+      });
 
-    const totalDizimistas = await Dizimista.count();
+    const totalDizimistas =
+      await Dizimista.count();
 
     return res.status(200).json({
       totalComunidades,
@@ -224,10 +297,14 @@ export const resumoDashboard = async (req, res) => {
       totalDizimistas,
     });
   } catch (error) {
-    console.error("Erro ao carregar dashboard:", error);
+    console.error(
+      "Erro ao carregar dashboard:",
+      error
+    );
 
     return res.status(500).json({
-      mensagem: "Erro ao carregar resumo do dashboard.",
+      mensagem:
+        "Erro ao carregar resumo do dashboard.",
       erro: error.message,
     });
   }

@@ -2468,3 +2468,57 @@ tfoot td:nth-child(3) {
   color: #b91c1c;
   font-weight: 600;
 }
+
+/* ========================================
+   TABELA DE COMUNIDADES
+======================================== */
+
+.admin-tabela-comunidades {
+  min-width: 900px;
+}
+
+/* Nome */
+.admin-tabela-comunidades th:nth-child(1),
+.admin-tabela-comunidades td:nth-child(1) {
+  width: 20%;
+}
+
+/* Paróquia */
+.admin-tabela-comunidades th:nth-child(2),
+.admin-tabela-comunidades td:nth-child(2) {
+  width: 20%;
+}
+
+/* Cidade */
+.admin-tabela-comunidades th:nth-child(3),
+.admin-tabela-comunidades td:nth-child(3) {
+  width: 15%;
+}
+
+/* Usuários */
+.admin-tabela-comunidades th:nth-child(4),
+.admin-tabela-comunidades td:nth-child(4) {
+  width: 10%;
+  text-align: center;
+}
+
+/* Dizimistas */
+.admin-tabela-comunidades th:nth-child(5),
+.admin-tabela-comunidades td:nth-child(5) {
+  width: 10%;
+  text-align: center;
+}
+
+/* Status */
+.admin-tabela-comunidades th:nth-child(6),
+.admin-tabela-comunidades td:nth-child(6) {
+  width: 10%;
+  text-align: center;
+}
+
+/* Ações */
+.admin-tabela-comunidades th:nth-child(7),
+.admin-tabela-comunidades td:nth-child(7) {
+  width: 15%;
+  text-align: center;
+}

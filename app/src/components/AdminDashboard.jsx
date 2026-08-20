@@ -2,20 +2,78 @@ import { useEffect, useState } from "react";
 import api from "../api/api";
 
 function AdminDashboard() {
+    // ========================================
+    // USUÁRIO LOGADO
+    // ========================================
+
+    const usuarioLogado = (() => {
+        try {
+            const usuarioSalvo =
+                localStorage.getItem("usuario");
+
+            return usuarioSalvo
+                ? JSON.parse(usuarioSalvo)
+                : null;
+        } catch {
+            return null;
+        }
+    })();
+
+    // ========================================
+    // ESTADOS DO DASHBOARD
+    // ========================================
+
     const [resumo, setResumo] = useState(null);
     const [erro, setErro] = useState("");
-    const [carregando, setCarregando] = useState(true);
+    const [carregando, setCarregando] =
+        useState(true);
 
-    const [aba, setAba] = useState("visao-geral");
+    const [aba, setAba] =
+        useState("visao-geral");
 
-    const [usuarios, setUsuarios] = useState([]);
-    const [carregandoUsuarios, setCarregandoUsuarios] =
-        useState(false);
+    // ========================================
+    // ESTADOS DE USUÁRIOS
+    // ========================================
 
-    const [erroUsuarios, setErroUsuarios] = useState("");
+    const [usuarios, setUsuarios] =
+        useState([]);
 
-    const [usuarioAlterando, setUsuarioAlterando] =
-        useState(null);
+    const [
+        carregandoUsuarios,
+        setCarregandoUsuarios,
+    ] = useState(false);
+
+    const [
+        erroUsuarios,
+        setErroUsuarios,
+    ] = useState("");
+
+    const [
+        usuarioAlterando,
+        setUsuarioAlterando,
+    ] = useState(null);
+
+    // ========================================
+    // ESTADOS DE COMUNIDADES
+    // ========================================
+
+    const [comunidades, setComunidades] =
+        useState([]);
+
+    const [
+        carregandoComunidades,
+        setCarregandoComunidades,
+    ] = useState(false);
+
+    const [
+        erroComunidades,
+        setErroComunidades,
+    ] = useState("");
+
+    const [
+        comunidadeAlterando,
+        setComunidadeAlterando,
+    ] = useState(null);
 
     // ========================================
     // CARREGAR RESUMO DO DASHBOARD
@@ -24,7 +82,9 @@ function AdminDashboard() {
     useEffect(() => {
         const carregarDashboard = async () => {
             try {
-                const resposta = await api.get("/admin/dashboard");
+                const resposta = await api.get(
+                    "/admin/dashboard"
+                );
 
                 setResumo(resposta.data);
             } catch (error) {
@@ -45,7 +105,7 @@ function AdminDashboard() {
     }, []);
 
     // ========================================
-    // CARREGAR USUÁRIOS
+    // CARREGAR USUÁRIOS AO ABRIR A ABA
     // ========================================
 
     useEffect(() => {
@@ -55,6 +115,22 @@ function AdminDashboard() {
 
         carregarUsuarios();
     }, [aba]);
+
+    // ========================================
+    // CARREGAR COMUNIDADES AO ABRIR A ABA
+    // ========================================
+
+    useEffect(() => {
+        if (aba !== "comunidades") {
+            return;
+        }
+
+        carregarComunidades();
+    }, [aba]);
+
+    // ========================================
+    // CARREGAR USUÁRIOS
+    // ========================================
 
     const carregarUsuarios = async () => {
         try {
@@ -81,6 +157,141 @@ function AdminDashboard() {
     };
 
     // ========================================
+    // CARREGAR COMUNIDADES
+    // ========================================
+
+    const carregarComunidades = async () => {
+        try {
+            setCarregandoComunidades(true);
+            setErroComunidades("");
+
+            const resposta = await api.get(
+                "/admin/comunidades"
+            );
+
+            setComunidades(resposta.data);
+        } catch (error) {
+            console.error(
+                "Erro ao carregar comunidades:",
+                error
+            );
+
+            setErroComunidades(
+                "Não foi possível carregar as comunidades."
+            );
+        } finally {
+            setCarregandoComunidades(false);
+        }
+    };
+
+    // ========================================
+    // ALTERAR STATUS DA COMUNIDADE
+    // ========================================
+
+    const alterarStatusComunidade = async (
+        comunidadeId,
+        novoStatus
+    ) => {
+        try {
+            setComunidadeAlterando(comunidadeId);
+            setErroComunidades("");
+
+            await api.patch(
+                `/admin/comunidades/${comunidadeId}/status`,
+                {
+                    ativa: novoStatus,
+                }
+            );
+
+            // Atualiza a tabela imediatamente
+            setComunidades((comunidadesAtuais) =>
+                comunidadesAtuais.map(
+                    (comunidade) =>
+                        comunidade.id === comunidadeId
+                            ? {
+                                ...comunidade,
+                                ativa: novoStatus,
+                            }
+                            : comunidade
+                )
+            );
+
+            // Atualiza também o card da visão geral
+            setResumo((resumoAtual) => {
+                if (!resumoAtual) {
+                    return resumoAtual;
+                }
+
+                const diferenca = novoStatus
+                    ? 1
+                    : -1;
+
+                return {
+                    ...resumoAtual,
+                    comunidadesAtivas:
+                        resumoAtual.comunidadesAtivas +
+                        diferenca,
+                };
+            });
+        } catch (error) {
+            console.error(
+                "Erro ao alterar status da comunidade:",
+                error
+            );
+
+            const mensagem =
+                error.response?.data?.erro ||
+                "Não foi possível alterar o status da comunidade.";
+
+            setErroComunidades(mensagem);
+        } finally {
+            setComunidadeAlterando(null);
+        }
+    };
+
+    // ========================================
+    // DESATIVAR COMUNIDADE
+    // ========================================
+
+    const desativarComunidade = (
+        comunidade
+    ) => {
+        const confirmar = window.confirm(
+            `Deseja realmente desativar a comunidade "${comunidade.nome}"?`
+        );
+
+        if (!confirmar) {
+            return;
+        }
+
+        alterarStatusComunidade(
+            comunidade.id,
+            false
+        );
+    };
+
+    // ========================================
+    // REATIVAR COMUNIDADE
+    // ========================================
+
+    const reativarComunidade = (
+        comunidade
+    ) => {
+        const confirmar = window.confirm(
+            `Deseja reativar a comunidade "${comunidade.nome}"?`
+        );
+
+        if (!confirmar) {
+            return;
+        }
+
+        alterarStatusComunidade(
+            comunidade.id,
+            true
+        );
+    };
+
+    // ========================================
     // ALTERAR LICENÇA
     // ========================================
 
@@ -99,13 +310,13 @@ function AdminDashboard() {
                 }
             );
 
-            // Atualiza a tabela imediatamente
             setUsuarios((usuariosAtuais) =>
                 usuariosAtuais.map((usuario) =>
                     usuario.id === usuarioId
                         ? {
                             ...usuario,
-                            licencaStatus: novoStatus,
+                            licencaStatus:
+                                novoStatus,
                         }
                         : usuario
                 )
@@ -127,7 +338,7 @@ function AdminDashboard() {
     };
 
     // ========================================
-    // CONFIRMAR BLOQUEIO
+    // BLOQUEAR LICENÇA
     // ========================================
 
     const bloquearLicenca = (usuario) => {
@@ -146,7 +357,7 @@ function AdminDashboard() {
     };
 
     // ========================================
-    // CONFIRMAR REATIVAÇÃO
+    // REATIVAR LICENÇA
     // ========================================
 
     const reativarLicenca = (usuario) => {
@@ -189,7 +400,7 @@ function AdminDashboard() {
     }
 
     // ========================================
-    // PAINEL
+    // PAINEL ADMINISTRATIVO
     // ========================================
 
     return (
@@ -197,9 +408,9 @@ function AdminDashboard() {
 
             <h2>Painel Administrativo</h2>
 
-            {/* ========================================
+            {/* =====================================
           MENU
-      ======================================== */}
+      ===================================== */}
 
             <div className="admin-menu">
 
@@ -232,9 +443,9 @@ function AdminDashboard() {
 
             </div>
 
-            {/* ========================================
+            {/* =====================================
           VISÃO GERAL
-      ======================================== */}
+      ===================================== */}
 
             {aba === "visao-geral" && (
                 <div className="admin-cards">
@@ -243,15 +454,19 @@ function AdminDashboard() {
                         <h3>Comunidades</h3>
 
                         <strong>
-                            {resumo?.totalComunidades ?? 0}
+                            {resumo?.totalComunidades ??
+                                0}
                         </strong>
                     </div>
 
                     <div className="admin-card">
-                        <h3>Comunidades Ativas</h3>
+                        <h3>
+                            Comunidades Ativas
+                        </h3>
 
                         <strong>
-                            {resumo?.comunidadesAtivas ?? 0}
+                            {resumo?.comunidadesAtivas ??
+                                0}
                         </strong>
                     </div>
 
@@ -259,7 +474,8 @@ function AdminDashboard() {
                         <h3>Usuários</h3>
 
                         <strong>
-                            {resumo?.totalUsuarios ?? 0}
+                            {resumo?.totalUsuarios ??
+                                0}
                         </strong>
                     </div>
 
@@ -267,7 +483,8 @@ function AdminDashboard() {
                         <h3>Usuários Ativos</h3>
 
                         <strong>
-                            {resumo?.usuariosAtivos ?? 0}
+                            {resumo?.usuariosAtivos ??
+                                0}
                         </strong>
                     </div>
 
@@ -275,16 +492,17 @@ function AdminDashboard() {
                         <h3>Dizimistas</h3>
 
                         <strong>
-                            {resumo?.totalDizimistas ?? 0}
+                            {resumo?.totalDizimistas ??
+                                0}
                         </strong>
                     </div>
 
                 </div>
             )}
 
-            {/* ========================================
+            {/* =====================================
           COMUNIDADES
-      ======================================== */}
+      ===================================== */}
 
             {aba === "comunidades" && (
                 <div className="admin-secao">
@@ -293,21 +511,183 @@ function AdminDashboard() {
                         Gerenciamento de Comunidades
                     </h3>
 
-                    <p>
-                        Em desenvolvimento...
-                    </p>
+                    {carregandoComunidades && (
+                        <p>
+                            Carregando comunidades...
+                        </p>
+                    )}
+
+                    {erroComunidades && (
+                        <p className="admin-erro">
+                            {erroComunidades}
+                        </p>
+                    )}
+
+                    {!carregandoComunidades &&
+                        !erroComunidades &&
+                        comunidades.length === 0 && (
+                            <p>
+                                Nenhuma comunidade
+                                encontrada.
+                            </p>
+                        )}
+
+                    {!carregandoComunidades &&
+                        comunidades.length > 0 && (
+
+                            <div className="admin-tabela-wrapper">
+
+                                <table className="admin-tabela admin-tabela-comunidades">
+
+                                    <thead>
+                                        <tr>
+                                            <th>Nome</th>
+                                            <th>Paróquia</th>
+                                            <th>Cidade</th>
+                                            <th>Usuários</th>
+                                            <th>Dizimistas</th>
+                                            <th>Status</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+
+                                        {comunidades.map(
+                                            (comunidade) => {
+                                                const alterando =
+                                                    comunidadeAlterando ===
+                                                    comunidade.id;
+
+                                                const ehComunidadeDoSuperAdmin =
+                                                    Number(
+                                                        comunidade.id
+                                                    ) ===
+                                                    Number(
+                                                        usuarioLogado?.comunidadeId
+                                                    );
+
+                                                return (
+                                                    <tr
+                                                        key={
+                                                            comunidade.id
+                                                        }
+                                                    >
+
+                                                        <td>
+                                                            {
+                                                                comunidade.nome
+                                                            }
+                                                        </td>
+
+                                                        <td>
+                                                            {comunidade.paroquia ||
+                                                                "-"}
+                                                        </td>
+
+                                                        <td>
+                                                            {comunidade.cidade ||
+                                                                "-"}
+                                                        </td>
+
+                                                        <td>
+                                                            {comunidade.totalUsuarios ??
+                                                                0}
+                                                        </td>
+
+                                                        <td>
+                                                            {comunidade.totalDizimistas ??
+                                                                0}
+                                                        </td>
+
+                                                        <td>
+
+                                                            {comunidade.ativa ? (
+                                                                <span className="status-ativo">
+                                                                    Ativa
+                                                                </span>
+                                                            ) : (
+                                                                <span className="status-inativo">
+                                                                    Inativa
+                                                                </span>
+                                                            )}
+
+                                                        </td>
+
+                                                        <td>
+
+                                                            {ehComunidadeDoSuperAdmin ? (
+                                                                <span className="admin-sem-acao">
+                                                                    Protegida
+                                                                </span>
+                                                            ) : comunidade.ativa ? (
+
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn-bloquear-licenca"
+                                                                    disabled={
+                                                                        alterando
+                                                                    }
+                                                                    onClick={() =>
+                                                                        desativarComunidade(
+                                                                            comunidade
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    {alterando
+                                                                        ? "Alterando..."
+                                                                        : "Desativar"}
+                                                                </button>
+
+                                                            ) : (
+
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn-reativar-licenca"
+                                                                    disabled={
+                                                                        alterando
+                                                                    }
+                                                                    onClick={() =>
+                                                                        reativarComunidade(
+                                                                            comunidade
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    {alterando
+                                                                        ? "Alterando..."
+                                                                        : "Reativar"}
+                                                                </button>
+
+                                                            )}
+
+                                                        </td>
+
+                                                    </tr>
+                                                );
+                                            }
+                                        )}
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        )}
 
                 </div>
             )}
 
-            {/* ========================================
+            {/* =====================================
           USUÁRIOS / LICENÇAS
-      ======================================== */}
+      ===================================== */}
 
             {aba === "usuarios" && (
                 <div className="admin-secao">
 
-                    <h3>Usuários e Licenças</h3>
+                    <h3>
+                        Usuários e Licenças
+                    </h3>
 
                     {carregandoUsuarios && (
                         <p>
@@ -350,114 +730,121 @@ function AdminDashboard() {
 
                                     <tbody>
 
-                                        {usuarios.map((usuario) => {
+                                        {usuarios.map(
+                                            (usuario) => {
+                                                const alterando =
+                                                    usuarioAlterando ===
+                                                    usuario.id;
 
-                                            const alterando =
-                                                usuarioAlterando ===
-                                                usuario.id;
+                                                const ehSuperAdmin =
+                                                    usuario.perfil ===
+                                                    "SUPER_ADMIN";
 
-                                            const ehSuperAdmin =
-                                                usuario.perfil ===
-                                                "SUPER_ADMIN";
+                                                return (
+                                                    <tr
+                                                        key={usuario.id}
+                                                    >
 
-                                            return (
-                                                <tr key={usuario.id}>
+                                                        <td>
+                                                            {usuario.nome}
+                                                        </td>
 
-                                                    <td>
-                                                        {usuario.nome}
-                                                    </td>
+                                                        <td>
+                                                            {usuario.email}
+                                                        </td>
 
-                                                    <td>
-                                                        {usuario.email}
-                                                    </td>
+                                                        <td>
+                                                            {usuario.perfil}
+                                                        </td>
 
-                                                    <td>
-                                                        {usuario.perfil}
-                                                    </td>
+                                                        <td>
+                                                            {usuario.comunidadeNome ||
+                                                                "Sem comunidade"}
+                                                        </td>
 
-                                                    <td>
-                                                        {usuario.comunidadeNome ||
-                                                            "Sem comunidade"}
-                                                    </td>
+                                                        <td>
 
-                                                    <td>
+                                                            {usuario.ativo ? (
+                                                                <span className="status-ativo">
+                                                                    Ativo
+                                                                </span>
+                                                            ) : (
+                                                                <span className="status-inativo">
+                                                                    Inativo
+                                                                </span>
+                                                            )}
 
-                                                        {usuario.ativo ? (
-                                                            <span className="status-ativo">
-                                                                Ativo
-                                                            </span>
-                                                        ) : (
-                                                            <span className="status-inativo">
-                                                                Inativo
-                                                            </span>
-                                                        )}
+                                                        </td>
 
-                                                    </td>
+                                                        <td>
 
-                                                    <td>
+                                                            {usuario.licencaStatus ===
+                                                                "ATIVA" ? (
+                                                                <span className="licenca-ativa">
+                                                                    ATIVA
+                                                                </span>
+                                                            ) : (
+                                                                <span className="licenca-bloqueada">
+                                                                    {usuario.licencaStatus ||
+                                                                        "SEM STATUS"}
+                                                                </span>
+                                                            )}
 
-                                                        {usuario.licencaStatus ===
-                                                            "ATIVA" ? (
-                                                            <span className="licenca-ativa">
-                                                                ATIVA
-                                                            </span>
-                                                        ) : (
-                                                            <span className="licenca-bloqueada">
-                                                                {usuario.licencaStatus ||
-                                                                    "SEM STATUS"}
-                                                            </span>
-                                                        )}
+                                                        </td>
 
-                                                    </td>
+                                                        <td>
 
-                                                    <td>
+                                                            {ehSuperAdmin ? (
+                                                                <span className="admin-sem-acao">
+                                                                    Protegido
+                                                                </span>
+                                                            ) : usuario.licencaStatus ===
+                                                                "ATIVA" ? (
 
-                                                        {ehSuperAdmin ? (
-                                                            <span className="admin-sem-acao">
-                                                                Protegido
-                                                            </span>
-                                                        ) : usuario.licencaStatus ===
-                                                            "ATIVA" ? (
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn-bloquear-licenca"
+                                                                    disabled={
+                                                                        alterando
+                                                                    }
+                                                                    onClick={() =>
+                                                                        bloquearLicenca(
+                                                                            usuario
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    {alterando
+                                                                        ? "Alterando..."
+                                                                        : "Bloquear"}
+                                                                </button>
 
-                                                            <button
-                                                                type="button"
-                                                                className="btn-bloquear-licenca"
-                                                                disabled={alterando}
-                                                                onClick={() =>
-                                                                    bloquearLicenca(
-                                                                        usuario
-                                                                    )
-                                                                }
-                                                            >
-                                                                {alterando
-                                                                    ? "Alterando..."
-                                                                    : "Bloquear"}
-                                                            </button>
+                                                            ) : (
 
-                                                        ) : (
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn-reativar-licenca"
+                                                                    disabled={
+                                                                        alterando
+                                                                    }
+                                                                    onClick={() =>
+                                                                        reativarLicenca(
+                                                                            usuario
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    {alterando
+                                                                        ? "Alterando..."
+                                                                        : "Reativar"}
+                                                                </button>
 
-                                                            <button
-                                                                type="button"
-                                                                className="btn-reativar-licenca"
-                                                                disabled={alterando}
-                                                                onClick={() =>
-                                                                    reativarLicenca(
-                                                                        usuario
-                                                                    )
-                                                                }
-                                                            >
-                                                                {alterando
-                                                                    ? "Alterando..."
-                                                                    : "Reativar"}
-                                                            </button>
+                                                            )}
 
-                                                        )}
+                                                        </td>
 
-                                                    </td>
-
-                                                </tr>
-                                            );
-                                        })}
+                                                    </tr>
+                                                );
+                                            }
+                                        )}
 
                                     </tbody>
 
