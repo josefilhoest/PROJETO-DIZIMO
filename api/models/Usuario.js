@@ -34,9 +34,6 @@ const Usuario = sequelize.define(
 
     // ========================================
     // COMUNIDADE DO USUÁRIO
-    // Inicialmente pode ficar vazia.
-    // Depois que o usuário cadastrar sua comunidade,
-    // esse campo receberá o ID dela.
     // ========================================
 
     comunidadeId: {

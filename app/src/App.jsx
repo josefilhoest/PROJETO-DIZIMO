@@ -3,6 +3,7 @@ import { useState } from "react";
 import Tabela from "./components/Tabela";
 import Login from "./components/Login";
 import CadastroComunidade from "./components/CadastroComunidade";
+import AdminDashboard from "./components/AdminDashboard";
 
 import "./App.css";
 
@@ -22,6 +23,7 @@ function App() {
   });
 
   const [telaAcesso, setTelaAcesso] = useState("login");
+  const [telaLogada, setTelaLogada] = useState("sistema");
 
   const sair = () => {
     localStorage.removeItem("token");
@@ -29,6 +31,7 @@ function App() {
 
     setUsuario(null);
     setTelaAcesso("login");
+    setTelaLogada("sistema");
   };
 
   // ========================================
@@ -71,16 +74,41 @@ function App() {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="btn-sair"
-          onClick={sair}
-        >
-          Sair
-        </button>
+        <div>
+          {usuario.perfil === "SUPER_ADMIN" && (
+            <button
+              type="button"
+              onClick={() =>
+                setTelaLogada(
+                  telaLogada === "admin"
+                    ? "sistema"
+                    : "admin"
+                )
+              }
+            >
+              {telaLogada === "admin"
+                ? "Voltar ao Sistema"
+                : "Painel Administrativo"}
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="btn-sair"
+            onClick={sair}
+          >
+            Sair
+          </button>
+        </div>
       </div>
 
-      <Tabela usuario={usuario} />
+      {telaLogada === "sistema" && (
+        <Tabela usuario={usuario} />
+      )}
+
+      {telaLogada === "admin" && (
+        <AdminDashboard />
+      )}
     </div>
   );
 }

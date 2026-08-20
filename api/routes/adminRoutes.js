@@ -8,6 +8,7 @@ import {
   listarComunidades,
   listarUsuarios,
   resumoDashboard,
+  alterarLicencaUsuario,
 } from "../controllers/adminController.js";
 
 const router = Router();
@@ -59,6 +60,17 @@ router.get(
   autenticar,
   somenteSuperAdmin,
   resumoDashboard
+);
+
+// ========================================
+// ALTERAR LICENÇA DE UM USUÁRIO
+// ========================================
+
+router.patch(
+  "/usuarios/:id/licenca",
+  autenticar,
+  somenteSuperAdmin,
+  alterarLicencaUsuario
 );
 
 export default router;

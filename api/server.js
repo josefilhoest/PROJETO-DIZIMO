@@ -16,8 +16,15 @@ import registroMensalRoutes from "./routes/registroMensalRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 
+// ========================================
+// VALIDAR JWT_SECRET
+// ========================================
+
 if (!process.env.JWT_SECRET) {
-  console.error("ERRO: JWT_SECRET não foi configurado.");
+  console.error(
+    "ERRO: JWT_SECRET não foi configurado."
+  );
+
   process.exit(1);
 }
 
@@ -29,17 +36,18 @@ const app = express();
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
+
   limit: 10,
 
   standardHeaders: "draft-8",
+
   legacyHeaders: false,
 
   message: {
-    erro: "Muitas tentativas de login. Aguarde alguns minutos e tente novamente.",
+    erro:
+      "Muitas tentativas de login. Aguarde alguns minutos e tente novamente.",
   },
 });
-
-
 
 // ========================================
 // MIDDLEWARES DE SEGURANÇA
@@ -48,15 +56,33 @@ const loginLimiter = rateLimit({
 // Adiciona headers de segurança
 app.use(helmet());
 
-// CORS restrito ao frontend autorizado
+// ========================================
+// CORS
+// ========================================
+
+// Frontends autorizados a acessar a API
+const origensPermitidas = [
+  "http://localhost:5173",
+  "https://dizimo.jrfsite.com",
+];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://dizimo.jrfsite.com",
+    origin: origensPermitidas,
+
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
     ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
   })
 );
 
@@ -99,7 +125,8 @@ app.use(
 
 app.get("/", (req, res) => {
   res.json({
-    mensagem: "API do sistema de dízimo funcionando!",
+    mensagem:
+      "API do sistema de dízimo funcionando!",
   });
 });
 
@@ -120,7 +147,8 @@ try {
     "Tabelas sincronizadas com sucesso!"
   );
 
-  const PORT = process.env.PORT || 8080;
+  const PORT =
+    process.env.PORT || 8080;
 
   app.listen(PORT, () => {
     console.log(
