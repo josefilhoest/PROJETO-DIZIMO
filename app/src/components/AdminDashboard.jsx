@@ -63,11 +63,15 @@ function AdminDashboard() {
         setMostrarFormularioUsuario,
     ] = useState(false);
 
+    const [mostrarSenha, setMostrarSenha] =
+        useState(false);
+
     const [novoUsuario, setNovoUsuario] =
         useState({
             nome: "",
             email: "",
             senha: "",
+            confirmarSenha: "",
             perfil: "ADMIN_COMUNIDADE",
             licencaStatus: "ATIVA",
         });
@@ -224,6 +228,15 @@ function AdminDashboard() {
             ...dadosAtuais,
             [name]: value,
         }));
+
+        // Limpa mensagens enquanto o usuário corrige o formulário
+        if (erroUsuarios) {
+            setErroUsuarios("");
+        }
+
+        if (mensagemUsuario) {
+            setMensagemUsuario("");
+        }
     };
 
     // ========================================
@@ -232,6 +245,39 @@ function AdminDashboard() {
 
     const cadastrarNovoUsuario = async (event) => {
         event.preventDefault();
+
+        if (novoUsuario.nome.trim().length < 3) {
+            setErroUsuarios(
+                "O nome deve ter pelo menos 3 caracteres."
+            );
+            return;
+        }
+
+        const emailValido =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                novoUsuario.email.trim()
+            );
+
+        if (!emailValido) {
+            setErroUsuarios(
+                "Digite um e-mail válido."
+            );
+            return;
+        }
+
+        if (novoUsuario.senha.length < 6) {
+            setErroUsuarios(
+                "A senha deve ter pelo menos 6 caracteres."
+            );
+            return;
+        }
+
+        if (novoUsuario.senha !== novoUsuario.confirmarSenha) {
+            setErroUsuarios(
+                "As senhas não coincidem."
+            );
+            return;
+        }
 
         try {
             setCadastrandoUsuario(true);
@@ -256,11 +302,13 @@ function AdminDashboard() {
                 nome: "",
                 email: "",
                 senha: "",
+                confirmarSenha: "",
                 perfil: "ADMIN_COMUNIDADE",
                 licencaStatus: "ATIVA",
             });
 
             setMostrarFormularioUsuario(false);
+            setMostrarSenha(false);
 
             setMensagemUsuario(
                 resposta.data?.mensagem ||
@@ -883,9 +931,26 @@ function AdminDashboard() {
                             className="btn-novo-usuario"
                             disabled={cadastrandoUsuario}
                             onClick={() => {
+                                const novoEstado =
+                                    !mostrarFormularioUsuario;
+
                                 setMostrarFormularioUsuario(
-                                    !mostrarFormularioUsuario
+                                    novoEstado
                                 );
+
+                                if (!novoEstado) {
+                                    setMostrarSenha(false);
+
+                                    setNovoUsuario({
+                                        nome: "",
+                                        email: "",
+                                        senha: "",
+                                        confirmarSenha: "",
+                                        perfil: "ADMIN_COMUNIDADE",
+                                        licencaStatus: "ATIVA",
+                                    });
+                                }
+
                                 setErroUsuarios("");
                                 setMensagemUsuario("");
                             }}
@@ -906,6 +971,7 @@ function AdminDashboard() {
                         <form
                             className="admin-form-usuario"
                             onSubmit={cadastrarNovoUsuario}
+                            noValidate
                         >
                             <h4>Cadastrar Novo Usuário</h4>
 
@@ -950,7 +1016,7 @@ function AdminDashboard() {
                                     <input
                                         id="novo-usuario-senha"
                                         name="senha"
-                                        type="password"
+                                        type={mostrarSenha ? "text" : "password"}
                                         placeholder="Mínimo de 6 caracteres"
                                         minLength={6}
                                         value={novoUsuario.senha}
@@ -958,6 +1024,45 @@ function AdminDashboard() {
                                         disabled={cadastrandoUsuario}
                                         required
                                     />
+                                </div>
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="novo-usuario-confirmar-senha">
+                                        Confirmar senha
+                                    </label>
+
+                                    <input
+                                        id="novo-usuario-confirmar-senha"
+                                        name="confirmarSenha"
+                                        type={mostrarSenha ? "text" : "password"}
+                                        placeholder="Digite a senha novamente"
+                                        minLength={6}
+                                        value={novoUsuario.confirmarSenha}
+                                        onChange={alterarCampoNovoUsuario}
+                                        disabled={cadastrandoUsuario}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="admin-form-campo admin-form-campo-senha-toggle">
+                                    <span className="admin-form-label-espaco">
+                                        Visualização da senha
+                                    </span>
+
+                                    <button
+                                        type="button"
+                                        className="btn-mostrar-senha"
+                                        onClick={() =>
+                                            setMostrarSenha(
+                                                !mostrarSenha
+                                            )
+                                        }
+                                        disabled={cadastrandoUsuario}
+                                    >
+                                        {mostrarSenha
+                                            ? "Ocultar senha"
+                                            : "Mostrar senha"}
+                                    </button>
                                 </div>
 
                                 <div className="admin-form-campo">

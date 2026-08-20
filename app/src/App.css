@@ -2706,3 +2706,68 @@ tfoot td:nth-child(3) {
     width: 100%;
   }
 }
+
+/* ========================================
+   MOSTRAR / OCULTAR SENHA - ADMIN
+======================================== */
+
+.admin-form-campo-senha-toggle {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  gap: 6px !important;
+  width: 100% !important;
+
+  position: static !important;
+}
+
+.admin-form-label-espaco {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-form-campo-senha-toggle .btn-mostrar-senha {
+  position: static !important;
+
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+
+  float: none !important;
+
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+
+  width: auto !important;
+  min-width: 110px !important;
+
+  margin: 0 !important;
+  padding: 9px 14px !important;
+
+  border: 1px solid #2563eb !important;
+  border-radius: 7px !important;
+
+  background: #ffffff !important;
+  color: #2563eb !important;
+
+  font-size: 13px !important;
+  font-weight: 600 !important;
+
+  cursor: pointer;
+  transform: none !important;
+
+  align-self: flex-start !important;
+}
+
+.admin-form-campo-senha-toggle .btn-mostrar-senha:hover {
+  background: #eff6ff !important;
+}
+
+.admin-form-campo-senha-toggle .btn-mostrar-senha:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
