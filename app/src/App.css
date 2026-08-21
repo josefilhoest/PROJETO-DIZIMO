@@ -2692,6 +2692,64 @@ tfoot td:nth-child(3) {
 }
 
 /* ========================================
+   REFINOS DOS DETALHES DA COMUNIDADE
+   ======================================== */
+
+.admin-detalhes-id {
+  display: inline-block;
+  margin-top: 5px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.admin-detalhes-perfil {
+  margin-top: 4px !important;
+  color: #475569 !important;
+  font-size: 11px !important;
+  font-weight: 700;
+}
+
+.admin-comunidade-selecionada td {
+  background: #eff6ff !important;
+}
+
+.admin-comunidade-selecionada td:first-child {
+  box-shadow: inset 3px 0 0 #2563eb;
+}
+
+.admin-comunidade-selecionada .btn-detalhes-comunidade {
+  background: #1e40af;
+}
+
+.admin-detalhes-usuarios-lista {
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 3px;
+}
+
+.admin-detalhes-usuarios-lista::-webkit-scrollbar {
+  width: 7px;
+}
+
+.admin-detalhes-usuarios-lista::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: #cbd5e1;
+}
+
+@media (max-width: 700px) {
+  .admin-detalhes-id {
+    font-size: 10px;
+  }
+
+  .admin-detalhes-usuarios-lista {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+}
+
+/* ========================================
    BUSCA E FILTRO DE COMUNIDADES
    ======================================== */
 

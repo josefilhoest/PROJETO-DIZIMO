@@ -164,6 +164,24 @@ function AdminDashboard() {
     ] = useState("");
 
     // ========================================
+    // FORMATAR DATA
+    // ========================================
+
+    const formatarData = (data) => {
+        if (!data) {
+            return "-";
+        }
+
+        const dataFormatada = new Date(data);
+
+        if (Number.isNaN(dataFormatada.getTime())) {
+            return "-";
+        }
+
+        return dataFormatada.toLocaleDateString("pt-BR");
+    };
+
+    // ========================================
     // CARREGAR RESUMO DO DASHBOARD
     // ========================================
 
@@ -1275,6 +1293,14 @@ function AdminDashboard() {
                                             ?.comunidade?.nome ||
                                             "Carregando..."}
                                     </h4>
+
+                                    {comunidadeDetalhada && (
+                                        <span className="admin-detalhes-id">
+                                            ID da comunidade:{" "}
+                                            {comunidadeDetalhada
+                                                .comunidade?.id}
+                                        </span>
+                                    )}
                                 </div>
 
                                 <button
@@ -1283,6 +1309,7 @@ function AdminDashboard() {
                                     onClick={
                                         fecharDetalhesComunidade
                                     }
+                                    aria-label="Fechar detalhes da comunidade"
                                 >
                                     Fechar
                                 </button>
@@ -1365,6 +1392,17 @@ function AdminDashboard() {
                                                 </strong>
                                             </div>
 
+                                            <div className="admin-detalhes-item">
+                                                <span>Cadastrada em</span>
+                                                <strong>
+                                                    {formatarData(
+                                                        comunidadeDetalhada
+                                                            .comunidade
+                                                            ?.createdAt
+                                                    )}
+                                                </strong>
+                                            </div>
+
                                         </div>
 
                                         <div className="admin-detalhes-usuarios">
@@ -1394,6 +1432,13 @@ function AdminDashboard() {
                                                                         <span>
                                                                             {
                                                                                 usuario.email
+                                                                            }
+                                                                        </span>
+
+                                                                        <span className="admin-detalhes-perfil">
+                                                                            Perfil:{" "}
+                                                                            {
+                                                                                usuario.perfil
                                                                             }
                                                                         </span>
                                                                     </div>
@@ -1562,6 +1607,18 @@ function AdminDashboard() {
                                                         key={
                                                             comunidade.id
                                                         }
+                                                        className={
+                                                            Number(
+                                                                comunidadeDetalhada
+                                                                    ?.comunidade
+                                                                    ?.id
+                                                            ) ===
+                                                            Number(
+                                                                comunidade.id
+                                                            )
+                                                                ? "admin-comunidade-selecionada"
+                                                                : ""
+                                                        }
                                                     >
 
                                                         <td>
@@ -1616,7 +1673,16 @@ function AdminDashboard() {
                                                                         )
                                                                     }
                                                                 >
-                                                                    Detalhes
+                                                                    {Number(
+                                                                        comunidadeDetalhada
+                                                                            ?.comunidade
+                                                                            ?.id
+                                                                    ) ===
+                                                                    Number(
+                                                                        comunidade.id
+                                                                    )
+                                                                        ? "Aberto"
+                                                                        : "Detalhes"}
                                                                 </button>
 
                                                                 {ehComunidadeDoSuperAdmin ? (
