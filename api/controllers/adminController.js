@@ -80,8 +80,8 @@ export const alterarStatusComunidade = async (
       });
     }
 
-    // Impede o SUPER_ADMIN de desativar
-    // a própria comunidade
+    // Impede o SUPER_ADMIN de alterar o status
+    // da própria comunidade.
     if (
       Number(comunidade.id) ===
       Number(req.usuario.comunidadeId)
@@ -93,6 +93,7 @@ export const alterarStatusComunidade = async (
     }
 
     comunidade.ativa = ativa;
+
     await comunidade.save();
 
     return res.status(200).json({
@@ -193,6 +194,7 @@ export const cadastrarUsuarioAdmin = async (
     } = req.body;
 
     const nomeLimpo = nome?.trim();
+
     const emailLimpo = email
       ?.trim()
       .toLowerCase();
@@ -201,6 +203,24 @@ export const cadastrarUsuarioAdmin = async (
       return res.status(400).json({
         erro:
           "Nome, e-mail e senha são obrigatórios.",
+      });
+    }
+
+    if (nomeLimpo.length < 3) {
+      return res.status(400).json({
+        erro:
+          "O nome deve ter pelo menos 3 caracteres.",
+      });
+    }
+
+    const emailValido =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        emailLimpo
+      );
+
+    if (!emailValido) {
+      return res.status(400).json({
+        erro: "Digite um e-mail válido.",
       });
     }
 
@@ -249,7 +269,7 @@ export const cadastrarUsuarioAdmin = async (
       senha: senhaHash,
 
       // O SUPER_ADMIN do sistema não é criado
-      // por este formulário.
+      // através deste formulário.
       perfil: "ADMIN_COMUNIDADE",
 
       // O comprador nasce sem comunidade.
@@ -263,17 +283,23 @@ export const cadastrarUsuarioAdmin = async (
     return res.status(201).json({
       mensagem:
         "Usuário cadastrado com sucesso.",
+
       usuario: {
         id: novoUsuario.id,
         nome: novoUsuario.nome,
         email: novoUsuario.email,
         perfil: novoUsuario.perfil,
+
         comunidadeId:
           novoUsuario.comunidadeId,
+
         comunidadeNome: null,
+
         ativo: novoUsuario.ativo,
+
         licencaStatus:
           novoUsuario.licencaStatus,
+
         createdAt: novoUsuario.createdAt,
       },
     });
@@ -302,13 +328,15 @@ export const editarUsuarioAdmin = async (
     const { nome, email } = req.body;
 
     const nomeLimpo = nome?.trim();
+
     const emailLimpo = email
       ?.trim()
       .toLowerCase();
 
     if (!nomeLimpo || !emailLimpo) {
       return res.status(400).json({
-        erro: "Nome e e-mail são obrigatórios.",
+        erro:
+          "Nome e e-mail são obrigatórios.",
       });
     }
 
@@ -338,8 +366,10 @@ export const editarUsuarioAdmin = async (
       });
     }
 
-    // Proteção extra no backend:
-    // nenhum SUPER_ADMIN pode ser alterado por esta rota.
+    // ========================================
+    // PROTEÇÃO DO SUPER_ADMIN
+    // ========================================
+
     if (usuario.perfil === "SUPER_ADMIN") {
       return res.status(403).json({
         erro:
@@ -379,15 +409,18 @@ export const editarUsuarioAdmin = async (
     return res.status(200).json({
       mensagem:
         "Usuário atualizado com sucesso.",
+
       usuario: {
         id: usuario.id,
         nome: usuario.nome,
         email: usuario.email,
         perfil: usuario.perfil,
         comunidadeId: usuario.comunidadeId,
+
         comunidadeNome: comunidade
           ? comunidade.nome
           : null,
+
         ativo: usuario.ativo,
         licencaStatus: usuario.licencaStatus,
         createdAt: usuario.createdAt,
@@ -438,8 +471,10 @@ export const redefinirSenhaUsuarioAdmin = async (
       });
     }
 
-    // Protege qualquer SUPER_ADMIN contra redefinição
-    // de senha por esta rota administrativa.
+    // ========================================
+    // PROTEÇÃO DO SUPER_ADMIN
+    // ========================================
+
     if (usuario.perfil === "SUPER_ADMIN") {
       return res.status(403).json({
         erro:
@@ -459,6 +494,7 @@ export const redefinirSenhaUsuarioAdmin = async (
     return res.status(200).json({
       mensagem:
         "Senha do usuário redefinida com sucesso.",
+
       usuario: {
         id: usuario.id,
         nome: usuario.nome,
@@ -501,7 +537,10 @@ export const excluirUsuarioAdmin = async (
       });
     }
 
-    // Protege qualquer SUPER_ADMIN.
+    // ========================================
+    // PROTEÇÃO DO SUPER_ADMIN
+    // ========================================
+
     if (usuario.perfil === "SUPER_ADMIN") {
       return res.status(403).json({
         erro:
@@ -520,8 +559,8 @@ export const excluirUsuarioAdmin = async (
       });
     }
 
-    // Nesta etapa, somente usuários ainda sem comunidade
-    // podem ser excluídos permanentemente.
+    // Nesta etapa somente usuários ainda sem
+    // comunidade podem ser excluídos definitivamente.
     if (usuario.comunidadeId !== null) {
       return res.status(409).json({
         erro:
@@ -540,6 +579,7 @@ export const excluirUsuarioAdmin = async (
     return res.status(200).json({
       mensagem:
         "Usuário excluído com sucesso.",
+
       usuario: usuarioExcluido,
     });
   } catch (error) {
@@ -581,6 +621,19 @@ export const alterarStatusUsuario = async (
       });
     }
 
+    // ========================================
+    // PROTEÇÃO DO SUPER_ADMIN
+    // ========================================
+
+    if (usuario.perfil === "SUPER_ADMIN") {
+      return res.status(403).json({
+        erro:
+          "O usuário SUPER_ADMIN é protegido e não pode ter seu status alterado.",
+      });
+    }
+
+    // Proteção adicional contra alteração
+    // do próprio usuário autenticado.
     if (
       Number(usuario.id) ===
       Number(req.usuario.usuarioId)
@@ -592,11 +645,13 @@ export const alterarStatusUsuario = async (
     }
 
     usuario.ativo = ativo;
+
     await usuario.save();
 
     return res.status(200).json({
       mensagem:
         "Status do usuário atualizado com sucesso.",
+
       usuario: {
         id: usuario.id,
         nome: usuario.nome,
@@ -653,6 +708,19 @@ export const alterarLicencaUsuario = async (
       });
     }
 
+    // ========================================
+    // PROTEÇÃO DO SUPER_ADMIN
+    // ========================================
+
+    if (usuario.perfil === "SUPER_ADMIN") {
+      return res.status(403).json({
+        erro:
+          "A licença do usuário SUPER_ADMIN é protegida e não pode ser alterada.",
+      });
+    }
+
+    // Proteção adicional contra alteração
+    // da própria licença.
     if (
       Number(usuario.id) ===
       Number(req.usuario.usuarioId)
@@ -664,11 +732,13 @@ export const alterarLicencaUsuario = async (
     }
 
     usuario.licencaStatus = licencaStatus;
+
     await usuario.save();
 
     return res.status(200).json({
       mensagem:
         "Status da licença atualizado com sucesso.",
+
       usuario: {
         id: usuario.id,
         nome: usuario.nome,
