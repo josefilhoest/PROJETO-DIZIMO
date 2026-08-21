@@ -290,6 +290,122 @@ export const cadastrarUsuarioAdmin = async (
 };
 
 // ========================================
+// EDITAR DADOS DO USUÁRIO PELO SUPER ADMIN
+// ========================================
+
+export const editarUsuarioAdmin = async (
+  req,
+  res
+) => {
+  try {
+    const { id } = req.params;
+    const { nome, email } = req.body;
+
+    const nomeLimpo = nome?.trim();
+    const emailLimpo = email
+      ?.trim()
+      .toLowerCase();
+
+    if (!nomeLimpo || !emailLimpo) {
+      return res.status(400).json({
+        erro: "Nome e e-mail são obrigatórios.",
+      });
+    }
+
+    if (nomeLimpo.length < 3) {
+      return res.status(400).json({
+        erro:
+          "O nome deve ter pelo menos 3 caracteres.",
+      });
+    }
+
+    const emailValido =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        emailLimpo
+      );
+
+    if (!emailValido) {
+      return res.status(400).json({
+        erro: "Digite um e-mail válido.",
+      });
+    }
+
+    const usuario = await Usuario.findByPk(id);
+
+    if (!usuario) {
+      return res.status(404).json({
+        erro: "Usuário não encontrado.",
+      });
+    }
+
+    // Proteção extra no backend:
+    // nenhum SUPER_ADMIN pode ser alterado por esta rota.
+    if (usuario.perfil === "SUPER_ADMIN") {
+      return res.status(403).json({
+        erro:
+          "O usuário SUPER_ADMIN é protegido e não pode ser editado.",
+      });
+    }
+
+    const usuarioComMesmoEmail =
+      await Usuario.findOne({
+        where: {
+          email: emailLimpo,
+        },
+      });
+
+    if (
+      usuarioComMesmoEmail &&
+      Number(usuarioComMesmoEmail.id) !==
+        Number(usuario.id)
+    ) {
+      return res.status(409).json({
+        erro:
+          "Já existe outro usuário cadastrado com este e-mail.",
+      });
+    }
+
+    usuario.nome = nomeLimpo;
+    usuario.email = emailLimpo;
+
+    await usuario.save();
+
+    const comunidade = usuario.comunidadeId
+      ? await Comunidade.findByPk(
+          usuario.comunidadeId
+        )
+      : null;
+
+    return res.status(200).json({
+      mensagem:
+        "Usuário atualizado com sucesso.",
+      usuario: {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        perfil: usuario.perfil,
+        comunidadeId: usuario.comunidadeId,
+        comunidadeNome: comunidade
+          ? comunidade.nome
+          : null,
+        ativo: usuario.ativo,
+        licencaStatus: usuario.licencaStatus,
+        createdAt: usuario.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Erro ao editar usuário:",
+      error
+    );
+
+    return res.status(500).json({
+      erro: "Erro ao editar usuário.",
+    });
+  }
+};
+
+// ========================================
 // ALTERAR STATUS DO USUÁRIO
 // ========================================
 

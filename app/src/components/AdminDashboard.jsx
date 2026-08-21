@@ -86,6 +86,25 @@ function AdminDashboard() {
         setMensagemUsuario,
     ] = useState("");
 
+    const [
+        usuarioEmEdicao,
+        setUsuarioEmEdicao,
+    ] = useState(null);
+
+    const [dadosEdicaoUsuario, setDadosEdicaoUsuario] =
+        useState({
+            nome: "",
+            email: "",
+            perfil: "",
+            comunidadeId: null,
+            comunidadeNome: "",
+        });
+
+    const [
+        salvandoEdicaoUsuario,
+        setSalvandoEdicaoUsuario,
+    ] = useState(false);
+
     // ========================================
     // ESTADOS DE COMUNIDADES
     // ========================================
@@ -343,6 +362,172 @@ function AdminDashboard() {
             setErroUsuarios(mensagem);
         } finally {
             setCadastrandoUsuario(false);
+        }
+    };
+
+    // ========================================
+    // INICIAR EDIÇÃO DE USUÁRIO
+    // ========================================
+
+    const iniciarEdicaoUsuario = (usuario) => {
+        setMostrarFormularioUsuario(false);
+        setMostrarSenha(false);
+
+        setNovoUsuario({
+            nome: "",
+            email: "",
+            senha: "",
+            confirmarSenha: "",
+            perfil: "ADMIN_COMUNIDADE",
+            licencaStatus: "ATIVA",
+        });
+
+        setErroUsuarios("");
+        setMensagemUsuario("");
+
+        setUsuarioEmEdicao(usuario);
+
+        setDadosEdicaoUsuario({
+            nome: usuario.nome || "",
+            email: usuario.email || "",
+            perfil: usuario.perfil || "",
+            comunidadeId: usuario.comunidadeId ?? null,
+            comunidadeNome:
+                usuario.comunidadeNome ||
+                "Sem comunidade",
+        });
+    };
+
+    // ========================================
+    // ALTERAR CAMPOS DA EDIÇÃO
+    // ========================================
+
+    const alterarCampoEdicaoUsuario = (event) => {
+        const { name, value } = event.target;
+
+        setDadosEdicaoUsuario((dadosAtuais) => ({
+            ...dadosAtuais,
+            [name]: value,
+        }));
+
+        if (erroUsuarios) {
+            setErroUsuarios("");
+        }
+
+        if (mensagemUsuario) {
+            setMensagemUsuario("");
+        }
+    };
+
+    // ========================================
+    // CANCELAR EDIÇÃO DE USUÁRIO
+    // ========================================
+
+    const cancelarEdicaoUsuario = () => {
+        setUsuarioEmEdicao(null);
+
+        setDadosEdicaoUsuario({
+            nome: "",
+            email: "",
+            perfil: "",
+            comunidadeId: null,
+            comunidadeNome: "",
+        });
+
+        setErroUsuarios("");
+        setMensagemUsuario("");
+    };
+
+    // ========================================
+    // SALVAR EDIÇÃO DO USUÁRIO
+    // ========================================
+
+    const salvarEdicaoUsuario = async (event) => {
+        event.preventDefault();
+
+        if (!usuarioEmEdicao) {
+            return;
+        }
+
+        if (dadosEdicaoUsuario.nome.trim().length < 3) {
+            setErroUsuarios(
+                "O nome deve ter pelo menos 3 caracteres."
+            );
+            return;
+        }
+
+        const emailValido =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                dadosEdicaoUsuario.email.trim()
+            );
+
+        if (!emailValido) {
+            setErroUsuarios(
+                "Digite um e-mail válido."
+            );
+            return;
+        }
+
+        try {
+            setSalvandoEdicaoUsuario(true);
+            setErroUsuarios("");
+            setMensagemUsuario("");
+
+            const resposta = await api.patch(
+                `/admin/usuarios/${usuarioEmEdicao.id}`,
+                {
+                    nome: dadosEdicaoUsuario.nome.trim(),
+                    email: dadosEdicaoUsuario.email
+                        .trim()
+                        .toLowerCase(),
+                }
+            );
+
+            const usuarioAtualizado =
+                resposta.data?.usuario;
+
+            if (usuarioAtualizado) {
+                setUsuarios((usuariosAtuais) =>
+                    usuariosAtuais.map((usuario) =>
+                        usuario.id === usuarioAtualizado.id
+                            ? {
+                                ...usuario,
+                                ...usuarioAtualizado,
+                            }
+                            : usuario
+                    )
+                );
+            } else {
+                await carregarUsuarios();
+            }
+
+            setMensagemUsuario(
+                resposta.data?.mensagem ||
+                "Usuário atualizado com sucesso."
+            );
+
+            setUsuarioEmEdicao(null);
+
+            setDadosEdicaoUsuario({
+                nome: "",
+                email: "",
+                perfil: "",
+                comunidadeId: null,
+                comunidadeNome: "",
+            });
+        } catch (error) {
+            console.error(
+                "Erro ao editar usuário:",
+                error
+            );
+
+            const mensagem =
+                error.response?.data?.erro ||
+                "Não foi possível atualizar o usuário.";
+
+            setErroUsuarios(mensagem);
+        } finally {
+            setSalvandoEdicaoUsuario(false);
         }
     };
 
@@ -938,6 +1123,17 @@ function AdminDashboard() {
                                     novoEstado
                                 );
 
+                                if (novoEstado) {
+                                    setUsuarioEmEdicao(null);
+                                    setDadosEdicaoUsuario({
+                                        nome: "",
+                                        email: "",
+                                        perfil: "",
+                                        comunidadeId: null,
+                                        comunidadeNome: "",
+                                    });
+                                }
+
                                 if (!novoEstado) {
                                     setMostrarSenha(false);
 
@@ -1123,6 +1319,100 @@ function AdminDashboard() {
                         </form>
                     )}
 
+                    {usuarioEmEdicao && (
+                        <form
+                            className="admin-form-usuario"
+                            onSubmit={salvarEdicaoUsuario}
+                            noValidate
+                        >
+                            <h4>
+                                Editar Usuário: {usuarioEmEdicao.nome}
+                            </h4>
+
+                            <div className="admin-form-grid">
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="editar-usuario-nome">
+                                        Nome
+                                    </label>
+                                    <input
+                                        id="editar-usuario-nome"
+                                        name="nome"
+                                        type="text"
+                                        value={dadosEdicaoUsuario.nome}
+                                        onChange={alterarCampoEdicaoUsuario}
+                                        disabled={salvandoEdicaoUsuario}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="editar-usuario-email">
+                                        E-mail
+                                    </label>
+                                    <input
+                                        id="editar-usuario-email"
+                                        name="email"
+                                        type="email"
+                                        value={dadosEdicaoUsuario.email}
+                                        onChange={alterarCampoEdicaoUsuario}
+                                        disabled={salvandoEdicaoUsuario}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="editar-usuario-perfil">
+                                        Perfil
+                                    </label>
+                                    <input
+                                        id="editar-usuario-perfil"
+                                        type="text"
+                                        value={dadosEdicaoUsuario.perfil}
+                                        disabled
+                                    />
+                                </div>
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="editar-usuario-comunidade">
+                                        Comunidade atual
+                                    </label>
+                                    <input
+                                        id="editar-usuario-comunidade"
+                                        type="text"
+                                        value={
+                                            dadosEdicaoUsuario.comunidadeNome
+                                        }
+                                        disabled
+                                    />
+                                </div>
+
+                            </div>
+
+                            <div className="admin-form-acoes">
+                                <button
+                                    type="button"
+                                    className="btn-novo-usuario"
+                                    onClick={cancelarEdicaoUsuario}
+                                    disabled={salvandoEdicaoUsuario}
+                                >
+                                    Cancelar edição
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    className="btn-salvar-usuario"
+                                    disabled={salvandoEdicaoUsuario}
+                                >
+                                    {salvandoEdicaoUsuario
+                                        ? "Salvando..."
+                                        : "Salvar alterações"}
+                                </button>
+                            </div>
+
+                        </form>
+                    )}
+
                     {carregandoUsuarios && (
                         <p>
                             Carregando usuários...
@@ -1238,6 +1528,23 @@ function AdminDashboard() {
                                                                 </span>
                                                             ) : (
                                                                 <div className="admin-acoes-usuario">
+
+                                                                    <button
+                                                                        type="button"
+                                                                        className="btn-editar-usuario"
+                                                                        disabled={
+                                                                            alterandoStatus ||
+                                                                            alterandoLicenca ||
+                                                                            salvandoEdicaoUsuario
+                                                                        }
+                                                                        onClick={() =>
+                                                                            iniciarEdicaoUsuario(
+                                                                                usuario
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        Editar
+                                                                    </button>
 
                                                                     {/* STATUS DO USUÁRIO */}
 

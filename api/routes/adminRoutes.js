@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import { autenticar } from "../middlewares/authMiddleware.js";
+
 import { somenteSuperAdmin } from "../middlewares/adminMiddleware.js";
 
 import {
@@ -8,6 +9,7 @@ import {
   alterarStatusComunidade,
   listarUsuarios,
   cadastrarUsuarioAdmin,
+  editarUsuarioAdmin,
   alterarStatusUsuario,
   alterarLicencaUsuario,
   resumoDashboard,
@@ -73,6 +75,17 @@ router.post(
   autenticar,
   somenteSuperAdmin,
   cadastrarUsuarioAdmin
+);
+
+// ========================================
+// EDITAR NOME E E-MAIL DE UM USUÁRIO
+// ========================================
+
+router.patch(
+  "/usuarios/:id",
+  autenticar,
+  somenteSuperAdmin,
+  editarUsuarioAdmin
 );
 
 // ========================================
