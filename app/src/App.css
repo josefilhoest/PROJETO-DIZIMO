@@ -2199,22 +2199,59 @@ tfoot td:nth-child(3) {
 
 /* ========================================
    PAINEL ADMINISTRATIVO
-======================================== */
+   ======================================== */
 
+/*
+  O painel pode usar mais largura que a ficha normal do sistema.
+  Isso evita que e-mail, comunidade, perfil e ações fiquem apertados.
+*/
 .admin-dashboard {
-  width: 100%;
+  width: min(1500px, calc(100vw - 48px));
   margin-top: 30px;
+  margin-left: 50%;
+  transform: translateX(-50%);
 }
 
 .admin-dashboard h2 {
-  margin-bottom: 24px;
+  margin: 0 0 24px;
   font-size: 28px;
   color: #1f2937;
 }
 
+/* ========================================
+   MENU DO PAINEL
+   ======================================== */
+
+.admin-menu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.admin-menu button {
+  padding: 9px 14px;
+  border: 1px solid #dbe1e8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-menu button:hover {
+  background: #f3f6f9;
+  border-color: #cbd5e1;
+}
+
+/* ========================================
+   CARDS DA VISÃO GERAL
+   ======================================== */
+
 .admin-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 20px;
 }
 
@@ -2224,7 +2261,9 @@ tfoot td:nth-child(3) {
   border-radius: 14px;
   padding: 24px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .admin-card:hover {
@@ -2245,19 +2284,18 @@ tfoot td:nth-child(3) {
   color: #15803d;
 }
 
-@media (max-width: 600px) {
-  .admin-cards {
-    grid-template-columns: 1fr;
-  }
+/* ========================================
+   SEÇÕES ADMINISTRATIVAS
+   ======================================== */
 
-  .admin-card {
-    padding: 20px;
-  }
+.admin-secao {
+  margin-top: 24px;
 }
 
-/* ========================================
-   CABEÇALHO DAS SEÇÕES ADMIN
-======================================== */
+.admin-secao h3 {
+  margin-bottom: 16px;
+  color: #1f2937;
+}
 
 .admin-secao-cabecalho {
   display: flex;
@@ -2273,7 +2311,7 @@ tfoot td:nth-child(3) {
 
 /* ========================================
    BOTÃO NOVO USUÁRIO
-======================================== */
+   ======================================== */
 
 .btn-novo-usuario {
   border: none;
@@ -2282,9 +2320,12 @@ tfoot td:nth-child(3) {
   padding: 10px 18px;
   border-radius: 8px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: 0.2s;
+  white-space: nowrap;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
 .btn-novo-usuario:hover {
@@ -2296,97 +2337,110 @@ tfoot td:nth-child(3) {
   transform: translateY(0);
 }
 
-@media (max-width: 600px) {
-  .admin-secao-cabecalho {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .btn-novo-usuario {
-    width: 100%;
-  }
+.btn-novo-usuario:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* ========================================
-   TABELA ADMINISTRATIVA
-======================================== */
-
-.admin-secao {
-  margin-top: 24px;
-}
-
-.admin-secao h3 {
-  margin-bottom: 16px;
-  color: #1f2937;
-}
+   TABELAS ADMINISTRATIVAS
+   ======================================== */
 
 .admin-tabela-wrapper {
   width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  -webkit-overflow-scrolling: touch;
 }
 
 .admin-tabela {
   width: 100%;
-  min-width: 900px;
+  min-width: 1180px;
   border-collapse: collapse;
-
-  /* importante para controlar as colunas */
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 .admin-tabela th,
 .admin-tabela td {
-  padding: 12px 14px;
+  border: 0;
   border-bottom: 1px solid #e5e7eb;
+  padding: 13px 12px;
   text-align: left;
   vertical-align: middle;
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 .admin-tabela th {
   background: #1f2937;
   color: #ffffff;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.admin-tabela tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-tabela tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.admin-tabela tbody tr:hover {
+  background: #f1f5f9;
 }
 
 /* Nome */
 .admin-tabela th:nth-child(1),
 .admin-tabela td:nth-child(1) {
-  width: 16%;
+  width: 15%;
+  min-width: 150px;
 }
 
 /* E-mail */
 .admin-tabela th:nth-child(2),
 .admin-tabela td:nth-child(2) {
-  width: 22%;
+  width: 20%;
+  min-width: 220px;
+  overflow-wrap: anywhere;
 }
 
 /* Perfil */
 .admin-tabela th:nth-child(3),
 .admin-tabela td:nth-child(3) {
   width: 15%;
+  min-width: 165px;
+  white-space: nowrap;
 }
 
 /* Comunidade */
 .admin-tabela th:nth-child(4),
 .admin-tabela td:nth-child(4) {
-  width: 18%;
+  width: 17%;
+  min-width: 180px;
+  overflow-wrap: anywhere;
 }
 
 /* Status */
 .admin-tabela th:nth-child(5),
 .admin-tabela td:nth-child(5) {
-  width: 9%;
+  width: 8%;
+  min-width: 90px;
   text-align: center;
 }
 
 /* Licença */
 .admin-tabela th:nth-child(6),
 .admin-tabela td:nth-child(6) {
-  width: 9%;
+  width: 8%;
+  min-width: 100px;
   text-align: center;
 }
 
@@ -2394,208 +2448,173 @@ tfoot td:nth-child(3) {
 .admin-tabela th:nth-child(7),
 .admin-tabela td:nth-child(7) {
   width: 18%;
+  min-width: 245px;
   text-align: center;
 }
 
 /* ========================================
-   STATUS
-======================================== */
+   TABELA DE COMUNIDADES
+   ======================================== */
 
-.status-ativo {
-  display: inline-block;
-  padding: 4px 9px;
-  border-radius: 20px;
-  background: #dcfce7;
-  color: #15803d;
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
+.admin-tabela-comunidades {
+  min-width: 1100px;
 }
 
-.status-inativo {
-  display: inline-block;
-  padding: 4px 9px;
-  border-radius: 20px;
-  background: #fee2e2;
-  color: #b91c1c;
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
+.admin-tabela-comunidades th:nth-child(1),
+.admin-tabela-comunidades td:nth-child(1) {
+  width: 18%;
+  min-width: 170px;
+}
+
+.admin-tabela-comunidades th:nth-child(2),
+.admin-tabela-comunidades td:nth-child(2) {
+  width: 21%;
+  min-width: 200px;
+}
+
+.admin-tabela-comunidades th:nth-child(3),
+.admin-tabela-comunidades td:nth-child(3) {
+  width: 16%;
+  min-width: 150px;
+}
+
+.admin-tabela-comunidades th:nth-child(4),
+.admin-tabela-comunidades td:nth-child(4),
+.admin-tabela-comunidades th:nth-child(5),
+.admin-tabela-comunidades td:nth-child(5),
+.admin-tabela-comunidades th:nth-child(6),
+.admin-tabela-comunidades td:nth-child(6) {
+  width: 10%;
+  min-width: 95px;
+  text-align: center;
+}
+
+.admin-tabela-comunidades th:nth-child(7),
+.admin-tabela-comunidades td:nth-child(7) {
+  width: 15%;
+  min-width: 150px;
+  text-align: center;
 }
 
 /* ========================================
-   RESPONSIVIDADE
-======================================== */
+   STATUS E LICENÇAS
+   ======================================== */
 
-@media (max-width: 768px) {
-  .admin-tabela-wrapper {
-    overflow-x: auto;
-  }
-
-  .admin-tabela {
-    min-width: 900px;
-  }
-}
-
-/* ========================================
-   LICENÇAS
-======================================== */
-
-.licenca-ativa {
-  display: inline-block;
-  padding: 4px 9px;
-  border-radius: 20px;
-  background: #dcfce7;
-  color: #15803d;
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
+.status-ativo,
+.status-inativo,
+.licenca-ativa,
 .licenca-bloqueada {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
   padding: 4px 9px;
-  border-radius: 20px;
-  background: #fee2e2;
-  color: #b91c1c;
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-/* ========================================
-   AÇÕES DE LICENÇA
-======================================== */
-
-.btn-bloquear-licenca,
-.btn-reativar-licenca {
-  padding: 6px 10px;
-  border: none;
-  border-radius: 8px;
+  border-radius: 999px;
   font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
+  font-weight: 800;
+  line-height: 1;
   white-space: nowrap;
 }
 
-.btn-bloquear-licenca {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-.btn-bloquear-licenca:hover {
-  background: #fecaca;
-}
-
-.btn-reativar-licenca {
+.status-ativo,
+.licenca-ativa {
   background: #dcfce7;
   color: #15803d;
 }
 
-.btn-reativar-licenca:hover {
-  background: #bbf7d0;
-}
-
-.btn-bloquear-licenca:disabled,
-.btn-reativar-licenca:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.status-inativo,
+.licenca-bloqueada {
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 .admin-sem-acao {
-  display: inline-block;
-  padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 5px 9px;
   border-radius: 8px;
   background: #f3f4f6;
   color: #6b7280;
   font-size: 11px;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ========================================
+   MENSAGENS DO ADMIN
+   ======================================== */
+
+.admin-erro,
+.admin-sucesso {
+  margin: 12px 0 18px;
+  padding: 11px 13px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .admin-erro {
-  margin: 12px 0;
-  padding: 10px 12px;
-  border-radius: 8px;
+  border: 1px solid #fecaca;
   background: #fee2e2;
   color: #b91c1c;
-  font-weight: 600;
+}
+
+.admin-sucesso {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
 }
 
 /* ========================================
-   TABELA DE COMUNIDADES
-======================================== */
-
-.admin-tabela-comunidades {
-  min-width: 900px;
-}
-
-/* Nome */
-.admin-tabela-comunidades th:nth-child(1),
-.admin-tabela-comunidades td:nth-child(1) {
-  width: 20%;
-}
-
-/* Paróquia */
-.admin-tabela-comunidades th:nth-child(2),
-.admin-tabela-comunidades td:nth-child(2) {
-  width: 20%;
-}
-
-/* Cidade */
-.admin-tabela-comunidades th:nth-child(3),
-.admin-tabela-comunidades td:nth-child(3) {
-  width: 15%;
-}
-
-/* Usuários */
-.admin-tabela-comunidades th:nth-child(4),
-.admin-tabela-comunidades td:nth-child(4) {
-  width: 10%;
-  text-align: center;
-}
-
-/* Dizimistas */
-.admin-tabela-comunidades th:nth-child(5),
-.admin-tabela-comunidades td:nth-child(5) {
-  width: 10%;
-  text-align: center;
-}
-
-/* Status */
-.admin-tabela-comunidades th:nth-child(6),
-.admin-tabela-comunidades td:nth-child(6) {
-  width: 10%;
-  text-align: center;
-}
-
-/* Ações */
-.admin-tabela-comunidades th:nth-child(7),
-.admin-tabela-comunidades td:nth-child(7) {
-  width: 15%;
-  text-align: center;
-}
-
-/* ========================================
-   AÇÕES DO USUÁRIO
-======================================== */
+   AÇÕES DOS USUÁRIOS
+   ======================================== */
 
 .admin-acoes-usuario {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(92px, 1fr));
+  align-items: stretch;
   justify-content: center;
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: 7px;
+  width: 100%;
+  max-width: 230px;
+  margin: 0 auto;
 }
 
+.btn-editar-usuario,
+.btn-excluir-usuario,
 .btn-desativar-usuario,
-.btn-ativar-usuario {
-  padding: 6px 10px;
+.btn-ativar-usuario,
+.btn-bloquear-licenca,
+.btn-reativar-licenca {
+  min-height: 31px;
+  padding: 6px 9px;
   border: none;
-  border-radius: 8px;
+  border-radius: 7px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
+  line-height: 1.15;
   cursor: pointer;
   white-space: nowrap;
+}
+
+.btn-editar-usuario {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.btn-editar-usuario:hover {
+  background: #1d4ed8;
+}
+
+.btn-excluir-usuario {
+  background: #b91c1c;
+  color: #ffffff;
+}
+
+.btn-excluir-usuario:hover {
+  background: #991b1b;
 }
 
 .btn-desativar-usuario {
@@ -2607,37 +2626,54 @@ tfoot td:nth-child(3) {
   background: #ffedd5;
 }
 
-.btn-ativar-usuario {
+.btn-ativar-usuario,
+.btn-reativar-licenca {
   background: #dcfce7;
   color: #15803d;
 }
 
-.btn-ativar-usuario:hover {
+.btn-ativar-usuario:hover,
+.btn-reativar-licenca:hover {
   background: #bbf7d0;
 }
 
+.btn-bloquear-licenca {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.btn-bloquear-licenca:hover {
+  background: #fecaca;
+}
+
+.btn-editar-usuario:disabled,
+.btn-excluir-usuario:disabled,
 .btn-desativar-usuario:disabled,
-.btn-ativar-usuario:disabled {
+.btn-ativar-usuario:disabled,
+.btn-bloquear-licenca:disabled,
+.btn-reativar-licenca:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
 /* ========================================
-   FORMULÁRIO NOVO USUÁRIO
-======================================== */
+   FORMULÁRIO DE USUÁRIO
+   ======================================== */
 
 .admin-form-usuario {
   margin-bottom: 24px;
-  padding: 20px;
+  padding: 22px;
   background: #ffffff;
   border: 1px solid #dbe1e8;
-  border-radius: 10px;
+  border-radius: 12px;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
 }
 
 .admin-form-usuario h4 {
-  margin-top: 0;
-  margin-bottom: 18px;
+  margin: 0 0 18px;
+  color: #1f2937;
+  font-size: 17px;
 }
 
 .admin-form-grid {
@@ -2650,19 +2686,27 @@ tfoot td:nth-child(3) {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
-.admin-form-campo label {
+.admin-form-campo label,
+.admin-form-label-espaco {
+  display: block;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
+  color: #374151;
 }
 
 .admin-form-campo input,
 .admin-form-campo select {
   width: 100%;
-  padding: 10px 12px;
+  min-width: 0;
+  height: 42px;
+  padding: 9px 12px;
   border: 1px solid #cbd5e1;
-  border-radius: 7px;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1f2937;
   font-size: 14px;
   box-sizing: border-box;
 }
@@ -2671,12 +2715,23 @@ tfoot td:nth-child(3) {
 .admin-form-campo select:focus {
   outline: none;
   border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.admin-form-campo input:disabled,
+.admin-form-campo select:disabled {
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
 }
 
 .admin-form-acoes {
   margin-top: 18px;
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .btn-salvar-usuario {
@@ -2685,7 +2740,8 @@ tfoot td:nth-child(3) {
   color: #ffffff;
   padding: 10px 18px;
   border-radius: 8px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -2693,23 +2749,14 @@ tfoot td:nth-child(3) {
   background: #15803d;
 }
 
-@media (max-width: 600px) {
-  .admin-form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-form-acoes {
-    justify-content: stretch;
-  }
-
-  .btn-salvar-usuario {
-    width: 100%;
-  }
+.btn-salvar-usuario:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ========================================
    MOSTRAR / OCULTAR SENHA - ADMIN
-======================================== */
+   ======================================== */
 
 .admin-form-campo-senha-toggle {
   display: flex !important;
@@ -2718,24 +2765,12 @@ tfoot td:nth-child(3) {
   justify-content: flex-start !important;
   gap: 6px !important;
   width: 100% !important;
-
   position: static !important;
-}
-
-.admin-form-label-espaco {
-  display: block;
-  font-size: 14px;
-  font-weight: 600;
 }
 
 .admin-form-campo-senha-toggle .btn-mostrar-senha {
   position: static !important;
-
-  top: auto !important;
-  right: auto !important;
-  bottom: auto !important;
-  left: auto !important;
-
+  inset: auto !important;
   float: none !important;
 
   display: inline-flex !important;
@@ -2743,23 +2778,23 @@ tfoot td:nth-child(3) {
   justify-content: center;
 
   width: auto !important;
-  min-width: 110px !important;
+  min-width: 120px !important;
+  min-height: 42px;
 
   margin: 0 !important;
   padding: 9px 14px !important;
 
   border: 1px solid #2563eb !important;
-  border-radius: 7px !important;
+  border-radius: 8px !important;
 
   background: #ffffff !important;
   color: #2563eb !important;
 
   font-size: 13px !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
 
   cursor: pointer;
   transform: none !important;
-
   align-self: flex-start !important;
 }
 
@@ -2773,44 +2808,320 @@ tfoot td:nth-child(3) {
 }
 
 /* ========================================
-   BOTÃO EDITAR USUÁRIO
-======================================== */
+   RESPONSIVIDADE DO PAINEL - NOTEBOOK
+   ======================================== */
 
-.btn-editar-usuario {
-  border: none;
-  background: #2563eb;
-  color: #ffffff;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
+@media (max-width: 1280px) {
+  .admin-dashboard {
+    width: 100%;
+    margin-left: 0;
+    transform: none;
+  }
 
-.btn-editar-usuario:hover {
-  background: #1d4ed8;
+  .admin-tabela {
+    min-width: 1120px;
+  }
 }
 
 /* ========================================
-   BOTÃO EXCLUIR USUÁRIO
-======================================== */
+   RESPONSIVIDADE DO PAINEL - TABLET
+   ======================================== */
 
-.btn-excluir-usuario {
-  border: none;
-  background: #b91c1c;
-  color: #ffffff;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
+@media (max-width: 900px) {
+  .admin-dashboard {
+    margin-top: 24px;
+  }
+
+  .admin-dashboard h2 {
+    font-size: 24px;
+    margin-bottom: 18px;
+  }
+
+  .admin-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .admin-card {
+    padding: 20px;
+  }
+
+  .admin-card strong {
+    font-size: 28px;
+  }
+
+  .admin-menu {
+    gap: 6px;
+  }
+
+  .admin-menu button {
+    flex: 1 1 160px;
+  }
+
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /*
+    Em tablet ainda mantemos a tabela tradicional com rolagem horizontal.
+    Isso evita comprimir informações importantes.
+  */
+  .admin-tabela-wrapper {
+    border-radius: 10px;
+  }
 }
 
-.btn-excluir-usuario:hover {
-  background: #991b1b;
+/* ========================================
+   RESPONSIVIDADE DO PAINEL - CELULAR
+   ======================================== */
+
+@media (max-width: 700px) {
+  .admin-dashboard {
+    width: 100%;
+    margin-top: 20px;
+  }
+
+  .admin-dashboard h2 {
+    font-size: 22px;
+  }
+
+  .admin-menu {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .admin-menu button {
+    width: 100%;
+  }
+
+  .admin-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-secao-cabecalho {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-novo-usuario {
+    width: 100%;
+  }
+
+  .admin-form-usuario {
+    padding: 16px;
+  }
+
+  .admin-form-acoes {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .admin-form-acoes .btn-novo-usuario,
+  .admin-form-acoes .btn-salvar-usuario {
+    width: 100%;
+  }
+
+  /*
+    No celular as tabelas viram cartões.
+    Assim o usuário não precisa arrastar a tela para os lados.
+  */
+  .admin-tabela-wrapper {
+    overflow: visible;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .admin-tabela,
+  .admin-tabela-comunidades {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .admin-tabela thead {
+    display: none;
+  }
+
+  .admin-tabela tbody {
+    display: grid;
+    gap: 16px;
+  }
+
+  .admin-tabela tbody tr {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .admin-tabela tbody tr:nth-child(even),
+  .admin-tabela tbody tr:hover {
+    background: #ffffff;
+  }
+
+  .admin-tabela tbody td {
+    display: grid;
+    grid-template-columns: minmax(92px, 34%) minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+
+    width: 100% !important;
+    min-width: 0 !important;
+
+    padding: 10px 12px;
+    border: 0;
+    border-bottom: 1px solid #eef2f7;
+
+    text-align: right !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-tabela tbody td:last-child {
+    border-bottom: 0;
+  }
+
+  .admin-tabela tbody td::before {
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    text-align: left;
+  }
+
+  /* Usuários / Licenças */
+  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(1)::before {
+    content: "Nome";
+  }
+
+  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(2)::before {
+    content: "E-mail";
+  }
+
+  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(3)::before {
+    content: "Perfil";
+  }
+
+  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(3) {
+    font-size: 11px;
+    letter-spacing: -0.1px;
+  }
+
+  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(4)::before {
+    content: "Comunidade";
+  }
+
+  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(5)::before {
+    content: "Status";
+  }
+
+  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(6)::before {
+    content: "Licença";
+  }
+
+  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(7)::before {
+    content: "Ações";
+  }
+
+  /* Comunidades */
+  .admin-tabela-comunidades tbody td:nth-child(1)::before {
+    content: "Nome";
+  }
+
+  .admin-tabela-comunidades tbody td:nth-child(2)::before {
+    content: "Paróquia";
+  }
+
+  .admin-tabela-comunidades tbody td:nth-child(3)::before {
+    content: "Cidade";
+  }
+
+  .admin-tabela-comunidades tbody td:nth-child(4)::before {
+    content: "Usuários";
+  }
+
+  .admin-tabela-comunidades tbody td:nth-child(5)::before {
+    content: "Dizimistas";
+  }
+
+  .admin-tabela-comunidades tbody td:nth-child(6)::before {
+    content: "Status";
+  }
+
+  .admin-tabela-comunidades tbody td:nth-child(7)::before {
+    content: "Ações";
+  }
+
+  .admin-acoes-usuario {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    gap: 7px;
+  }
+
+  .admin-acoes-usuario button {
+    width: 100%;
+  }
+
+  .admin-sem-acao {
+    justify-self: end;
+  }
 }
 
-.btn-excluir-usuario:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+/* ========================================
+   CELULARES PEQUENOS
+   ======================================== */
+
+@media (max-width: 430px) {
+  .admin-dashboard h2 {
+    font-size: 20px;
+  }
+
+  .admin-card {
+    padding: 17px;
+  }
+
+  .admin-card strong {
+    font-size: 26px;
+  }
+
+  .admin-tabela tbody td {
+    grid-template-columns: 82px minmax(0, 1fr);
+    gap: 8px;
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+
+  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(3) {
+    font-size: 10.5px;
+  }
+
+  .admin-tabela tbody td::before {
+    font-size: 10px;
+  }
+
+  .admin-acoes-usuario {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-form-usuario {
+    padding: 14px;
+  }
+}
+
+/* ========================================
+   NÃO IMPRIMIR O PAINEL ADMINISTRATIVO
+   ======================================== */
+
+@media print {
+  .admin-dashboard {
+    display: none !important;
+  }
 }
