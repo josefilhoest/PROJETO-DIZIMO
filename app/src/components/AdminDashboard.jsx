@@ -41,12 +41,6 @@ function AdminDashboard() {
     const [buscaUsuario, setBuscaUsuario] =
         useState("");
 
-    const [filtroStatusUsuario, setFiltroStatusUsuario] =
-        useState("TODOS");
-
-    const [filtroLicencaUsuario, setFiltroLicencaUsuario] =
-        useState("TODAS");
-
     const [
         carregandoUsuarios,
         setCarregandoUsuarios,
@@ -132,6 +126,12 @@ function AdminDashboard() {
 
     const [comunidades, setComunidades] =
         useState([]);
+
+    const [buscaComunidade, setBuscaComunidade] =
+        useState("");
+
+    const [filtroStatusComunidade, setFiltroStatusComunidade] =
+        useState("TODAS");
 
     const [
         carregandoComunidades,
@@ -998,6 +998,53 @@ function AdminDashboard() {
     };
 
     // ========================================
+    // FILTRAR COMUNIDADES
+    // ========================================
+
+    const termoBuscaComunidade =
+        buscaComunidade.trim().toLowerCase();
+
+    const comunidadesFiltradas = comunidades.filter(
+        (comunidade) => {
+            const nome =
+                comunidade.nome?.toLowerCase() || "";
+
+            const paroquia =
+                comunidade.paroquia?.toLowerCase() || "";
+
+            const cidade =
+                comunidade.cidade?.toLowerCase() || "";
+
+            const correspondeBusca =
+                !termoBuscaComunidade ||
+                nome.includes(termoBuscaComunidade) ||
+                paroquia.includes(termoBuscaComunidade) ||
+                cidade.includes(termoBuscaComunidade);
+
+            const correspondeStatus =
+                filtroStatusComunidade === "TODAS" ||
+                (filtroStatusComunidade === "ATIVAS" &&
+                    comunidade.ativa) ||
+                (filtroStatusComunidade === "INATIVAS" &&
+                    !comunidade.ativa);
+
+            return (
+                correspondeBusca &&
+                correspondeStatus
+            );
+        }
+    );
+
+    const filtrosComunidadesAtivos =
+        buscaComunidade.trim() !== "" ||
+        filtroStatusComunidade !== "TODAS";
+
+    const limparFiltrosComunidades = () => {
+        setBuscaComunidade("");
+        setFiltroStatusComunidade("TODAS");
+    };
+
+    // ========================================
     // FILTRAR USUÁRIOS
     // ========================================
 
@@ -1006,6 +1053,10 @@ function AdminDashboard() {
 
     const usuariosFiltrados = usuarios.filter(
         (usuario) => {
+            if (!termoBuscaUsuario) {
+                return true;
+            }
+
             const nome =
                 usuario.nome?.toLowerCase() || "";
 
@@ -1016,42 +1067,13 @@ function AdminDashboard() {
                 usuario.comunidadeNome
                     ?.toLowerCase() || "";
 
-            const correspondeBusca =
-                !termoBuscaUsuario ||
+            return (
                 nome.includes(termoBuscaUsuario) ||
                 email.includes(termoBuscaUsuario) ||
-                comunidade.includes(termoBuscaUsuario);
-
-            const correspondeStatus =
-                filtroStatusUsuario === "TODOS" ||
-                (filtroStatusUsuario === "ATIVOS" &&
-                    usuario.ativo) ||
-                (filtroStatusUsuario === "INATIVOS" &&
-                    !usuario.ativo);
-
-            const correspondeLicenca =
-                filtroLicencaUsuario === "TODAS" ||
-                usuario.licencaStatus ===
-                    filtroLicencaUsuario;
-
-            return (
-                correspondeBusca &&
-                correspondeStatus &&
-                correspondeLicenca
+                comunidade.includes(termoBuscaUsuario)
             );
         }
     );
-
-    const filtrosUsuariosAtivos =
-        buscaUsuario.trim() !== "" ||
-        filtroStatusUsuario !== "TODOS" ||
-        filtroLicencaUsuario !== "TODAS";
-
-    const limparFiltrosUsuarios = () => {
-        setBuscaUsuario("");
-        setFiltroStatusUsuario("TODOS");
-        setFiltroLicencaUsuario("TODAS");
-    };
 
     // ========================================
     // CARREGANDO DASHBOARD
@@ -1177,6 +1199,58 @@ function AdminDashboard() {
                         Gerenciamento de Comunidades
                     </h3>
 
+                    <div className="admin-filtros-comunidades">
+                        <div className="admin-busca">
+                            <input
+                                type="search"
+                                placeholder="Buscar por nome, paróquia ou cidade..."
+                                value={buscaComunidade}
+                                onChange={(event) =>
+                                    setBuscaComunidade(
+                                        event.target.value
+                                    )
+                                }
+                                aria-label="Buscar comunidades"
+                            />
+                        </div>
+
+                        <div className="admin-filtro-campo">
+                            <label htmlFor="filtro-status-comunidade">
+                                Status
+                            </label>
+
+                            <select
+                                id="filtro-status-comunidade"
+                                value={filtroStatusComunidade}
+                                onChange={(event) =>
+                                    setFiltroStatusComunidade(
+                                        event.target.value
+                                    )
+                                }
+                            >
+                                <option value="TODAS">
+                                    Todas
+                                </option>
+                                <option value="ATIVAS">
+                                    Ativas
+                                </option>
+                                <option value="INATIVAS">
+                                    Inativas
+                                </option>
+                            </select>
+                        </div>
+
+                        {filtrosComunidadesAtivos && (
+                            <button
+                                type="button"
+                                className="admin-busca-limpar"
+                                onClick={limparFiltrosComunidades}
+                            >
+                                Limpar filtros
+                            </button>
+                        )}
+                    </div>
+
                     {carregandoComunidades && (
                         <p>
                             Carregando comunidades...
@@ -1193,12 +1267,22 @@ function AdminDashboard() {
                         !erroComunidades &&
                         comunidades.length === 0 && (
                             <p>
-                                Nenhuma comunidade encontrada.
+                                Nenhuma comunidade cadastrada.
                             </p>
                         )}
 
                     {!carregandoComunidades &&
-                        comunidades.length > 0 && (
+                        !erroComunidades &&
+                        comunidades.length > 0 &&
+                        comunidadesFiltradas.length === 0 && (
+                            <p className="admin-sem-resultados">
+                                Nenhuma comunidade corresponde aos
+                                filtros selecionados.
+                            </p>
+                        )}
+
+                    {!carregandoComunidades &&
+                        comunidadesFiltradas.length > 0 && (
 
                             <div className="admin-tabela-wrapper">
 
@@ -1218,7 +1302,7 @@ function AdminDashboard() {
 
                                     <tbody>
 
-                                        {comunidades.map(
+                                        {comunidadesFiltradas.map(
                                             (comunidade) => {
                                                 const alterando =
                                                     comunidadeAlterando ===
@@ -1398,80 +1482,28 @@ function AdminDashboard() {
                         </button>
                     </div>
 
-                    <div className="admin-filtros-usuarios">
-                        <div className="admin-busca">
-                            <input
-                                type="search"
-                                placeholder="Buscar por nome, e-mail ou comunidade..."
-                                value={buscaUsuario}
-                                onChange={(event) =>
-                                    setBuscaUsuario(
-                                        event.target.value
-                                    )
-                                }
-                                aria-label="Buscar usuários"
-                            />
-                        </div>
+                    <div className="admin-busca">
+                        <input
+                            type="search"
+                            placeholder="Buscar por nome, e-mail ou comunidade..."
+                            value={buscaUsuario}
+                            onChange={(event) =>
+                                setBuscaUsuario(
+                                    event.target.value
+                                )
+                            }
+                            aria-label="Buscar usuários"
+                        />
 
-                        <div className="admin-filtro-campo">
-                            <label htmlFor="filtro-status-usuario">
-                                Status
-                            </label>
-
-                            <select
-                                id="filtro-status-usuario"
-                                value={filtroStatusUsuario}
-                                onChange={(event) =>
-                                    setFiltroStatusUsuario(
-                                        event.target.value
-                                    )
-                                }
-                            >
-                                <option value="TODOS">
-                                    Todos
-                                </option>
-                                <option value="ATIVOS">
-                                    Ativos
-                                </option>
-                                <option value="INATIVOS">
-                                    Inativos
-                                </option>
-                            </select>
-                        </div>
-
-                        <div className="admin-filtro-campo">
-                            <label htmlFor="filtro-licenca-usuario">
-                                Licença
-                            </label>
-
-                            <select
-                                id="filtro-licenca-usuario"
-                                value={filtroLicencaUsuario}
-                                onChange={(event) =>
-                                    setFiltroLicencaUsuario(
-                                        event.target.value
-                                    )
-                                }
-                            >
-                                <option value="TODAS">
-                                    Todas
-                                </option>
-                                <option value="ATIVA">
-                                    Ativa
-                                </option>
-                                <option value="BLOQUEADA">
-                                    Bloqueada
-                                </option>
-                            </select>
-                        </div>
-
-                        {filtrosUsuariosAtivos && (
+                        {buscaUsuario && (
                             <button
                                 type="button"
                                 className="admin-busca-limpar"
-                                onClick={limparFiltrosUsuarios}
+                                onClick={() =>
+                                    setBuscaUsuario("")
+                                }
                             >
-                                Limpar filtros
+                                Limpar
                             </button>
                         )}
                     </div>
@@ -1832,8 +1864,8 @@ function AdminDashboard() {
                         usuarios.length > 0 &&
                         usuariosFiltrados.length === 0 && (
                             <p className="admin-sem-resultados">
-                                Nenhum usuário corresponde aos
-                                filtros selecionados.
+                                Nenhum usuário encontrado para
+                                "{buscaUsuario}".
                             </p>
                         )}
 

@@ -2484,6 +2484,46 @@ tfoot td:nth-child(3) {
 }
 
 /* ========================================
+   BUSCA E FILTRO DE COMUNIDADES
+   ======================================== */
+
+.admin-filtros-comunidades {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) 180px auto;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 900px) {
+  .admin-filtros-comunidades {
+    grid-template-columns: 1fr 180px;
+  }
+
+  .admin-filtros-comunidades .admin-busca-limpar {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .admin-filtros-comunidades {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 13px;
+  }
+
+  .admin-filtros-comunidades .admin-busca-limpar {
+    grid-column: auto;
+    width: 100%;
+  }
+}
+
+/* ========================================
    TABELAS ADMINISTRATIVAS
    ======================================== */
 
