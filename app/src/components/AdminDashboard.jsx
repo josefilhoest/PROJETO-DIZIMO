@@ -181,6 +181,26 @@ function AdminDashboard() {
         return dataFormatada.toLocaleDateString("pt-BR");
     };
 
+    const formatarMoeda = (valor) => {
+        const numero = Number(valor || 0);
+
+        return numero.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+        });
+    };
+
+    const traduzirAtividade = (atividade) => {
+        const textos = {
+            RECENTE: "Atividade recente",
+            ATENCAO: "Atenção",
+            INATIVA: "Sem atividade recente",
+            SEM_MOVIMENTACAO: "Sem movimentação",
+        };
+
+        return textos[atividade] || "Sem informação";
+    };
+
     // ========================================
     // CARREGAR RESUMO DO DASHBOARD
     // ========================================
@@ -1380,7 +1400,8 @@ function AdminDashboard() {
                                                 <span>Usuários</span>
                                                 <strong>
                                                     {comunidadeDetalhada
-                                                        .totalUsuarios ?? 0}
+                                                        .indicadores
+                                                        ?.totalUsuarios ?? 0}
                                                 </strong>
                                             </div>
 
@@ -1388,7 +1409,8 @@ function AdminDashboard() {
                                                 <span>Dizimistas</span>
                                                 <strong>
                                                     {comunidadeDetalhada
-                                                        .totalDizimistas ?? 0}
+                                                        .indicadores
+                                                        ?.totalDizimistas ?? 0}
                                                 </strong>
                                             </div>
 
@@ -1403,6 +1425,82 @@ function AdminDashboard() {
                                                 </strong>
                                             </div>
 
+                                            <div className="admin-detalhes-item admin-indicador-gerencial">
+                                                <span>Valor atual registrado</span>
+                                                <strong>
+                                                    {formatarMoeda(
+                                                        comunidadeDetalhada
+                                                            .indicadores
+                                                            ?.valorAtualRegistrado
+                                                    )}
+                                                </strong>
+                                            </div>
+
+                                            <div className="admin-detalhes-item admin-indicador-gerencial">
+                                                <span>Registros mensais</span>
+                                                <strong>
+                                                    {comunidadeDetalhada
+                                                        .indicadores
+                                                        ?.totalRegistrosMensais ?? 0}
+                                                </strong>
+                                            </div>
+
+                                            <div className="admin-detalhes-item admin-indicador-gerencial">
+                                                <span>Último registro</span>
+                                                <strong>
+                                                    {formatarData(
+                                                        comunidadeDetalhada
+                                                            .indicadores
+                                                            ?.ultimoRegistroData
+                                                    )}
+                                                </strong>
+                                            </div>
+
+                                            <div className="admin-detalhes-item admin-indicador-gerencial">
+                                                <span>Última movimentação</span>
+                                                <strong>
+                                                    {formatarData(
+                                                        comunidadeDetalhada
+                                                            .indicadores
+                                                            ?.ultimaMovimentacao
+                                                    )}
+                                                </strong>
+                                            </div>
+
+                                            <div className="admin-detalhes-item admin-indicador-gerencial">
+                                                <span>Dias sem movimentação</span>
+                                                <strong>
+                                                    {comunidadeDetalhada
+                                                        .indicadores
+                                                        ?.diasSemMovimentacao ??
+                                                        "-"}
+                                                </strong>
+                                            </div>
+
+                                            <div className="admin-detalhes-item admin-indicador-gerencial">
+                                                <span>Acompanhamento</span>
+                                                <strong
+                                                    className={`admin-atividade admin-atividade-${
+                                                        comunidadeDetalhada
+                                                            .indicadores
+                                                            ?.atividade ||
+                                                        "SEM_MOVIMENTACAO"
+                                                    }`}
+                                                >
+                                                    {traduzirAtividade(
+                                                        comunidadeDetalhada
+                                                            .indicadores
+                                                            ?.atividade
+                                                    )}
+                                                </strong>
+                                            </div>
+
+                                        </div>
+
+                                        <div className="admin-indicadores-aviso">
+                                            Indicadores destinados ao acompanhamento
+                                            administrativo. Os dados individuais dos
+                                            dizimistas não são exibidos neste painel.
                                         </div>
 
                                         <div className="admin-detalhes-usuarios">

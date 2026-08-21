@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import Comunidade from "../models/Comunidade.js";
 import Usuario from "../models/Usuario.js";
 import Dizimista from "../models/Dizimista.js";
+import RegistroMensal from "../models/RegistroMensal.js";
 
 // ========================================
 // LISTAR TODAS AS COMUNIDADES
@@ -107,6 +108,84 @@ export const detalharComunidade = async (
         },
       });
 
+    const valorAtualRegistrado =
+      await Dizimista.sum("valor", {
+        where: {
+          comunidadeId,
+        },
+      });
+
+    const totalRegistrosMensais =
+      await RegistroMensal.count({
+        where: {
+          comunidadeId,
+        },
+      });
+
+    const ultimoRegistroData =
+      await RegistroMensal.max("data", {
+        where: {
+          comunidadeId,
+        },
+      });
+
+    const ultimaAtualizacaoDizimista =
+      await Dizimista.max("updatedAt", {
+        where: {
+          comunidadeId,
+        },
+      });
+
+    const ultimaAtualizacaoRegistro =
+      await RegistroMensal.max("updatedAt", {
+        where: {
+          comunidadeId,
+        },
+      });
+
+    const datasMovimentacao = [
+      ultimaAtualizacaoDizimista,
+      ultimaAtualizacaoRegistro,
+    ]
+      .filter(Boolean)
+      .map((data) => new Date(data))
+      .filter(
+        (data) =>
+          !Number.isNaN(data.getTime())
+      );
+
+    const ultimaMovimentacao =
+      datasMovimentacao.length > 0
+        ? new Date(
+            Math.max(
+              ...datasMovimentacao.map(
+                (data) => data.getTime()
+              )
+            )
+          )
+        : null;
+
+    const diasSemMovimentacao =
+      ultimaMovimentacao
+        ? Math.floor(
+            (Date.now() -
+              ultimaMovimentacao.getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+        : null;
+
+    let atividade = "SEM_MOVIMENTACAO";
+
+    if (diasSemMovimentacao !== null) {
+      if (diasSemMovimentacao <= 30) {
+        atividade = "RECENTE";
+      } else if (diasSemMovimentacao <= 90) {
+        atividade = "ATENCAO";
+      } else {
+        atividade = "INATIVA";
+      }
+    }
+
     return res.status(200).json({
       comunidade: {
         id: comunidade.id,
@@ -117,8 +196,21 @@ export const detalharComunidade = async (
         createdAt: comunidade.createdAt,
       },
 
-      totalUsuarios: usuarios.length,
-      totalDizimistas,
+      indicadores: {
+        totalUsuarios: usuarios.length,
+        totalDizimistas,
+        valorAtualRegistrado:
+          Number(valorAtualRegistrado || 0),
+        totalRegistrosMensais,
+        ultimoRegistroData:
+          ultimoRegistroData || null,
+        ultimaMovimentacao:
+          ultimaMovimentacao
+            ? ultimaMovimentacao.toISOString()
+            : null,
+        diasSemMovimentacao,
+        atividade,
+      },
 
       usuarios: usuarios.map((usuario) => ({
         id: usuario.id,

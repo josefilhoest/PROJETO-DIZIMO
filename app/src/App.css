@@ -2692,6 +2692,53 @@ tfoot td:nth-child(3) {
 }
 
 /* ========================================
+   INDICADORES GERENCIAIS DA COMUNIDADE
+   ======================================== */
+
+.admin-indicador-gerencial {
+  background: #ffffff;
+}
+
+.admin-indicadores-aviso {
+  margin-top: 16px;
+  padding: 11px 13px;
+  border: 1px solid #dbe4ee;
+  border-radius: 9px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.admin-atividade {
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 11px !important;
+  font-weight: 800;
+}
+
+.admin-atividade-RECENTE {
+  background: #dcfce7;
+  color: #166534 !important;
+}
+
+.admin-atividade-ATENCAO {
+  background: #fef3c7;
+  color: #92400e !important;
+}
+
+.admin-atividade-INATIVA {
+  background: #fee2e2;
+  color: #991b1b !important;
+}
+
+.admin-atividade-SEM_MOVIMENTACAO {
+  background: #e2e8f0;
+  color: #475569 !important;
+}
+
+/* ========================================
    REFINOS DOS DETALHES DA COMUNIDADE
    ======================================== */
 
