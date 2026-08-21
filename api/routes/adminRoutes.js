@@ -6,6 +6,7 @@ import { somenteSuperAdmin } from "../middlewares/adminMiddleware.js";
 
 import {
   listarComunidades,
+  detalharComunidade,
   alterarStatusComunidade,
   listarUsuarios,
   cadastrarUsuarioAdmin,
@@ -44,6 +45,17 @@ router.get(
   autenticar,
   somenteSuperAdmin,
   listarComunidades
+);
+
+// ========================================
+// DETALHAR UMA COMUNIDADE
+// ========================================
+
+router.get(
+  "/comunidades/:id",
+  autenticar,
+  somenteSuperAdmin,
+  detalharComunidade
 );
 
 // ========================================

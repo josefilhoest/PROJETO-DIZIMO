@@ -54,6 +54,96 @@ export const listarComunidades = async (req, res) => {
 };
 
 // ========================================
+// DETALHAR UMA COMUNIDADE
+// ========================================
+
+export const detalharComunidade = async (
+  req,
+  res
+) => {
+  try {
+    const { id } = req.params;
+
+    const comunidadeId = Number(id);
+
+    if (
+      !Number.isInteger(comunidadeId) ||
+      comunidadeId <= 0
+    ) {
+      return res.status(400).json({
+        erro: "ID da comunidade inválido.",
+      });
+    }
+
+    const comunidade =
+      await Comunidade.findByPk(comunidadeId);
+
+    if (!comunidade) {
+      return res.status(404).json({
+        erro: "Comunidade não encontrada.",
+      });
+    }
+
+    const usuarios = await Usuario.findAll({
+      where: {
+        comunidadeId,
+      },
+      attributes: [
+        "id",
+        "nome",
+        "email",
+        "perfil",
+        "ativo",
+        "licencaStatus",
+        "createdAt",
+      ],
+      order: [["nome", "ASC"]],
+    });
+
+    const totalDizimistas =
+      await Dizimista.count({
+        where: {
+          comunidadeId,
+        },
+      });
+
+    return res.status(200).json({
+      comunidade: {
+        id: comunidade.id,
+        nome: comunidade.nome,
+        paroquia: comunidade.paroquia,
+        cidade: comunidade.cidade,
+        ativa: comunidade.ativa,
+        createdAt: comunidade.createdAt,
+      },
+
+      totalUsuarios: usuarios.length,
+      totalDizimistas,
+
+      usuarios: usuarios.map((usuario) => ({
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        perfil: usuario.perfil,
+        ativo: usuario.ativo,
+        licencaStatus: usuario.licencaStatus,
+        createdAt: usuario.createdAt,
+      })),
+    });
+  } catch (error) {
+    console.error(
+      "Erro ao detalhar comunidade:",
+      error
+    );
+
+    return res.status(500).json({
+      erro:
+        "Erro ao carregar os detalhes da comunidade.",
+    });
+  }
+};
+
+// ========================================
 // ALTERAR STATUS DA COMUNIDADE
 // ========================================
 

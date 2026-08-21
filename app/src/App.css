@@ -2484,6 +2484,214 @@ tfoot td:nth-child(3) {
 }
 
 /* ========================================
+   DETALHES DA COMUNIDADE
+   ======================================== */
+
+.admin-detalhes-comunidade {
+  margin-bottom: 20px;
+  padding: 18px;
+  border: 1px solid #dbe4ee;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.admin-detalhes-cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.admin-detalhes-legenda {
+  display: block;
+  margin-bottom: 4px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-detalhes-cabecalho h4 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 20px;
+}
+
+.admin-detalhes-fechar {
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-detalhes-fechar:hover {
+  background: #eef2f7;
+}
+
+.admin-detalhes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-detalhes-item {
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.admin-detalhes-item > span:first-child {
+  display: block;
+  margin-bottom: 6px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.admin-detalhes-item strong {
+  display: inline-block;
+  max-width: 100%;
+  color: #1e293b;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.admin-detalhes-usuarios {
+  margin-top: 18px;
+}
+
+.admin-detalhes-usuarios h5 {
+  margin: 0 0 10px;
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.admin-detalhes-usuarios-lista {
+  display: grid;
+  gap: 9px;
+}
+
+.admin-detalhes-usuario {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 13px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.admin-detalhes-usuario > div:first-child {
+  min-width: 0;
+}
+
+.admin-detalhes-usuario strong {
+  display: block;
+  color: #1e293b;
+  font-size: 13px;
+}
+
+.admin-detalhes-usuario > div:first-child span {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.admin-detalhes-usuario-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.admin-acoes-comunidade {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.btn-detalhes-comunidade {
+  min-height: 32px;
+  padding: 7px 11px;
+  border: 0;
+  border-radius: 7px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.btn-detalhes-comunidade:hover {
+  background: #1d4ed8;
+}
+
+.btn-detalhes-comunidade:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .admin-detalhes-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .admin-detalhes-comunidade {
+    padding: 14px;
+  }
+
+  .admin-detalhes-cabecalho {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-detalhes-fechar {
+    width: 100%;
+  }
+
+  .admin-detalhes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-detalhes-usuario {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-detalhes-usuario-status {
+    justify-content: flex-start;
+  }
+
+  .admin-acoes-comunidade {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-acoes-comunidade button,
+  .admin-acoes-comunidade .admin-sem-acao {
+    width: 100%;
+  }
+}
+
+/* ========================================
    BUSCA E FILTRO DE COMUNIDADES
    ======================================== */
 

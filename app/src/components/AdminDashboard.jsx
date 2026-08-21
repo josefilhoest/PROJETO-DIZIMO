@@ -148,6 +148,21 @@ function AdminDashboard() {
         setComunidadeAlterando,
     ] = useState(null);
 
+    const [
+        comunidadeDetalhada,
+        setComunidadeDetalhada,
+    ] = useState(null);
+
+    const [
+        carregandoDetalhesComunidade,
+        setCarregandoDetalhesComunidade,
+    ] = useState(false);
+
+    const [
+        erroDetalhesComunidade,
+        setErroDetalhesComunidade,
+    ] = useState("");
+
     // ========================================
     // CARREGAR RESUMO DO DASHBOARD
     // ========================================
@@ -609,6 +624,51 @@ function AdminDashboard() {
         } finally {
             setSalvandoEdicaoUsuario(false);
         }
+    };
+
+    // ========================================
+    // ABRIR DETALHES DA COMUNIDADE
+    // ========================================
+
+    const abrirDetalhesComunidade = async (
+        comunidade
+    ) => {
+        try {
+            setCarregandoDetalhesComunidade(true);
+            setErroDetalhesComunidade("");
+            setComunidadeDetalhada(null);
+
+            const resposta = await api.get(
+                `/admin/comunidades/${comunidade.id}`
+            );
+
+            setComunidadeDetalhada(
+                resposta.data
+            );
+        } catch (error) {
+            console.error(
+                "Erro ao carregar detalhes da comunidade:",
+                error
+            );
+
+            const mensagem =
+                error.response?.data?.erro ||
+                "Não foi possível carregar os detalhes da comunidade.";
+
+            setErroDetalhesComunidade(mensagem);
+        } finally {
+            setCarregandoDetalhesComunidade(false);
+        }
+    };
+
+    // ========================================
+    // FECHAR DETALHES DA COMUNIDADE
+    // ========================================
+
+    const fecharDetalhesComunidade = () => {
+        setComunidadeDetalhada(null);
+        setErroDetalhesComunidade("");
+        setCarregandoDetalhesComunidade(false);
     };
 
     // ========================================
@@ -1199,6 +1259,186 @@ function AdminDashboard() {
                         Gerenciamento de Comunidades
                     </h3>
 
+                    {(carregandoDetalhesComunidade ||
+                        erroDetalhesComunidade ||
+                        comunidadeDetalhada) && (
+                        <div className="admin-detalhes-comunidade">
+
+                            <div className="admin-detalhes-cabecalho">
+                                <div>
+                                    <span className="admin-detalhes-legenda">
+                                        Detalhes da comunidade
+                                    </span>
+
+                                    <h4>
+                                        {comunidadeDetalhada
+                                            ?.comunidade?.nome ||
+                                            "Carregando..."}
+                                    </h4>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    className="admin-detalhes-fechar"
+                                    onClick={
+                                        fecharDetalhesComunidade
+                                    }
+                                >
+                                    Fechar
+                                </button>
+                            </div>
+
+                            {carregandoDetalhesComunidade && (
+                                <p>
+                                    Carregando detalhes...
+                                </p>
+                            )}
+
+                            {erroDetalhesComunidade && (
+                                <p className="admin-erro">
+                                    {erroDetalhesComunidade}
+                                </p>
+                            )}
+
+                            {!carregandoDetalhesComunidade &&
+                                !erroDetalhesComunidade &&
+                                comunidadeDetalhada && (
+                                    <>
+                                        <div className="admin-detalhes-grid">
+
+                                            <div className="admin-detalhes-item">
+                                                <span>Nome</span>
+                                                <strong>
+                                                    {comunidadeDetalhada
+                                                        .comunidade
+                                                        ?.nome || "-"}
+                                                </strong>
+                                            </div>
+
+                                            <div className="admin-detalhes-item">
+                                                <span>Paróquia</span>
+                                                <strong>
+                                                    {comunidadeDetalhada
+                                                        .comunidade
+                                                        ?.paroquia || "-"}
+                                                </strong>
+                                            </div>
+
+                                            <div className="admin-detalhes-item">
+                                                <span>Cidade</span>
+                                                <strong>
+                                                    {comunidadeDetalhada
+                                                        .comunidade
+                                                        ?.cidade || "-"}
+                                                </strong>
+                                            </div>
+
+                                            <div className="admin-detalhes-item">
+                                                <span>Status</span>
+
+                                                {comunidadeDetalhada
+                                                    .comunidade
+                                                    ?.ativa ? (
+                                                    <strong className="status-ativo">
+                                                        Ativa
+                                                    </strong>
+                                                ) : (
+                                                    <strong className="status-inativo">
+                                                        Inativa
+                                                    </strong>
+                                                )}
+                                            </div>
+
+                                            <div className="admin-detalhes-item">
+                                                <span>Usuários</span>
+                                                <strong>
+                                                    {comunidadeDetalhada
+                                                        .totalUsuarios ?? 0}
+                                                </strong>
+                                            </div>
+
+                                            <div className="admin-detalhes-item">
+                                                <span>Dizimistas</span>
+                                                <strong>
+                                                    {comunidadeDetalhada
+                                                        .totalDizimistas ?? 0}
+                                                </strong>
+                                            </div>
+
+                                        </div>
+
+                                        <div className="admin-detalhes-usuarios">
+
+                                            <h5>
+                                                Usuários vinculados
+                                            </h5>
+
+                                            {comunidadeDetalhada
+                                                .usuarios?.length > 0 ? (
+                                                <div className="admin-detalhes-usuarios-lista">
+                                                    {comunidadeDetalhada
+                                                        .usuarios.map(
+                                                            (usuario) => (
+                                                                <div
+                                                                    className="admin-detalhes-usuario"
+                                                                    key={
+                                                                        usuario.id
+                                                                    }
+                                                                >
+                                                                    <div>
+                                                                        <strong>
+                                                                            {
+                                                                                usuario.nome
+                                                                            }
+                                                                        </strong>
+                                                                        <span>
+                                                                            {
+                                                                                usuario.email
+                                                                            }
+                                                                        </span>
+                                                                    </div>
+
+                                                                    <div className="admin-detalhes-usuario-status">
+                                                                        {usuario.ativo ? (
+                                                                            <span className="status-ativo">
+                                                                                Ativo
+                                                                            </span>
+                                                                        ) : (
+                                                                            <span className="status-inativo">
+                                                                                Inativo
+                                                                            </span>
+                                                                        )}
+
+                                                                        {usuario.licencaStatus ===
+                                                                        "ATIVA" ? (
+                                                                            <span className="licenca-ativa">
+                                                                                ATIVA
+                                                                            </span>
+                                                                        ) : (
+                                                                            <span className="licenca-bloqueada">
+                                                                                {usuario.licencaStatus ||
+                                                                                    "SEM STATUS"}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            )
+                                                        )}
+                                                </div>
+                                            ) : (
+                                                <p>
+                                                    Nenhum usuário vinculado
+                                                    a esta comunidade.
+                                                </p>
+                                            )}
+
+                                        </div>
+                                    </>
+                                )}
+
+                        </div>
+                    )}
+
                     <div className="admin-filtros-comunidades">
                         <div className="admin-busca">
                             <input
@@ -1362,49 +1602,68 @@ function AdminDashboard() {
 
                                                         <td>
 
-                                                            {ehComunidadeDoSuperAdmin ? (
-                                                                <span className="admin-sem-acao">
-                                                                    Protegida
-                                                                </span>
-                                                            ) : comunidade.ativa ? (
+                                                            <div className="admin-acoes-comunidade">
 
                                                                 <button
                                                                     type="button"
-                                                                    className="btn-bloquear-licenca"
+                                                                    className="btn-detalhes-comunidade"
                                                                     disabled={
-                                                                        alterando
+                                                                        carregandoDetalhesComunidade
                                                                     }
                                                                     onClick={() =>
-                                                                        desativarComunidade(
+                                                                        abrirDetalhesComunidade(
                                                                             comunidade
                                                                         )
                                                                     }
                                                                 >
-                                                                    {alterando
-                                                                        ? "Alterando..."
-                                                                        : "Desativar"}
+                                                                    Detalhes
                                                                 </button>
 
-                                                            ) : (
+                                                                {ehComunidadeDoSuperAdmin ? (
+                                                                    <span className="admin-sem-acao">
+                                                                        Protegida
+                                                                    </span>
+                                                                ) : comunidade.ativa ? (
 
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn-reativar-licenca"
-                                                                    disabled={
-                                                                        alterando
-                                                                    }
-                                                                    onClick={() =>
-                                                                        reativarComunidade(
-                                                                            comunidade
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    {alterando
-                                                                        ? "Alterando..."
-                                                                        : "Reativar"}
-                                                                </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        className="btn-bloquear-licenca"
+                                                                        disabled={
+                                                                            alterando
+                                                                        }
+                                                                        onClick={() =>
+                                                                            desativarComunidade(
+                                                                                comunidade
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        {alterando
+                                                                            ? "Alterando..."
+                                                                            : "Desativar"}
+                                                                    </button>
 
-                                                            )}
+                                                                ) : (
+
+                                                                    <button
+                                                                        type="button"
+                                                                        className="btn-reativar-licenca"
+                                                                        disabled={
+                                                                            alterando
+                                                                        }
+                                                                        onClick={() =>
+                                                                            reativarComunidade(
+                                                                                comunidade
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        {alterando
+                                                                            ? "Alterando..."
+                                                                            : "Reativar"}
+                                                                    </button>
+
+                                                                )}
+
+                                                            </div>
 
                                                         </td>
 
