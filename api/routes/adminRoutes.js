@@ -10,6 +10,7 @@ import {
   listarUsuarios,
   cadastrarUsuarioAdmin,
   editarUsuarioAdmin,
+  redefinirSenhaUsuarioAdmin,
   alterarStatusUsuario,
   alterarLicencaUsuario,
   resumoDashboard,
@@ -86,6 +87,17 @@ router.patch(
   autenticar,
   somenteSuperAdmin,
   editarUsuarioAdmin
+);
+
+// ========================================
+// REDEFINIR SENHA DE UM USUÁRIO
+// ========================================
+
+router.patch(
+  "/usuarios/:id/senha",
+  autenticar,
+  somenteSuperAdmin,
+  redefinirSenhaUsuarioAdmin
 );
 
 // ========================================

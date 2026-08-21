@@ -406,6 +406,83 @@ export const editarUsuarioAdmin = async (
 };
 
 // ========================================
+// REDEFINIR SENHA DO USUÁRIO PELO SUPER ADMIN
+// ========================================
+
+export const redefinirSenhaUsuarioAdmin = async (
+  req,
+  res
+) => {
+  try {
+    const { id } = req.params;
+    const { novaSenha } = req.body;
+
+    if (!novaSenha) {
+      return res.status(400).json({
+        erro: "A nova senha é obrigatória.",
+      });
+    }
+
+    if (novaSenha.length < 6) {
+      return res.status(400).json({
+        erro:
+          "A nova senha deve ter pelo menos 6 caracteres.",
+      });
+    }
+
+    const usuario = await Usuario.findByPk(id);
+
+    if (!usuario) {
+      return res.status(404).json({
+        erro: "Usuário não encontrado.",
+      });
+    }
+
+    // Protege qualquer SUPER_ADMIN contra redefinição
+    // de senha por esta rota administrativa.
+    if (usuario.perfil === "SUPER_ADMIN") {
+      return res.status(403).json({
+        erro:
+          "A senha do usuário SUPER_ADMIN não pode ser redefinida por esta rota.",
+      });
+    }
+
+    const senhaHash = await bcrypt.hash(
+      novaSenha,
+      10
+    );
+
+    usuario.senha = senhaHash;
+
+    await usuario.save();
+
+    return res.status(200).json({
+      mensagem:
+        "Senha do usuário redefinida com sucesso.",
+      usuario: {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        perfil: usuario.perfil,
+        comunidadeId: usuario.comunidadeId,
+        ativo: usuario.ativo,
+        licencaStatus: usuario.licencaStatus,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Erro ao redefinir senha do usuário:",
+      error
+    );
+
+    return res.status(500).json({
+      erro:
+        "Erro ao redefinir a senha do usuário.",
+    });
+  }
+};
+
+// ========================================
 // ALTERAR STATUS DO USUÁRIO
 // ========================================
 

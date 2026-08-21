@@ -66,6 +66,11 @@ function AdminDashboard() {
     const [mostrarSenha, setMostrarSenha] =
         useState(false);
 
+    const [
+        mostrarSenhaEdicao,
+        setMostrarSenhaEdicao,
+    ] = useState(false);
+
     const [novoUsuario, setNovoUsuario] =
         useState({
             nome: "",
@@ -98,6 +103,8 @@ function AdminDashboard() {
             perfil: "",
             comunidadeId: null,
             comunidadeNome: "",
+            novaSenha: "",
+            confirmarNovaSenha: "",
         });
 
     const [
@@ -372,6 +379,7 @@ function AdminDashboard() {
     const iniciarEdicaoUsuario = (usuario) => {
         setMostrarFormularioUsuario(false);
         setMostrarSenha(false);
+        setMostrarSenhaEdicao(false);
 
         setNovoUsuario({
             nome: "",
@@ -395,6 +403,8 @@ function AdminDashboard() {
             comunidadeNome:
                 usuario.comunidadeNome ||
                 "Sem comunidade",
+            novaSenha: "",
+            confirmarNovaSenha: "",
         });
     };
 
@@ -425,6 +435,7 @@ function AdminDashboard() {
 
     const cancelarEdicaoUsuario = () => {
         setUsuarioEmEdicao(null);
+        setMostrarSenhaEdicao(false);
 
         setDadosEdicaoUsuario({
             nome: "",
@@ -432,6 +443,8 @@ function AdminDashboard() {
             perfil: "",
             comunidadeId: null,
             comunidadeNome: "",
+            novaSenha: "",
+            confirmarNovaSenha: "",
         });
 
         setErroUsuarios("");
@@ -468,12 +481,47 @@ function AdminDashboard() {
             return;
         }
 
+        const novaSenha =
+            dadosEdicaoUsuario.novaSenha;
+        const confirmarNovaSenha =
+            dadosEdicaoUsuario.confirmarNovaSenha;
+
+        const informouAlgumaSenha =
+            novaSenha.length > 0 ||
+            confirmarNovaSenha.length > 0;
+
+        if (informouAlgumaSenha) {
+            if (
+                novaSenha.length === 0 ||
+                confirmarNovaSenha.length === 0
+            ) {
+                setErroUsuarios(
+                    "Preencha a nova senha e a confirmação."
+                );
+                return;
+            }
+
+            if (novaSenha.length < 6) {
+                setErroUsuarios(
+                    "A nova senha deve ter pelo menos 6 caracteres."
+                );
+                return;
+            }
+
+            if (novaSenha !== confirmarNovaSenha) {
+                setErroUsuarios(
+                    "As novas senhas não coincidem."
+                );
+                return;
+            }
+        }
+
         try {
             setSalvandoEdicaoUsuario(true);
             setErroUsuarios("");
             setMensagemUsuario("");
 
-            const resposta = await api.patch(
+            const respostaUsuario = await api.patch(
                 `/admin/usuarios/${usuarioEmEdicao.id}`,
                 {
                     nome: dadosEdicaoUsuario.nome.trim(),
@@ -484,7 +532,7 @@ function AdminDashboard() {
             );
 
             const usuarioAtualizado =
-                resposta.data?.usuario;
+                respostaUsuario.data?.usuario;
 
             if (usuarioAtualizado) {
                 setUsuarios((usuariosAtuais) =>
@@ -501,12 +549,28 @@ function AdminDashboard() {
                 await carregarUsuarios();
             }
 
-            setMensagemUsuario(
-                resposta.data?.mensagem ||
-                "Usuário atualizado com sucesso."
-            );
+            let mensagemFinal =
+                respostaUsuario.data?.mensagem ||
+                "Usuário atualizado com sucesso.";
+
+            if (informouAlgumaSenha) {
+                const respostaSenha = await api.patch(
+                    `/admin/usuarios/${usuarioEmEdicao.id}/senha`,
+                    {
+                        novaSenha,
+                    }
+                );
+
+                mensagemFinal =
+                    respostaSenha.data?.mensagem
+                        ? "Dados e senha atualizados com sucesso."
+                        : "Dados e senha atualizados com sucesso.";
+            }
+
+            setMensagemUsuario(mensagemFinal);
 
             setUsuarioEmEdicao(null);
+            setMostrarSenhaEdicao(false);
 
             setDadosEdicaoUsuario({
                 nome: "",
@@ -514,6 +578,8 @@ function AdminDashboard() {
                 perfil: "",
                 comunidadeId: null,
                 comunidadeNome: "",
+                novaSenha: "",
+                confirmarNovaSenha: "",
             });
         } catch (error) {
             console.error(
@@ -1131,6 +1197,8 @@ function AdminDashboard() {
                                         perfil: "",
                                         comunidadeId: null,
                                         comunidadeNome: "",
+                                        novaSenha: "",
+                                        confirmarNovaSenha: "",
                                     });
                                 }
 
@@ -1385,6 +1453,81 @@ function AdminDashboard() {
                                         }
                                         disabled
                                     />
+                                </div>
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="editar-usuario-nova-senha">
+                                        Nova senha
+                                    </label>
+                                    <input
+                                        id="editar-usuario-nova-senha"
+                                        name="novaSenha"
+                                        type={
+                                            mostrarSenhaEdicao
+                                                ? "text"
+                                                : "password"
+                                        }
+                                        placeholder="Mínimo de 6 caracteres"
+                                        minLength={6}
+                                        value={
+                                            dadosEdicaoUsuario.novaSenha
+                                        }
+                                        onChange={
+                                            alterarCampoEdicaoUsuario
+                                        }
+                                        disabled={
+                                            salvandoEdicaoUsuario
+                                        }
+                                    />
+                                </div>
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="editar-usuario-confirmar-nova-senha">
+                                        Confirmar nova senha
+                                    </label>
+                                    <input
+                                        id="editar-usuario-confirmar-nova-senha"
+                                        name="confirmarNovaSenha"
+                                        type={
+                                            mostrarSenhaEdicao
+                                                ? "text"
+                                                : "password"
+                                        }
+                                        placeholder="Digite a nova senha novamente"
+                                        minLength={6}
+                                        value={
+                                            dadosEdicaoUsuario.confirmarNovaSenha
+                                        }
+                                        onChange={
+                                            alterarCampoEdicaoUsuario
+                                        }
+                                        disabled={
+                                            salvandoEdicaoUsuario
+                                        }
+                                    />
+                                </div>
+
+                                <div className="admin-form-campo admin-form-campo-senha-toggle">
+                                    <span className="admin-form-label-espaco">
+                                        Visualização da nova senha
+                                    </span>
+
+                                    <button
+                                        type="button"
+                                        className="btn-mostrar-senha"
+                                        onClick={() =>
+                                            setMostrarSenhaEdicao(
+                                                !mostrarSenhaEdicao
+                                            )
+                                        }
+                                        disabled={
+                                            salvandoEdicaoUsuario
+                                        }
+                                    >
+                                        {mostrarSenhaEdicao
+                                            ? "Ocultar senha"
+                                            : "Mostrar senha"}
+                                    </button>
                                 </div>
 
                             </div>
