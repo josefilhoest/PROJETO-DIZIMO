@@ -483,6 +483,78 @@ export const redefinirSenhaUsuarioAdmin = async (
 };
 
 // ========================================
+// EXCLUIR USUÁRIO SEM COMUNIDADE
+// ========================================
+
+export const excluirUsuarioAdmin = async (
+  req,
+  res
+) => {
+  try {
+    const { id } = req.params;
+
+    const usuario = await Usuario.findByPk(id);
+
+    if (!usuario) {
+      return res.status(404).json({
+        erro: "Usuário não encontrado.",
+      });
+    }
+
+    // Protege qualquer SUPER_ADMIN.
+    if (usuario.perfil === "SUPER_ADMIN") {
+      return res.status(403).json({
+        erro:
+          "O usuário SUPER_ADMIN é protegido e não pode ser excluído.",
+      });
+    }
+
+    // Protege a própria conta do usuário autenticado.
+    if (
+      Number(usuario.id) ===
+      Number(req.usuario.usuarioId)
+    ) {
+      return res.status(403).json({
+        erro:
+          "Você não pode excluir o próprio usuário.",
+      });
+    }
+
+    // Nesta etapa, somente usuários ainda sem comunidade
+    // podem ser excluídos permanentemente.
+    if (usuario.comunidadeId !== null) {
+      return res.status(409).json({
+        erro:
+          "Este usuário está vinculado a uma comunidade. Desative o usuário em vez de excluí-lo.",
+      });
+    }
+
+    const usuarioExcluido = {
+      id: usuario.id,
+      nome: usuario.nome,
+      email: usuario.email,
+    };
+
+    await usuario.destroy();
+
+    return res.status(200).json({
+      mensagem:
+        "Usuário excluído com sucesso.",
+      usuario: usuarioExcluido,
+    });
+  } catch (error) {
+    console.error(
+      "Erro ao excluir usuário:",
+      error
+    );
+
+    return res.status(500).json({
+      erro: "Erro ao excluir usuário.",
+    });
+  }
+};
+
+// ========================================
 // ALTERAR STATUS DO USUÁRIO
 // ========================================
 

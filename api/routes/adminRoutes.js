@@ -11,6 +11,7 @@ import {
   cadastrarUsuarioAdmin,
   editarUsuarioAdmin,
   redefinirSenhaUsuarioAdmin,
+  excluirUsuarioAdmin,
   alterarStatusUsuario,
   alterarLicencaUsuario,
   resumoDashboard,
@@ -98,6 +99,17 @@ router.patch(
   autenticar,
   somenteSuperAdmin,
   redefinirSenhaUsuarioAdmin
+);
+
+// ========================================
+// EXCLUIR USUÁRIO SEM COMUNIDADE
+// ========================================
+
+router.delete(
+  "/usuarios/:id",
+  autenticar,
+  somenteSuperAdmin,
+  excluirUsuarioAdmin
 );
 
 // ========================================

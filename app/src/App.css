@@ -2790,3 +2790,27 @@ tfoot td:nth-child(3) {
 .btn-editar-usuario:hover {
   background: #1d4ed8;
 }
+
+/* ========================================
+   BOTÃO EXCLUIR USUÁRIO
+======================================== */
+
+.btn-excluir-usuario {
+  border: none;
+  background: #b91c1c;
+  color: #ffffff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-excluir-usuario:hover {
+  background: #991b1b;
+}
+
+.btn-excluir-usuario:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

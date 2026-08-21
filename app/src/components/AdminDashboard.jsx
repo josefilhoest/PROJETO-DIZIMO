@@ -59,6 +59,11 @@ function AdminDashboard() {
     ] = useState(null);
 
     const [
+        usuarioExcluindo,
+        setUsuarioExcluindo,
+    ] = useState(null);
+
+    const [
         mostrarFormularioUsuario,
         setMostrarFormularioUsuario,
     ] = useState(false);
@@ -697,6 +702,109 @@ function AdminDashboard() {
             comunidade.id,
             true
         );
+    };
+
+    // ========================================
+    // EXCLUIR USUÁRIO SEM COMUNIDADE
+    // ========================================
+
+    const excluirUsuario = async (usuario) => {
+        if (usuario.perfil === "SUPER_ADMIN") {
+            setErroUsuarios(
+                "O usuário SUPER_ADMIN é protegido e não pode ser excluído."
+            );
+            return;
+        }
+
+        if (usuario.comunidadeId !== null) {
+            setErroUsuarios(
+                "Este usuário está vinculado a uma comunidade. Desative o usuário em vez de excluí-lo."
+            );
+            return;
+        }
+
+        const confirmar = window.confirm(
+            `Deseja realmente excluir permanentemente o usuário "${usuario.nome}"?\n\nEsta ação não poderá ser desfeita.`
+        );
+
+        if (!confirmar) {
+            return;
+        }
+
+        try {
+            setUsuarioExcluindo(usuario.id);
+            setErroUsuarios("");
+            setMensagemUsuario("");
+
+            const resposta = await api.delete(
+                `/admin/usuarios/${usuario.id}`
+            );
+
+            setUsuarios((usuariosAtuais) =>
+                usuariosAtuais.filter(
+                    (usuarioAtual) =>
+                        usuarioAtual.id !== usuario.id
+                )
+            );
+
+            if (
+                usuarioEmEdicao &&
+                usuarioEmEdicao.id === usuario.id
+            ) {
+                setUsuarioEmEdicao(null);
+                setMostrarSenhaEdicao(false);
+
+                setDadosEdicaoUsuario({
+                    nome: "",
+                    email: "",
+                    perfil: "",
+                    comunidadeId: null,
+                    comunidadeNome: "",
+                    novaSenha: "",
+                    confirmarNovaSenha: "",
+                });
+            }
+
+            setResumo((resumoAtual) => {
+                if (!resumoAtual) {
+                    return resumoAtual;
+                }
+
+                return {
+                    ...resumoAtual,
+                    totalUsuarios:
+                        Math.max(
+                            0,
+                            (resumoAtual.totalUsuarios ?? 0) - 1
+                        ),
+                    usuariosAtivos:
+                        usuario.ativo
+                            ? Math.max(
+                                0,
+                                (resumoAtual.usuariosAtivos ?? 0) - 1
+                              )
+                            : resumoAtual.usuariosAtivos,
+                };
+            });
+
+            setMensagemUsuario(
+                resposta.data?.mensagem ||
+                "Usuário excluído com sucesso."
+            );
+        } catch (error) {
+            console.error(
+                "Erro ao excluir usuário:",
+                error
+            );
+
+            const mensagem =
+                error.response?.data?.erro ||
+                "Não foi possível excluir o usuário.";
+
+            setErroUsuarios(mensagem);
+        } finally {
+            setUsuarioExcluindo(null);
+        }
     };
 
     // ========================================
@@ -1607,6 +1715,10 @@ function AdminDashboard() {
                                                     usuarioAlterandoLicenca ===
                                                     usuario.id;
 
+                                                const excluindo =
+                                                    usuarioExcluindo ===
+                                                    usuario.id;
+
                                                 const ehSuperAdmin =
                                                     usuario.perfil ===
                                                     "SUPER_ADMIN";
@@ -1678,6 +1790,7 @@ function AdminDashboard() {
                                                                         disabled={
                                                                             alterandoStatus ||
                                                                             alterandoLicenca ||
+                                                                            excluindo ||
                                                                             salvandoEdicaoUsuario
                                                                         }
                                                                         onClick={() =>
@@ -1697,7 +1810,8 @@ function AdminDashboard() {
                                                                             className="btn-desativar-usuario"
                                                                             disabled={
                                                                                 alterandoStatus ||
-                                                                                alterandoLicenca
+                                                                                alterandoLicenca ||
+                                                                                excluindo
                                                                             }
                                                                             onClick={() =>
                                                                                 desativarUsuario(
@@ -1715,7 +1829,8 @@ function AdminDashboard() {
                                                                             className="btn-ativar-usuario"
                                                                             disabled={
                                                                                 alterandoStatus ||
-                                                                                alterandoLicenca
+                                                                                alterandoLicenca ||
+                                                                                excluindo
                                                                             }
                                                                             onClick={() =>
                                                                                 reativarUsuario(
@@ -1738,7 +1853,8 @@ function AdminDashboard() {
                                                                             className="btn-bloquear-licenca"
                                                                             disabled={
                                                                                 alterandoStatus ||
-                                                                                alterandoLicenca
+                                                                                alterandoLicenca ||
+                                                                                excluindo
                                                                             }
                                                                             onClick={() =>
                                                                                 bloquearLicenca(
@@ -1756,7 +1872,8 @@ function AdminDashboard() {
                                                                             className="btn-reativar-licenca"
                                                                             disabled={
                                                                                 alterandoStatus ||
-                                                                                alterandoLicenca
+                                                                                alterandoLicenca ||
+                                                                                excluindo
                                                                             }
                                                                             onClick={() =>
                                                                                 reativarLicenca(
@@ -1767,6 +1884,30 @@ function AdminDashboard() {
                                                                             {alterandoLicenca
                                                                                 ? "Alterando..."
                                                                                 : "Licença"}
+                                                                        </button>
+                                                                    )}
+
+                                                                    {/* EXCLUSÃO PERMANENTE */}
+
+                                                                    {usuario.comunidadeId === null && (
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn-excluir-usuario"
+                                                                            disabled={
+                                                                                alterandoStatus ||
+                                                                                alterandoLicenca ||
+                                                                                excluindo ||
+                                                                                salvandoEdicaoUsuario
+                                                                            }
+                                                                            onClick={() =>
+                                                                                excluirUsuario(
+                                                                                    usuario
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            {excluindo
+                                                                                ? "Excluindo..."
+                                                                                : "Excluir"}
                                                                         </button>
                                                                     )}
 
