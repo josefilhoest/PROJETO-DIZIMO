@@ -38,6 +38,15 @@ function AdminDashboard() {
     const [usuarios, setUsuarios] =
         useState([]);
 
+    const [buscaUsuario, setBuscaUsuario] =
+        useState("");
+
+    const [filtroStatusUsuario, setFiltroStatusUsuario] =
+        useState("TODOS");
+
+    const [filtroLicencaUsuario, setFiltroLicencaUsuario] =
+        useState("TODAS");
+
     const [
         carregandoUsuarios,
         setCarregandoUsuarios,
@@ -782,7 +791,7 @@ function AdminDashboard() {
                             ? Math.max(
                                 0,
                                 (resumoAtual.usuariosAtivos ?? 0) - 1
-                              )
+                            )
                             : resumoAtual.usuariosAtivos,
                 };
             });
@@ -986,6 +995,62 @@ function AdminDashboard() {
             usuario.id,
             "ATIVA"
         );
+    };
+
+    // ========================================
+    // FILTRAR USUÁRIOS
+    // ========================================
+
+    const termoBuscaUsuario =
+        buscaUsuario.trim().toLowerCase();
+
+    const usuariosFiltrados = usuarios.filter(
+        (usuario) => {
+            const nome =
+                usuario.nome?.toLowerCase() || "";
+
+            const email =
+                usuario.email?.toLowerCase() || "";
+
+            const comunidade =
+                usuario.comunidadeNome
+                    ?.toLowerCase() || "";
+
+            const correspondeBusca =
+                !termoBuscaUsuario ||
+                nome.includes(termoBuscaUsuario) ||
+                email.includes(termoBuscaUsuario) ||
+                comunidade.includes(termoBuscaUsuario);
+
+            const correspondeStatus =
+                filtroStatusUsuario === "TODOS" ||
+                (filtroStatusUsuario === "ATIVOS" &&
+                    usuario.ativo) ||
+                (filtroStatusUsuario === "INATIVOS" &&
+                    !usuario.ativo);
+
+            const correspondeLicenca =
+                filtroLicencaUsuario === "TODAS" ||
+                usuario.licencaStatus ===
+                    filtroLicencaUsuario;
+
+            return (
+                correspondeBusca &&
+                correspondeStatus &&
+                correspondeLicenca
+            );
+        }
+    );
+
+    const filtrosUsuariosAtivos =
+        buscaUsuario.trim() !== "" ||
+        filtroStatusUsuario !== "TODOS" ||
+        filtroLicencaUsuario !== "TODAS";
+
+    const limparFiltrosUsuarios = () => {
+        setBuscaUsuario("");
+        setFiltroStatusUsuario("TODOS");
+        setFiltroLicencaUsuario("TODAS");
     };
 
     // ========================================
@@ -1331,6 +1396,84 @@ function AdminDashboard() {
                                 ? "Cancelar"
                                 : "+ Novo Usuário"}
                         </button>
+                    </div>
+
+                    <div className="admin-filtros-usuarios">
+                        <div className="admin-busca">
+                            <input
+                                type="search"
+                                placeholder="Buscar por nome, e-mail ou comunidade..."
+                                value={buscaUsuario}
+                                onChange={(event) =>
+                                    setBuscaUsuario(
+                                        event.target.value
+                                    )
+                                }
+                                aria-label="Buscar usuários"
+                            />
+                        </div>
+
+                        <div className="admin-filtro-campo">
+                            <label htmlFor="filtro-status-usuario">
+                                Status
+                            </label>
+
+                            <select
+                                id="filtro-status-usuario"
+                                value={filtroStatusUsuario}
+                                onChange={(event) =>
+                                    setFiltroStatusUsuario(
+                                        event.target.value
+                                    )
+                                }
+                            >
+                                <option value="TODOS">
+                                    Todos
+                                </option>
+                                <option value="ATIVOS">
+                                    Ativos
+                                </option>
+                                <option value="INATIVOS">
+                                    Inativos
+                                </option>
+                            </select>
+                        </div>
+
+                        <div className="admin-filtro-campo">
+                            <label htmlFor="filtro-licenca-usuario">
+                                Licença
+                            </label>
+
+                            <select
+                                id="filtro-licenca-usuario"
+                                value={filtroLicencaUsuario}
+                                onChange={(event) =>
+                                    setFiltroLicencaUsuario(
+                                        event.target.value
+                                    )
+                                }
+                            >
+                                <option value="TODAS">
+                                    Todas
+                                </option>
+                                <option value="ATIVA">
+                                    Ativa
+                                </option>
+                                <option value="BLOQUEADA">
+                                    Bloqueada
+                                </option>
+                            </select>
+                        </div>
+
+                        {filtrosUsuariosAtivos && (
+                            <button
+                                type="button"
+                                className="admin-busca-limpar"
+                                onClick={limparFiltrosUsuarios}
+                            >
+                                Limpar filtros
+                            </button>
+                        )}
                     </div>
 
                     {mensagemUsuario && (
@@ -1680,12 +1823,22 @@ function AdminDashboard() {
                         !erroUsuarios &&
                         usuarios.length === 0 && (
                             <p>
-                                Nenhum usuário encontrado.
+                                Nenhum usuário cadastrado.
                             </p>
                         )}
 
                     {!carregandoUsuarios &&
-                        usuarios.length > 0 && (
+                        !erroUsuarios &&
+                        usuarios.length > 0 &&
+                        usuariosFiltrados.length === 0 && (
+                            <p className="admin-sem-resultados">
+                                Nenhum usuário corresponde aos
+                                filtros selecionados.
+                            </p>
+                        )}
+
+                    {!carregandoUsuarios &&
+                        usuariosFiltrados.length > 0 && (
 
                             <div className="admin-tabela-wrapper">
 
@@ -1705,7 +1858,7 @@ function AdminDashboard() {
 
                                     <tbody>
 
-                                        {usuarios.map(
+                                        {usuariosFiltrados.map(
                                             (usuario) => {
                                                 const alterandoStatus =
                                                     usuarioAlterandoStatus ===
