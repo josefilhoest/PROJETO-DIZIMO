@@ -604,7 +604,7 @@ function AdminDashboard() {
             if (usuarioAtualizado) {
                 setUsuarios((usuariosAtuais) =>
                     usuariosAtuais.map((usuario) =>
-                        usuario.id === usuarioAtualizado.id
+                        Number(usuario.id) === Number(usuarioAtualizado.id)
                             ? {
                                 ...usuario,
                                 ...usuarioAtualizado,
@@ -629,9 +629,7 @@ function AdminDashboard() {
                 );
 
                 mensagemFinal =
-                    respostaSenha.data?.mensagem
-                        ? "Dados e senha atualizados com sucesso."
-                        : "Dados e senha atualizados com sucesso.";
+                    "Dados e senha atualizados com sucesso.";
             }
 
             setMensagemUsuario(mensagemFinal);
@@ -731,7 +729,7 @@ function AdminDashboard() {
             setComunidades((comunidadesAtuais) =>
                 comunidadesAtuais.map(
                     (comunidade) =>
-                        comunidade.id === comunidadeId
+                        Number(comunidade.id) === Number(comunidadeId)
                             ? {
                                 ...comunidade,
                                 ativa: novoStatus,
@@ -739,6 +737,24 @@ function AdminDashboard() {
                             : comunidade
                 )
             );
+
+            setComunidadeDetalhada((detalhesAtuais) => {
+                if (
+                    !detalhesAtuais?.comunidade ||
+                    Number(detalhesAtuais.comunidade.id) !==
+                        Number(comunidadeId)
+                ) {
+                    return detalhesAtuais;
+                }
+
+                return {
+                    ...detalhesAtuais,
+                    comunidade: {
+                        ...detalhesAtuais.comunidade,
+                        ativa: novoStatus,
+                    },
+                };
+            });
 
             setResumo((resumoAtual) => {
                 if (!resumoAtual) {
@@ -748,9 +764,11 @@ function AdminDashboard() {
                 return {
                     ...resumoAtual,
 
-                    comunidadesAtivas:
-                        resumoAtual.comunidadesAtivas +
-                        (novoStatus ? 1 : -1),
+                    comunidadesAtivas: Math.max(
+                        0,
+                        (resumoAtual.comunidadesAtivas ?? 0) +
+                        (novoStatus ? 1 : -1)
+                    ),
                 };
             });
         } catch (error) {
@@ -850,13 +868,13 @@ function AdminDashboard() {
             setUsuarios((usuariosAtuais) =>
                 usuariosAtuais.filter(
                     (usuarioAtual) =>
-                        usuarioAtual.id !== usuario.id
+                        Number(usuarioAtual.id) !== Number(usuario.id)
                 )
             );
 
             if (
                 usuarioEmEdicao &&
-                usuarioEmEdicao.id === usuario.id
+                Number(usuarioEmEdicao.id) === Number(usuario.id)
             ) {
                 setUsuarioEmEdicao(null);
                 setMostrarSenhaEdicao(false);
@@ -935,7 +953,7 @@ function AdminDashboard() {
 
             setUsuarios((usuariosAtuais) =>
                 usuariosAtuais.map((usuario) =>
-                    usuario.id === usuarioId
+                    Number(usuario.id) === Number(usuarioId)
                         ? {
                             ...usuario,
                             ativo: novoStatus,
@@ -952,9 +970,11 @@ function AdminDashboard() {
                 return {
                     ...resumoAtual,
 
-                    usuariosAtivos:
-                        resumoAtual.usuariosAtivos +
-                        (novoStatus ? 1 : -1),
+                    usuariosAtivos: Math.max(
+                        0,
+                        (resumoAtual.usuariosAtivos ?? 0) +
+                        (novoStatus ? 1 : -1)
+                    ),
                 };
             });
         } catch (error) {
@@ -1032,7 +1052,7 @@ function AdminDashboard() {
 
             setUsuarios((usuariosAtuais) =>
                 usuariosAtuais.map((usuario) =>
-                    usuario.id === usuarioId
+                    Number(usuario.id) === Number(usuarioId)
                         ? {
                             ...usuario,
                             licencaStatus:
@@ -2491,7 +2511,7 @@ function AdminDashboard() {
                                                                         >
                                                                             {alterandoLicenca
                                                                                 ? "Alterando..."
-                                                                                : "Licença"}
+                                                                                : "Reativar licença"}
                                                                         </button>
                                                                     )}
 
