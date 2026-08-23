@@ -8,6 +8,9 @@ import AdminDashboard from "./components/AdminDashboard";
 import "./App.css";
 
 function App() {
+  // ========================================
+  // USUÁRIO LOGADO
+  // ========================================
   const [usuario, setUsuario] = useState(() => {
     const usuarioSalvo = localStorage.getItem("usuario");
 
@@ -18,49 +21,92 @@ function App() {
     try {
       return JSON.parse(usuarioSalvo);
     } catch {
+      localStorage.removeItem("usuario");
+      localStorage.removeItem("token");
       return null;
     }
   });
 
-  const [telaAcesso, setTelaAcesso] = useState("login");
+  // ========================================
+  // TELA DO USUÁRIO LOGADO
+  // sistema | admin
+  // ========================================
   const [telaLogada, setTelaLogada] = useState("sistema");
 
+  // ========================================
+  // LOGIN CONCLUÍDO
+  // ========================================
+  const entrar = (dadosUsuario) => {
+    if (!dadosUsuario) {
+      return;
+    }
+
+    localStorage.setItem(
+      "usuario",
+      JSON.stringify(dadosUsuario)
+    );
+
+    setUsuario(dadosUsuario);
+    setTelaLogada("sistema");
+  };
+
+  // ========================================
+  // CADASTRO DA COMUNIDADE CONCLUÍDO
+  // ========================================
+  const comunidadeCadastrada = (dadosUsuarioAtualizados) => {
+    if (!dadosUsuarioAtualizados) {
+      return;
+    }
+
+    localStorage.setItem(
+      "usuario",
+      JSON.stringify(dadosUsuarioAtualizados)
+    );
+
+    setUsuario(dadosUsuarioAtualizados);
+    setTelaLogada("sistema");
+  };
+
+  // ========================================
+  // SAIR DO SISTEMA
+  // ========================================
   const sair = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("usuario");
 
     setUsuario(null);
-    setTelaAcesso("login");
     setTelaLogada("sistema");
   };
 
   // ========================================
   // USUÁRIO NÃO LOGADO
   // ========================================
-
   if (!usuario) {
-    if (telaAcesso === "cadastro") {
-      return (
-        <CadastroComunidade
-          onVoltar={() => setTelaAcesso("login")}
-        />
-      );
-    }
+    return <Login onLogin={entrar} />;
+  }
 
+  // ========================================
+  // ADMIN_COMUNIDADE SEM COMUNIDADE
+  //
+  // Só pode chegar aqui depois do login.
+  // ========================================
+  const adminSemComunidade =
+    usuario.perfil === "ADMIN_COMUNIDADE" &&
+    !usuario.comunidadeId;
+
+  if (adminSemComunidade) {
     return (
-      <Login
-        onLogin={setUsuario}
-        onCadastrarComunidade={() =>
-          setTelaAcesso("cadastro")
-        }
+      <CadastroComunidade
+        usuario={usuario}
+        onCadastroConcluido={comunidadeCadastrada}
+        onSair={sair}
       />
     );
   }
 
   // ========================================
-  // USUÁRIO LOGADO
+  // USUÁRIO LOGADO E COM ACESSO AO SISTEMA
   // ========================================
-
   return (
     <div className="container">
       <div className="topo-sistema">
@@ -106,9 +152,10 @@ function App() {
         <Tabela usuario={usuario} />
       )}
 
-      {telaLogada === "admin" && (
-        <AdminDashboard />
-      )}
+      {telaLogada === "admin" &&
+        usuario.perfil === "SUPER_ADMIN" && (
+          <AdminDashboard />
+        )}
     </div>
   );
 }

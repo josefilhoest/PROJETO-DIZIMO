@@ -1,7 +1,8 @@
 import { useState } from "react";
+
 import api from "../api/api";
 
-function Login({ onLogin, onCadastrarComunidade }) {
+function Login({ onLogin }) {
     const [email, setEmail] = useState("");
     const [senha, setSenha] = useState("");
     const [mostrarSenha, setMostrarSenha] = useState(false);
@@ -29,7 +30,10 @@ function Login({ onLogin, onCadastrarComunidade }) {
             const { token, usuario } = resposta.data;
 
             localStorage.setItem("token", token);
-            localStorage.setItem("usuario", JSON.stringify(usuario));
+            localStorage.setItem(
+                "usuario",
+                JSON.stringify(usuario)
+            );
 
             onLogin(usuario);
         } catch (error) {
@@ -41,7 +45,10 @@ function Login({ onLogin, onCadastrarComunidade }) {
             }
 
             if (error.response?.status === 403) {
-                setErro("Este usuário está desativado.");
+                setErro(
+                    error.response?.data?.erro ||
+                    "Este usuário não possui acesso ao sistema."
+                );
                 return;
             }
 
@@ -61,7 +68,10 @@ function Login({ onLogin, onCadastrarComunidade }) {
 
             <main className="login-card">
                 <div className="login-topo">
-                    <div className="login-icone" aria-hidden="true">
+                    <div
+                        className="login-icone"
+                        aria-hidden="true"
+                    >
                         <span className="login-cruz">✝</span>
                     </div>
 
@@ -77,11 +87,19 @@ function Login({ onLogin, onCadastrarComunidade }) {
                 </div>
 
                 {erro && (
-                    <div className="login-erro" role="alert">
-                        <div className="login-erro-icone">!</div>
+                    <div
+                        className="login-erro"
+                        role="alert"
+                    >
+                        <div className="login-erro-icone">
+                            !
+                        </div>
 
                         <div>
-                            <strong>Não foi possível entrar</strong>
+                            <strong>
+                                Não foi possível entrar
+                            </strong>
+
                             <p>{erro}</p>
                         </div>
                     </div>
@@ -184,7 +202,9 @@ function Login({ onLogin, onCadastrarComunidade }) {
                             </>
                         ) : (
                             <>
-                                <span>Entrar no sistema</span>
+                                <span>
+                                    Entrar no sistema
+                                </span>
 
                                 <span
                                     className="btn-login-seta"
@@ -194,14 +214,6 @@ function Login({ onLogin, onCadastrarComunidade }) {
                                 </span>
                             </>
                         )}
-                    </button>
-
-                    <button
-                        type="button"
-                        className="btn-cadastrar-comunidade"
-                        onClick={onCadastrarComunidade}
-                    >
-                        Cadastrar minha comunidade
                     </button>
                 </form>
 

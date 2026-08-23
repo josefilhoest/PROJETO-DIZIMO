@@ -1,20 +1,20 @@
 import { useState } from "react";
+
 import api from "../api/api";
 
-function CadastroComunidade({ onVoltar }) {
+function CadastroComunidade({
+    usuario,
+    onCadastroConcluido,
+    onSair,
+}) {
     const [formulario, setFormulario] = useState({
         nomeComunidade: "",
         paroquia: "",
         cidade: "",
-        nomeResponsavel: "",
-        email: "",
-        senha: "",
     });
 
     const [erro, setErro] = useState("");
-    const [sucesso, setSucesso] = useState("");
     const [carregando, setCarregando] = useState(false);
-    const [mostrarSenha, setMostrarSenha] = useState(false);
 
     const alterarCampo = (evento) => {
         const { name, value } = evento.target;
@@ -29,56 +29,89 @@ function CadastroComunidade({ onVoltar }) {
         evento.preventDefault();
 
         setErro("");
-        setSucesso("");
 
-        if (
-            !formulario.nomeComunidade.trim() ||
-            !formulario.nomeResponsavel.trim() ||
-            !formulario.email.trim() ||
-            !formulario.senha.trim()
-        ) {
+        if (!formulario.nomeComunidade.trim()) {
+            setErro("Informe o nome da comunidade.");
+            return;
+        }
+
+        const token = localStorage.getItem("token");
+
+        if (!token) {
             setErro(
-                "Preencha o nome da comunidade, responsável, e-mail e senha."
+                "Sua sessão não foi encontrada. Faça login novamente."
             );
-
             return;
         }
 
         try {
             setCarregando(true);
 
-            await api.post("/auth/cadastrar-comunidade", {
-                nomeComunidade: formulario.nomeComunidade.trim(),
-                paroquia: formulario.paroquia.trim(),
-                cidade: formulario.cidade.trim(),
-                nomeResponsavel: formulario.nomeResponsavel.trim(),
-                email: formulario.email.trim(),
-                senha: formulario.senha,
-            });
+            const resposta = await api.post(
+                "/auth/cadastrar-comunidade",
+                {
+                    nomeComunidade:
+                        formulario.nomeComunidade.trim(),
 
-            setSucesso(
-                "Comunidade cadastrada com sucesso! Agora você já pode fazer login."
+                    paroquia:
+                        formulario.paroquia.trim(),
+
+                    cidade:
+                        formulario.cidade.trim(),
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
             );
 
-            setFormulario({
-                nomeComunidade: "",
-                paroquia: "",
-                cidade: "",
-                nomeResponsavel: "",
-                email: "",
-                senha: "",
-            });
+            /*
+              A API deve devolver o usuário atualizado,
+              já com comunidadeId.
+            */
+            const usuarioAtualizado =
+                resposta.data.usuario;
+
+            if (!usuarioAtualizado?.comunidadeId) {
+                setErro(
+                    "A comunidade foi cadastrada, mas não foi possível atualizar o acesso do usuário."
+                );
+                return;
+            }
+
+            localStorage.setItem(
+                "usuario",
+                JSON.stringify(usuarioAtualizado)
+            );
+
+            onCadastroConcluido(usuarioAtualizado);
         } catch (error) {
             console.error(
                 "Erro ao cadastrar comunidade:",
                 error
             );
 
+            if (error.response?.status === 401) {
+                setErro(
+                    "Sua sessão expirou. Faça login novamente."
+                );
+                return;
+            }
+
+            if (error.response?.status === 403) {
+                setErro(
+                    error.response?.data?.erro ||
+                    "Você não possui permissão para cadastrar uma comunidade."
+                );
+                return;
+            }
+
             if (error.response?.status === 409) {
                 setErro(
-                    "Já existe um usuário cadastrado com este e-mail."
+                    error.response?.data?.erro ||
+                    "Este usuário já possui uma comunidade."
                 );
-
                 return;
             }
 
@@ -98,7 +131,10 @@ function CadastroComunidade({ onVoltar }) {
 
             <main className="login-card cadastro-comunidade-card">
                 <div className="login-topo">
-                    <div className="login-icone" aria-hidden="true">
+                    <div
+                        className="login-icone"
+                        aria-hidden="true"
+                    >
                         <span className="login-cruz">✝</span>
                     </div>
 
@@ -109,25 +145,37 @@ function CadastroComunidade({ onVoltar }) {
                     <h1>Cadastrar Comunidade</h1>
 
                     <p className="login-subtitulo">
-                        Crie o acesso da sua comunidade
+                        Complete seu primeiro acesso
                     </p>
                 </div>
 
+                <div className="cadastro-usuario-info">
+                    <p>
+                        Olá, <strong>{usuario?.nome}</strong>
+                    </p>
+
+                    <span>
+                        Cadastre a comunidade que será vinculada
+                        ao seu acesso.
+                    </span>
+                </div>
+
                 {erro && (
-                    <div className="login-erro" role="alert">
-                        <div className="login-erro-icone">!</div>
+                    <div
+                        className="login-erro"
+                        role="alert"
+                    >
+                        <div className="login-erro-icone">
+                            !
+                        </div>
 
                         <div>
-                            <strong>Não foi possível cadastrar</strong>
+                            <strong>
+                                Não foi possível cadastrar
+                            </strong>
+
                             <p>{erro}</p>
                         </div>
-                    </div>
-                )}
-
-                {sucesso && (
-                    <div className="cadastro-sucesso">
-                        <strong>Cadastro realizado!</strong>
-                        <p>{sucesso}</p>
                     </div>
                 )}
 
@@ -147,6 +195,7 @@ function CadastroComunidade({ onVoltar }) {
                             value={formulario.nomeComunidade}
                             onChange={alterarCampo}
                             placeholder="Ex.: Comunidade São José"
+                            autoComplete="organization"
                             required
                         />
                     </div>
@@ -181,81 +230,6 @@ function CadastroComunidade({ onVoltar }) {
                         />
                     </div>
 
-                    <div className="login-grupo">
-                        <label htmlFor="nomeResponsavel">
-                            Nome do responsável *
-                        </label>
-
-                        <input
-                            id="nomeResponsavel"
-                            name="nomeResponsavel"
-                            type="text"
-                            value={formulario.nomeResponsavel}
-                            onChange={alterarCampo}
-                            placeholder="Nome completo"
-                            required
-                        />
-                    </div>
-
-                    <div className="login-grupo">
-                        <label htmlFor="emailCadastro">
-                            E-mail *
-                        </label>
-
-                        <input
-                            id="emailCadastro"
-                            name="email"
-                            type="email"
-                            value={formulario.email}
-                            onChange={alterarCampo}
-                            placeholder="Digite seu e-mail"
-                            autoComplete="email"
-                            required
-                        />
-                    </div>
-
-                    <div className="login-grupo">
-                        <label htmlFor="senhaCadastro">
-                            Senha *
-                        </label>
-
-                        <div className="login-input-wrapper">
-                            <span
-                                className="login-input-icone"
-                                aria-hidden="true"
-                            >
-                                🔒
-                            </span>
-
-                            <input
-                                id="senhaCadastro"
-                                name="senha"
-                                type={
-                                    mostrarSenha
-                                        ? "text"
-                                        : "password"
-                                }
-                                value={formulario.senha}
-                                onChange={alterarCampo}
-                                placeholder="Crie uma senha"
-                                autoComplete="new-password"
-                                required
-                            />
-
-                            <button
-                                type="button"
-                                className="btn-mostrar-senha"
-                                onClick={() =>
-                                    setMostrarSenha(
-                                        (valorAtual) => !valorAtual
-                                    )
-                                }
-                            >
-                                {mostrarSenha ? "🙈" : "👁️"}
-                            </button>
-                        </div>
-                    </div>
-
                     <button
                         type="submit"
                         className="btn-login"
@@ -269,9 +243,10 @@ function CadastroComunidade({ onVoltar }) {
                     <button
                         type="button"
                         className="btn-voltar-login"
-                        onClick={onVoltar}
+                        onClick={onSair}
+                        disabled={carregando}
                     >
-                        ← Voltar para o login
+                        Sair
                     </button>
                 </form>
             </main>

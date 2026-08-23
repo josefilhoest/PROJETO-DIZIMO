@@ -58,12 +58,11 @@ export const cadastrarUsuario = async (req, res) => {
     // CRIAR USUÁRIO LICENCIADO
     // ========================================
     //
-    // IMPORTANTE:
     // O usuário nasce sem comunidade.
     // Depois do primeiro login ele cadastra
     // a própria comunidade.
     //
-    // Também não recebemos "perfil" do frontend.
+    // O perfil não vem do frontend.
     // Isso impede alguém de tentar criar
     // outro SUPER_ADMIN.
     // ========================================
@@ -90,8 +89,15 @@ export const cadastrarUsuario = async (req, res) => {
         nome: novoUsuario.nome,
         email: novoUsuario.email,
         perfil: novoUsuario.perfil,
+
         comunidadeId: novoUsuario.comunidadeId,
+
+        comunidadeNome: null,
+
+        possuiComunidade: false,
+
         ativo: novoUsuario.ativo,
+
         licencaStatus: novoUsuario.licencaStatus,
       },
     });
@@ -120,7 +126,7 @@ export const cadastrarComunidade = async (req, res) => {
     // IDENTIFICAR USUÁRIO PELO TOKEN
     // ========================================
 
-    const usuarioId = req.usuario.usuarioId;
+    const usuarioId = req.usuario?.usuarioId;
 
     if (!usuarioId) {
       return res.status(401).json({
@@ -135,10 +141,23 @@ export const cadastrarComunidade = async (req, res) => {
     } = req.body;
 
     // ========================================
+    // NORMALIZAR CAMPOS
+    // ========================================
+
+    const nomeComunidadeLimpo =
+      nomeComunidade?.trim();
+
+    const paroquiaLimpa =
+      paroquia?.trim() || null;
+
+    const cidadeLimpa =
+      cidade?.trim() || null;
+
+    // ========================================
     // VALIDAR CAMPOS
     // ========================================
 
-    if (!nomeComunidade) {
+    if (!nomeComunidadeLimpo) {
       return res.status(400).json({
         erro: "Nome da comunidade é obrigatório",
       });
@@ -148,11 +167,26 @@ export const cadastrarComunidade = async (req, res) => {
     // BUSCAR USUÁRIO LOGADO
     // ========================================
 
-    const usuario = await Usuario.findByPk(usuarioId);
+    const usuario = await Usuario.findByPk(
+      usuarioId
+    );
 
     if (!usuario) {
       return res.status(404).json({
         erro: "Usuário não encontrado",
+      });
+    }
+
+    // ========================================
+    // GARANTIR PERFIL PERMITIDO
+    // ========================================
+
+    if (
+      usuario.perfil !== "ADMIN_COMUNIDADE"
+    ) {
+      return res.status(403).json({
+        erro:
+          "Somente administradores de comunidade podem cadastrar uma comunidade",
       });
     }
 
@@ -182,7 +216,8 @@ export const cadastrarComunidade = async (req, res) => {
 
     if (usuario.comunidadeId) {
       return res.status(409).json({
-        erro: "Este usuário já possui uma comunidade cadastrada",
+        erro:
+          "Este usuário já possui uma comunidade cadastrada",
       });
     }
 
@@ -196,17 +231,18 @@ export const cadastrarComunidade = async (req, res) => {
     // CRIAR COMUNIDADE
     // ========================================
 
-    const novaComunidade = await Comunidade.create(
-      {
-        nome: nomeComunidade,
-        paroquia: paroquia || null,
-        cidade: cidade || null,
-        ativa: true,
-      },
-      {
-        transaction,
-      }
-    );
+    const novaComunidade =
+      await Comunidade.create(
+        {
+          nome: nomeComunidadeLimpo,
+          paroquia: paroquiaLimpa,
+          cidade: cidadeLimpa,
+          ativa: true,
+        },
+        {
+          transaction,
+        }
+      );
 
     // ========================================
     // VINCULAR A COMUNIDADE AO USUÁRIO
@@ -227,6 +263,10 @@ export const cadastrarComunidade = async (req, res) => {
 
     await transaction.commit();
 
+    // ========================================
+    // RESPOSTA DO CADASTRO DA COMUNIDADE
+    // ========================================
+
     return res.status(201).json({
       mensagem: "Comunidade cadastrada com sucesso",
 
@@ -243,9 +283,18 @@ export const cadastrarComunidade = async (req, res) => {
         nome: usuario.nome,
         email: usuario.email,
         perfil: usuario.perfil,
+
         comunidadeId: novaComunidade.id,
+
+        comunidadeNome:
+          novaComunidade.nome,
+
+        possuiComunidade: true,
+
         ativo: usuario.ativo,
-        licencaStatus: usuario.licencaStatus,
+
+        licencaStatus:
+          usuario.licencaStatus,
       },
     });
   } catch (error) {
@@ -253,7 +302,10 @@ export const cadastrarComunidade = async (req, res) => {
     // DESFAZER TRANSAÇÃO EM CASO DE ERRO
     // ========================================
 
-    if (transaction && !transaction.finished) {
+    if (
+      transaction &&
+      !transaction.finished
+    ) {
       await transaction.rollback();
     }
 
@@ -331,10 +383,11 @@ export const login = async (req, res) => {
     // VERIFICAR SENHA
     // ========================================
 
-    const senhaCorreta = await bcrypt.compare(
-      senha,
-      usuario.senha
-    );
+    const senhaCorreta =
+      await bcrypt.compare(
+        senha,
+        usuario.senha
+      );
 
     if (!senhaCorreta) {
       return res.status(401).json({
@@ -354,13 +407,15 @@ export const login = async (req, res) => {
     let comunidade = null;
 
     if (usuario.comunidadeId) {
-      comunidade = await Comunidade.findByPk(
-        usuario.comunidadeId
-      );
+      comunidade =
+        await Comunidade.findByPk(
+          usuario.comunidadeId
+        );
 
       if (!comunidade) {
         return res.status(404).json({
-          erro: "Comunidade vinculada ao usuário não encontrada",
+          erro:
+            "Comunidade vinculada ao usuário não encontrada",
         });
       }
 
@@ -382,7 +437,8 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       {
         usuarioId: usuario.id,
-        comunidadeId: usuario.comunidadeId,
+        comunidadeId:
+          usuario.comunidadeId,
         perfil: usuario.perfil,
       },
 
@@ -407,7 +463,9 @@ export const login = async (req, res) => {
         nome: usuario.nome,
         email: usuario.email,
         perfil: usuario.perfil,
-        comunidadeId: usuario.comunidadeId,
+
+        comunidadeId:
+          usuario.comunidadeId,
 
         comunidadeNome:
           comunidade?.nome || null,
