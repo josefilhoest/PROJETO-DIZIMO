@@ -303,6 +303,174 @@ export const alterarStatusComunidade = async (
 };
 
 // ========================================
+// EXCLUIR COMUNIDADE PELO SUPER ADMIN
+// ========================================
+
+export const excluirComunidadeAdmin = async (req, res) => {
+  let transaction = null;
+
+  try {
+    const { id } = req.params;
+    const comunidadeId = Number(id);
+
+    if (
+      !Number.isInteger(comunidadeId) ||
+      comunidadeId <= 0
+    ) {
+      return res.status(400).json({
+        erro: "ID da comunidade inválido.",
+      });
+    }
+
+    // A transação só começa depois de validar o ID.
+    transaction =
+      await Comunidade.sequelize.transaction();
+
+    const comunidade = await Comunidade.findByPk(
+      comunidadeId,
+      {
+        transaction,
+      }
+    );
+
+    if (!comunidade) {
+      await transaction.rollback();
+
+      return res.status(404).json({
+        erro: "Comunidade não encontrada.",
+      });
+    }
+
+    // ========================================
+    // PROTEÇÕES DE SEGURANÇA
+    // ========================================
+
+    // Impede o SUPER_ADMIN de excluir
+    // a própria comunidade.
+    if (
+      Number(comunidade.id) ===
+      Number(req.usuario.comunidadeId)
+    ) {
+      await transaction.rollback();
+
+      return res.status(403).json({
+        erro:
+          "Você não pode excluir a sua própria comunidade.",
+      });
+    }
+
+    // Proteção adicional:
+    // nenhuma comunidade com SUPER_ADMIN
+    // vinculado pode ser excluída.
+    const superAdminVinculado =
+      await Usuario.findOne({
+        where: {
+          comunidadeId,
+          perfil: "SUPER_ADMIN",
+        },
+        transaction,
+      });
+
+    if (superAdminVinculado) {
+      await transaction.rollback();
+
+      return res.status(403).json({
+        erro:
+          "Esta comunidade possui um SUPER_ADMIN protegido e não pode ser excluída.",
+      });
+    }
+
+    // ========================================
+    // RESUMO ANTES DA EXCLUSÃO
+    // ========================================
+
+    const totalUsuarios = await Usuario.count({
+      where: {
+        comunidadeId,
+      },
+      transaction,
+    });
+
+    const totalDizimistas =
+      await Dizimista.count({
+        where: {
+          comunidadeId,
+        },
+        transaction,
+      });
+
+    const totalRegistrosMensais =
+      await RegistroMensal.count({
+        where: {
+          comunidadeId,
+        },
+        transaction,
+      });
+
+    const comunidadeExcluida = {
+      id: comunidade.id,
+      nome: comunidade.nome,
+      totalUsuarios,
+      totalDizimistas,
+      totalRegistrosMensais,
+    };
+
+    // ========================================
+    // EXCLUSÃO DOS DADOS VINCULADOS
+    // ========================================
+
+    // Primeiro removemos os dados dependentes.
+    await RegistroMensal.destroy({
+      where: {
+        comunidadeId,
+      },
+      transaction,
+    });
+
+    await Dizimista.destroy({
+      where: {
+        comunidadeId,
+      },
+      transaction,
+    });
+
+    await Usuario.destroy({
+      where: {
+        comunidadeId,
+      },
+      transaction,
+    });
+
+    // A comunidade é removida somente depois
+    // de todos os dados vinculados.
+    await comunidade.destroy({
+      transaction,
+    });
+
+    await transaction.commit();
+
+    return res.status(200).json({
+      mensagem:
+        "Comunidade e todos os seus dados vinculados foram excluídos com sucesso.",
+      comunidade: comunidadeExcluida,
+    });
+  } catch (error) {
+    if (transaction && !transaction.finished) {
+      await transaction.rollback();
+    }
+
+    console.error(
+      "Erro ao excluir comunidade:",
+      error
+    );
+
+    return res.status(500).json({
+      erro: "Erro ao excluir comunidade.",
+    });
+  }
+};
+
+// ========================================
 // LISTAR TODOS OS USUÁRIOS
 // ========================================
 

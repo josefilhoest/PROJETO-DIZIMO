@@ -1,4 +1,5 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 
 import {
   cadastrarUsuario,
@@ -12,12 +13,32 @@ import { somenteSuperAdmin } from "../middlewares/adminMiddleware.js";
 const router = Router();
 
 // ========================================
+// LIMITADOR DE TENTATIVAS DE LOGIN
+// ========================================
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+
+  limit: 10,
+
+  standardHeaders: "draft-8",
+
+  legacyHeaders: false,
+
+  message: {
+    erro:
+      "Muitas tentativas de login. Aguarde alguns minutos e tente novamente.",
+  },
+});
+
+// ========================================
 // LOGIN
 // ROTA PÚBLICA
 // ========================================
 
 router.post(
   "/login",
+  loginLimiter,
   login
 );
 

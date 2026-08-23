@@ -3,7 +3,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
+
 
 import sequelize from "./database/database.js";
 
@@ -28,39 +28,37 @@ if (!process.env.JWT_SECRET) {
   process.exit(1);
 }
 
+// ========================================
+// CRIAR APLICAÇÃO EXPRESS
+// ========================================
+
 const app = express();
 
 // ========================================
-// LIMITADOR DE TENTATIVAS DE AUTENTICAÇÃO
+// CONFIGURAÇÃO PARA PROXY / RENDER
 // ========================================
 
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
+// O Render utiliza proxy reverso.
+// Esta configuração também ajuda o
+// express-rate-limit a identificar
+// corretamente o IP do cliente.
+app.set("trust proxy", 1);
 
-  limit: 10,
 
-  standardHeaders: "draft-8",
-
-  legacyHeaders: false,
-
-  message: {
-    erro:
-      "Muitas tentativas de login. Aguarde alguns minutos e tente novamente.",
-  },
-});
 
 // ========================================
 // MIDDLEWARES DE SEGURANÇA
 // ========================================
 
-// Adiciona headers de segurança
+// Adiciona headers HTTP de segurança.
 app.use(helmet());
 
 // ========================================
 // CORS
 // ========================================
 
-// Frontends autorizados a acessar a API
+// Somente estes frontends podem
+// acessar a API através do navegador.
 const origensPermitidas = [
   "http://localhost:5173",
   "https://dizimo.jrfsite.com",
@@ -86,8 +84,15 @@ app.use(
   })
 );
 
-// Permite receber JSON nas requisições
-app.use(express.json());
+// ========================================
+// JSON
+// ========================================
+
+app.use(
+  express.json({
+    limit: "1mb",
+  })
+);
 
 // ========================================
 // ROTAS
@@ -106,10 +111,8 @@ app.use(
 );
 
 // Autenticação
-// Protegida contra excesso de tentativas
 app.use(
   "/api/auth",
-  loginLimiter,
   authRoutes
 );
 
@@ -124,7 +127,7 @@ app.use(
 // ========================================
 
 app.get("/", (req, res) => {
-  res.json({
+  res.status(200).json({
     mensagem:
       "API do sistema de dízimo funcionando!",
   });
@@ -161,4 +164,6 @@ try {
   );
 
   console.error(error);
+
+  process.exit(1);
 }

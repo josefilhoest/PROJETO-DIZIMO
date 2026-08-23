@@ -8,6 +8,7 @@ import {
   listarComunidades,
   detalharComunidade,
   alterarStatusComunidade,
+  excluirComunidadeAdmin,
   listarUsuarios,
   cadastrarUsuarioAdmin,
   editarUsuarioAdmin,
@@ -67,6 +68,17 @@ router.patch(
   autenticar,
   somenteSuperAdmin,
   alterarStatusComunidade
+);
+
+// ========================================
+// EXCLUIR UMA COMUNIDADE
+// ========================================
+
+router.delete(
+  "/comunidades/:id",
+  autenticar,
+  somenteSuperAdmin,
+  excluirComunidadeAdmin
 );
 
 // ========================================
