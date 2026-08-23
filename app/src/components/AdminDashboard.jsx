@@ -144,8 +144,18 @@ function AdminDashboard() {
     ] = useState("");
 
     const [
+        mensagemComunidades,
+        setMensagemComunidades,
+    ] = useState("");
+
+    const [
         comunidadeAlterando,
         setComunidadeAlterando,
+    ] = useState(null);
+
+    const [
+        comunidadeExcluindo,
+        setComunidadeExcluindo,
     ] = useState(null);
 
     const [
@@ -718,6 +728,7 @@ function AdminDashboard() {
         try {
             setComunidadeAlterando(comunidadeId);
             setErroComunidades("");
+            setMensagemComunidades("");
 
             await api.patch(
                 `/admin/comunidades/${comunidadeId}/status`,
@@ -827,6 +838,93 @@ function AdminDashboard() {
             comunidade.id,
             true
         );
+    };
+
+    // ========================================
+    // EXCLUIR COMUNIDADE PERMANENTEMENTE
+    // ========================================
+
+    const excluirComunidade = async (comunidade) => {
+        const ehComunidadeDoSuperAdmin =
+            Number(comunidade.id) ===
+            Number(usuarioLogado?.comunidadeId);
+
+        if (ehComunidadeDoSuperAdmin) {
+            setErroComunidades(
+                "A comunidade do SUPER_ADMIN é protegida e não pode ser excluída."
+            );
+            return;
+        }
+
+        const confirmar = window.confirm(
+            `Deseja realmente excluir permanentemente a comunidade "${comunidade.nome}"?\n\n` +
+            `Usuários vinculados: ${comunidade.totalUsuarios ?? 0}\n` +
+            `Dizimistas vinculados: ${comunidade.totalDizimistas ?? 0}\n\n` +
+            "Esta ação excluirá também os dados vinculados à comunidade e não poderá ser desfeita."
+        );
+
+        if (!confirmar) {
+            return;
+        }
+
+        try {
+            setComunidadeExcluindo(comunidade.id);
+            setErroComunidades("");
+            setMensagemComunidades("");
+
+            const resposta = await api.delete(
+                `/admin/comunidades/${comunidade.id}`
+            );
+
+            setComunidades((comunidadesAtuais) =>
+                comunidadesAtuais.filter(
+                    (comunidadeAtual) =>
+                        Number(comunidadeAtual.id) !==
+                        Number(comunidade.id)
+                )
+            );
+
+            if (
+                Number(
+                    comunidadeDetalhada?.comunidade?.id
+                ) === Number(comunidade.id)
+            ) {
+                fecharDetalhesComunidade();
+            }
+
+            // Recarrega o resumo diretamente da API para manter
+            // todos os indicadores administrativos consistentes.
+            try {
+                const respostaResumo = await api.get(
+                    "/admin/dashboard"
+                );
+
+                setResumo(respostaResumo.data);
+            } catch (erroResumo) {
+                console.error(
+                    "Erro ao atualizar resumo após excluir comunidade:",
+                    erroResumo
+                );
+            }
+
+            setMensagemComunidades(
+                resposta.data?.mensagem ||
+                "Comunidade excluída com sucesso."
+            );
+        } catch (error) {
+            console.error(
+                "Erro ao excluir comunidade:",
+                error
+            );
+
+            const mensagem =
+                error.response?.data?.erro ||
+                "Não foi possível excluir a comunidade.";
+
+            setErroComunidades(mensagem);
+        } finally {
+            setComunidadeExcluindo(null);
+        }
     };
 
     // ========================================
@@ -1654,6 +1752,12 @@ function AdminDashboard() {
                         )}
                     </div>
 
+                    {mensagemComunidades && (
+                        <p className="admin-sucesso">
+                            {mensagemComunidades}
+                        </p>
+                    )}
+
                     {carregandoComunidades && (
                         <p>
                             Carregando comunidades...
@@ -1709,6 +1813,10 @@ function AdminDashboard() {
                                             (comunidade) => {
                                                 const alterando =
                                                     comunidadeAlterando ===
+                                                    comunidade.id;
+
+                                                const excluindo =
+                                                    comunidadeExcluindo ===
                                                     comunidade.id;
 
                                                 const ehComunidadeDoSuperAdmin =
@@ -1807,44 +1915,64 @@ function AdminDashboard() {
                                                                     <span className="admin-sem-acao">
                                                                         Protegida
                                                                     </span>
-                                                                ) : comunidade.ativa ? (
-
-                                                                    <button
-                                                                        type="button"
-                                                                        className="btn-bloquear-licenca"
-                                                                        disabled={
-                                                                            alterando
-                                                                        }
-                                                                        onClick={() =>
-                                                                            desativarComunidade(
-                                                                                comunidade
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        {alterando
-                                                                            ? "Alterando..."
-                                                                            : "Desativar"}
-                                                                    </button>
-
                                                                 ) : (
+                                                                    <>
+                                                                        {comunidade.ativa ? (
+                                                                            <button
+                                                                                type="button"
+                                                                                className="btn-bloquear-licenca"
+                                                                                disabled={
+                                                                                    alterando ||
+                                                                                    excluindo
+                                                                                }
+                                                                                onClick={() =>
+                                                                                    desativarComunidade(
+                                                                                        comunidade
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                {alterando
+                                                                                    ? "Alterando..."
+                                                                                    : "Desativar"}
+                                                                            </button>
+                                                                        ) : (
+                                                                            <button
+                                                                                type="button"
+                                                                                className="btn-reativar-licenca"
+                                                                                disabled={
+                                                                                    alterando ||
+                                                                                    excluindo
+                                                                                }
+                                                                                onClick={() =>
+                                                                                    reativarComunidade(
+                                                                                        comunidade
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                {alterando
+                                                                                    ? "Alterando..."
+                                                                                    : "Reativar"}
+                                                                            </button>
+                                                                        )}
 
-                                                                    <button
-                                                                        type="button"
-                                                                        className="btn-reativar-licenca"
-                                                                        disabled={
-                                                                            alterando
-                                                                        }
-                                                                        onClick={() =>
-                                                                            reativarComunidade(
-                                                                                comunidade
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        {alterando
-                                                                            ? "Alterando..."
-                                                                            : "Reativar"}
-                                                                    </button>
-
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn-excluir-usuario"
+                                                                            disabled={
+                                                                                alterando ||
+                                                                                excluindo
+                                                                            }
+                                                                            onClick={() =>
+                                                                                excluirComunidade(
+                                                                                    comunidade
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            {excluindo
+                                                                                ? "Excluindo..."
+                                                                                : "Excluir"}
+                                                                        </button>
+                                                                    </>
                                                                 )}
 
                                                             </div>
