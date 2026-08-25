@@ -3,20 +3,45 @@ import { Router } from "express";
 import {
   listarDizimistas,
   criarDizimista,
+  importarDizimistas,
   atualizarDizimista,
   removerDizimista,
 } from "../controllers/dizimistaController.js";
 
-import { autenticar } from "../middlewares/authMiddleware.js";
+import {
+  autenticar,
+} from "../middlewares/authMiddleware.js";
 
 const router = Router();
 
-router.get("/", autenticar, listarDizimistas);
+router.get(
+  "/",
+  autenticar,
+  listarDizimistas
+);
 
-router.post("/", autenticar, criarDizimista);
+router.post(
+  "/",
+  autenticar,
+  criarDizimista
+);
 
-router.put("/:id", autenticar, atualizarDizimista);
+router.post(
+  "/importar",
+  autenticar,
+  importarDizimistas
+);
 
-router.delete("/:id", autenticar, removerDizimista);
+router.put(
+  "/:id",
+  autenticar,
+  atualizarDizimista
+);
+
+router.delete(
+  "/:id",
+  autenticar,
+  removerDizimista
+);
 
 export default router;
