@@ -1,4 +1,4 @@
-const CACHE_NAME = "sistema-dizimo-v1";
+const CACHE_NAME = "sistema-dizimo-v2";
 
 const ARQUIVOS_INICIAIS = [
     "/",
@@ -17,7 +17,9 @@ self.addEventListener("install", (event) => {
         caches
             .open(CACHE_NAME)
             .then((cache) => {
-                return cache.addAll(ARQUIVOS_INICIAIS);
+                return cache.addAll(
+                    ARQUIVOS_INICIAIS
+                );
             })
     );
 
@@ -33,8 +35,13 @@ self.addEventListener("activate", (event) => {
         caches.keys().then((nomes) => {
             return Promise.all(
                 nomes
-                    .filter((nome) => nome !== CACHE_NAME)
-                    .map((nome) => caches.delete(nome))
+                    .filter(
+                        (nome) =>
+                            nome !== CACHE_NAME
+                    )
+                    .map((nome) =>
+                        caches.delete(nome)
+                    )
             );
         })
     );
@@ -58,7 +65,31 @@ self.addEventListener("fetch", (event) => {
 
     // Não interfere na API do Render
     // nem em outros domínios.
-    if (url.origin !== self.location.origin) {
+    if (
+        url.origin !== self.location.origin
+    ) {
+        return;
+    }
+
+    // ========================================
+    // MÓDULOS .MJS
+    // ========================================
+
+    /*
+     * O pdf.js utiliza um worker em formato .mjs.
+     *
+     * Deixamos esses arquivos serem carregados
+     * diretamente pelo navegador/servidor,
+     * sem passar pelo cache do Service Worker.
+     *
+     * Isso evita problemas com importação
+     * dinâmica do pdf.worker.
+     */
+    if (
+        url.pathname
+            .toLowerCase()
+            .endsWith(".mjs")
+    ) {
         return;
     }
 
@@ -68,20 +99,30 @@ self.addEventListener("fetch", (event) => {
 
     // Para páginas, tenta primeiro a internet.
     // Se estiver offline, usa a página em cache.
-    if (requisicao.mode === "navigate") {
+    if (
+        requisicao.mode === "navigate"
+    ) {
         event.respondWith(
             fetch(requisicao)
                 .then((resposta) => {
-                    const copia = resposta.clone();
+                    const copia =
+                        resposta.clone();
 
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put("/", copia);
-                    });
+                    caches
+                        .open(CACHE_NAME)
+                        .then((cache) => {
+                            cache.put(
+                                "/",
+                                copia
+                            );
+                        });
 
                     return resposta;
                 })
                 .catch(() => {
-                    return caches.match("/");
+                    return caches.match(
+                        "/"
+                    );
                 })
         );
 
@@ -96,28 +137,46 @@ self.addEventListener("fetch", (event) => {
     // Primeiro procura no cache.
     // Se não existir, baixa e guarda.
     event.respondWith(
-        caches.match(requisicao).then((respostaCache) => {
-            if (respostaCache) {
-                return respostaCache;
-            }
-
-            return fetch(requisicao).then((respostaRede) => {
-                if (
-                    !respostaRede ||
-                    respostaRede.status !== 200 ||
-                    respostaRede.type === "opaque"
-                ) {
-                    return respostaRede;
+        caches
+            .match(requisicao)
+            .then((respostaCache) => {
+                if (respostaCache) {
+                    return respostaCache;
                 }
 
-                const copia = respostaRede.clone();
+                return fetch(
+                    requisicao
+                ).then(
+                    (respostaRede) => {
+                        if (
+                            !respostaRede ||
+                            respostaRede.status !==
+                            200 ||
+                            respostaRede.type ===
+                            "opaque"
+                        ) {
+                            return respostaRede;
+                        }
 
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(requisicao, copia);
-                });
+                        const copia =
+                            respostaRede.clone();
 
-                return respostaRede;
-            });
-        })
+                        caches
+                            .open(
+                                CACHE_NAME
+                            )
+                            .then(
+                                (cache) => {
+                                    cache.put(
+                                        requisicao,
+                                        copia
+                                    );
+                                }
+                            );
+
+                        return respostaRede;
+                    }
+                );
+            })
     );
 });
