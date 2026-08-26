@@ -1,5 +1,7 @@
 import { Op } from "sequelize";
 import Dizimista from "../models/Dizimista.js";
+import Comunidade from "../models/Comunidade.js";
+import RegistroMensal from "../models/RegistroMensal.js";
 
 // ========================================
 // LISTAR DIZIMISTAS DA COMUNIDADE LOGADA
@@ -137,6 +139,173 @@ export const exportarDizimistasCsv = async (req, res) => {
         return res.status(500).json({
             erro:
                 "Erro ao exportar dizimistas.",
+        });
+    }
+};
+// ========================================
+// BACKUP COMPLETO DA COMUNIDADE EM JSON
+// ========================================
+
+export const exportarBackupComunidade = async (req, res) => {
+    try {
+        const comunidadeId = req.usuario?.comunidadeId;
+
+        // Segurança:
+        // a comunidade vem exclusivamente do usuário autenticado.
+        if (!comunidadeId) {
+            return res.status(400).json({
+                erro:
+                    "Não foi possível identificar a comunidade do usuário.",
+            });
+        }
+
+        const [comunidade, dizimistas, registrosMensais] =
+            await Promise.all([
+                Comunidade.findOne({
+                    where: {
+                        id: comunidadeId,
+                    },
+                    attributes: [
+                        "id",
+                        "nome",
+                        "paroquia",
+                        "cidade",
+                        "ativa",
+                    ],
+                }),
+
+                Dizimista.findAll({
+                    where: {
+                        comunidadeId,
+                    },
+                    attributes: [
+                        "numero",
+                        "folha",
+                        "nome",
+                        "valor",
+                    ],
+                    order: [["numero", "ASC"]],
+                }),
+
+                RegistroMensal.findAll({
+                    where: {
+                        comunidadeId,
+                    },
+                    attributes: [
+                        "data",
+                        "equipe_comunidade",
+                        "conferido_em",
+                        "responsavel_paroquia",
+                    ],
+                    order: [["data", "ASC"]],
+                }),
+            ]);
+
+        if (!comunidade) {
+            return res.status(404).json({
+                erro: "Comunidade não encontrada.",
+            });
+        }
+
+        const criadoEm = new Date().toISOString();
+
+        const backup = {
+            formato: "PROJETO-DIZIMO-BACKUP",
+            versao: "1.0",
+            criadoEm,
+
+            comunidade: {
+                id: Number(comunidade.id),
+                nome: comunidade.nome,
+                paroquia: comunidade.paroquia,
+                cidade: comunidade.cidade,
+                ativa: Boolean(comunidade.ativa),
+            },
+
+            dados: {
+                dizimistas: dizimistas.map(
+                    (dizimista) => ({
+                        numero: Number(dizimista.numero),
+                        folha: Number(dizimista.folha),
+                        nome: dizimista.nome,
+                        valor: Number(
+                            dizimista.valor ?? 0
+                        ),
+                    })
+                ),
+
+                registrosMensais:
+                    registrosMensais.map(
+                        (registro) => ({
+                            data: registro.data,
+                            equipe_comunidade:
+                                registro.equipe_comunidade,
+                            conferido_em:
+                                registro.conferido_em,
+                            responsavel_paroquia:
+                                registro.responsavel_paroquia,
+                        })
+                    ),
+            },
+
+            resumo: {
+                totalDizimistas:
+                    dizimistas.length,
+                totalRegistrosMensais:
+                    registrosMensais.length,
+            },
+        };
+
+        const json = JSON.stringify(
+            backup,
+            null,
+            2
+        );
+
+        const dataAtual = criadoEm.slice(0, 10);
+
+        const nomeComunidadeSeguro = String(
+            comunidade.nome || "comunidade"
+        )
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-zA-Z0-9_-]+/g, "-")
+            .replace(/^-+|-+$/g, "")
+            .toLowerCase() || "comunidade";
+
+        const nomeArquivo =
+            `backup-${nomeComunidadeSeguro}-${dataAtual}.json`;
+
+        res.setHeader(
+            "Content-Type",
+            "application/json; charset=utf-8"
+        );
+
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${nomeArquivo}"`
+        );
+
+        res.setHeader(
+            "Cache-Control",
+            "no-store"
+        );
+
+        res.setHeader(
+            "Pragma",
+            "no-cache"
+        );
+
+        return res.status(200).send(json);
+    } catch (error) {
+        console.error(
+            "Erro ao gerar backup da comunidade:",
+            error
+        );
+
+        return res.status(500).json({
+            erro:
+                "Erro ao gerar backup da comunidade.",
         });
     }
 };
