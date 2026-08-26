@@ -13,7 +13,6 @@ const RegistroMensal = sequelize.define(
     comunidade: {
       type: DataTypes.STRING(150),
       allowNull: false,
-      defaultValue: "Palmeira",
     },
 
     comunidadeId: {

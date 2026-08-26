@@ -18,14 +18,24 @@ export const cadastrarUsuario = async (req, res) => {
       email,
       senha,
     } = req.body;
+    const nomeLimpo = nome?.trim();
+
+    const emailLimpo = email
+      ?.trim()
+      .toLowerCase();
 
     // ========================================
     // VALIDAR CAMPOS OBRIGATÓRIOS
     // ========================================
 
-    if (!nome || !email || !senha) {
+    if (!nomeLimpo || !emailLimpo || !senha) {
       return res.status(400).json({
         erro: "Nome, email e senha são obrigatórios",
+      });
+    }
+    if (senha.length < 6) {
+      return res.status(400).json({
+        erro: "A senha deve ter pelo menos 6 caracteres.",
       });
     }
 
@@ -35,7 +45,7 @@ export const cadastrarUsuario = async (req, res) => {
 
     const usuarioExistente = await Usuario.findOne({
       where: {
-        email,
+        email: emailLimpo,
       },
     });
 
@@ -68,8 +78,8 @@ export const cadastrarUsuario = async (req, res) => {
     // ========================================
 
     const novoUsuario = await Usuario.create({
-      nome,
-      email,
+      nome: nomeLimpo,
+      email: emailLimpo,
       senha: senhaCriptografada,
 
       perfil: "ADMIN_COMUNIDADE",
@@ -373,7 +383,10 @@ export const login = async (req, res) => {
     // VERIFICAR LICENÇA
     // ========================================
 
-    if (usuario.licencaStatus !== "ATIVA") {
+    if (
+      usuario.perfil !== "SUPER_ADMIN" &&
+      usuario.licencaStatus !== "ATIVA"
+    ) {
       return res.status(403).json({
         erro: "Licença de uso bloqueada",
       });

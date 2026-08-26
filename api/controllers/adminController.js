@@ -157,21 +157,21 @@ export const detalharComunidade = async (
     const ultimaMovimentacao =
       datasMovimentacao.length > 0
         ? new Date(
-            Math.max(
-              ...datasMovimentacao.map(
-                (data) => data.getTime()
-              )
+          Math.max(
+            ...datasMovimentacao.map(
+              (data) => data.getTime()
             )
           )
+        )
         : null;
 
     const diasSemMovimentacao =
       ultimaMovimentacao
         ? Math.floor(
-            (Date.now() -
-              ultimaMovimentacao.getTime()) /
-              (1000 * 60 * 60 * 24)
-          )
+          (Date.now() -
+            ultimaMovimentacao.getTime()) /
+          (1000 * 60 * 60 * 24)
+        )
         : null;
 
     let atividade = "SEM_MOVIMENTACAO";
@@ -494,8 +494,8 @@ export const listarUsuarios = async (req, res) => {
       usuarios.map(async (usuario) => {
         const comunidade = usuario.comunidadeId
           ? await Comunidade.findByPk(
-              usuario.comunidadeId
-            )
+            usuario.comunidadeId
+          )
           : null;
 
         return {
@@ -737,7 +737,7 @@ export const editarUsuarioAdmin = async (
     if (
       usuarioComMesmoEmail &&
       Number(usuarioComMesmoEmail.id) !==
-        Number(usuario.id)
+      Number(usuario.id)
     ) {
       return res.status(409).json({
         erro:
@@ -752,8 +752,8 @@ export const editarUsuarioAdmin = async (
 
     const comunidade = usuario.comunidadeId
       ? await Comunidade.findByPk(
-          usuario.comunidadeId
-        )
+        usuario.comunidadeId
+      )
       : null;
 
     return res.status(200).json({
@@ -1160,7 +1160,7 @@ export const resumoDashboard = async (
     return res.status(500).json({
       mensagem:
         "Erro ao carregar resumo do dashboard.",
-      erro: error.message,
+
     });
   }
 };
