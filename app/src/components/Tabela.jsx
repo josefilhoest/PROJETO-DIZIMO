@@ -57,6 +57,13 @@ function Tabela({ usuario }) {
         useState("");
 
     // =====================================================
+    // ESTADO DA EXPORTAÇÃO CSV
+    // =====================================================
+
+    const [exportandoCsv, setExportandoCsv] =
+        useState(false);
+
+    // =====================================================
     // CARREGAR DIZIMISTAS
     // =====================================================
 
@@ -346,6 +353,95 @@ function Tabela({ usuario }) {
 
     const cancelarEdicao = () => {
         limparFormulario();
+    };
+
+    // =====================================================
+    // EXPORTAR DIZIMISTAS EM CSV
+    // =====================================================
+
+    const exportarDizimistasCsv = async () => {
+        if (exportandoCsv) {
+            return;
+        }
+
+        try {
+            setExportandoCsv(true);
+
+            const resposta = await api.get(
+                "/dizimistas/exportar",
+                {
+                    responseType: "blob",
+                }
+            );
+
+            const contentDisposition =
+                resposta.headers?.[
+                "content-disposition"
+                ] || "";
+
+            const nomeEncontrado =
+                contentDisposition.match(
+                    /filename="?([^";]+)"?/i
+                );
+
+            const nomeArquivo =
+                nomeEncontrado?.[1] ||
+                `dizimistas-${new Date()
+                    .toISOString()
+                    .slice(0, 10)}.csv`;
+
+            const tipoConteudo =
+                resposta.headers?.[
+                "content-type"
+                ] ||
+                "text/csv;charset=utf-8";
+
+            const arquivo = new Blob(
+                [resposta.data],
+                {
+                    type: tipoConteudo,
+                }
+            );
+
+            const url =
+                window.URL.createObjectURL(
+                    arquivo
+                );
+
+            const link =
+                document.createElement("a");
+
+            link.href = url;
+            link.download = nomeArquivo;
+
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            window.URL.revokeObjectURL(url);
+        } catch (erro) {
+            console.error(
+                "Erro ao exportar dizimistas:",
+                erro
+            );
+
+            if (
+                erro.response?.status === 401
+            ) {
+                alert(
+                    "Sua sessão expirou. Faça login novamente."
+                );
+
+                return;
+            }
+
+            alert(
+                erro.response?.data?.erro ||
+                "Não foi possível exportar os dizimistas."
+            );
+        } finally {
+            setExportandoCsv(false);
+        }
     };
 
     // =====================================================
@@ -1927,6 +2023,24 @@ function Tabela({ usuario }) {
                 >
                     📄 Importar lista
                     por PDF
+                </button>
+
+                <button
+                    type="button"
+                    className="btn-importar"
+                    onClick={
+                        exportarDizimistasCsv
+                    }
+                    disabled={
+                        exportandoCsv
+                    }
+                    style={{
+                        marginLeft: "8px",
+                    }}
+                >
+                    {exportandoCsv
+                        ? "Exportando..."
+                        : "⬇️ Exportar CSV"}
                 </button>
 
                 {mostrarImportacao && (

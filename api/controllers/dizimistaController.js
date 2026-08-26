@@ -25,6 +25,121 @@ export const listarDizimistas = async (req, res) => {
         });
     }
 };
+// ========================================
+// EXPORTAR DIZIMISTAS DA COMUNIDADE EM CSV
+// ========================================
+
+export const exportarDizimistasCsv = async (req, res) => {
+    try {
+        const comunidadeId = req.usuario?.comunidadeId;
+
+        // Segurança:
+        // a comunidade vem exclusivamente do usuário autenticado.
+        if (!comunidadeId) {
+            return res.status(400).json({
+                erro:
+                    "Não foi possível identificar a comunidade do usuário.",
+            });
+        }
+
+        const dizimistas = await Dizimista.findAll({
+            where: {
+                comunidadeId,
+            },
+            attributes: [
+                "numero",
+                "folha",
+                "nome",
+                "valor",
+            ],
+            order: [["numero", "ASC"]],
+        });
+
+        const protegerCelulaTexto = (valor) => {
+            const texto = String(valor ?? "");
+
+            if (/^[=+\-@]/.test(texto)) {
+                return `'${texto}`;
+            }
+
+            return texto;
+        };
+
+        const escaparCsv = (valor) => {
+            const texto = String(valor ?? "")
+                .replace(/"/g, '""');
+
+            return `"${texto}"`;
+        };
+
+        const linhas = [
+            ["Número", "Folha", "Nome", "Valor"]
+                .map(escaparCsv)
+                .join(";"),
+        ];
+
+        for (const dizimista of dizimistas) {
+            const numero = Number(dizimista.numero);
+            const folha = Number(dizimista.folha);
+
+            const nome = protegerCelulaTexto(
+                dizimista.nome
+            );
+
+            const valorNumerico = Number(
+                dizimista.valor ?? 0
+            );
+
+            const valor = Number.isFinite(valorNumerico)
+                ? valorNumerico
+                    .toFixed(2)
+                    .replace(".", ",")
+                : "0,00";
+
+            linhas.push(
+                [numero, folha, nome, valor]
+                    .map(escaparCsv)
+                    .join(";")
+            );
+        }
+
+        const csv = `\uFEFF${linhas.join("\r\n")}`;
+
+        const dataAtual = new Date()
+            .toISOString()
+            .slice(0, 10);
+
+        const nomeArquivo =
+            `dizimistas-${dataAtual}.csv`;
+
+        res.setHeader(
+            "Content-Type",
+            "text/csv; charset=utf-8"
+        );
+
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${nomeArquivo}"`
+        );
+
+        res.setHeader(
+            "Cache-Control",
+            "no-store"
+        );
+
+        return res.status(200).send(csv);
+    } catch (error) {
+        console.error(
+            "Erro ao exportar dizimistas:",
+            error
+        );
+
+        return res.status(500).json({
+            erro:
+                "Erro ao exportar dizimistas.",
+        });
+    }
+};
 
 // ========================================
 // CRIAR DIZIMISTA

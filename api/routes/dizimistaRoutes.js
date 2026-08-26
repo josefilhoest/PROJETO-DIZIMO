@@ -4,6 +4,7 @@ import {
   listarDizimistas,
   criarDizimista,
   importarDizimistas,
+  exportarDizimistasCsv,
   atualizarDizimista,
   removerDizimista,
 } from "../controllers/dizimistaController.js";
@@ -18,6 +19,12 @@ router.get(
   "/",
   autenticar,
   listarDizimistas
+);
+
+router.get(
+  "/exportar",
+  autenticar,
+  exportarDizimistasCsv
 );
 
 router.post(
