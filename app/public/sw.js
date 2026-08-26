@@ -1,4 +1,4 @@
-const CACHE_NAME = "sistema-dizimo-v2";
+const CACHE_NAME = "sistema-dizimo-v3";
 
 const ARQUIVOS_INICIAIS = [
     "/",
@@ -14,13 +14,9 @@ const ARQUIVOS_INICIAIS = [
 
 self.addEventListener("install", (event) => {
     event.waitUntil(
-        caches
-            .open(CACHE_NAME)
-            .then((cache) => {
-                return cache.addAll(
-                    ARQUIVOS_INICIAIS
-                );
-            })
+        caches.open(CACHE_NAME).then((cache) => {
+            return cache.addAll(ARQUIVOS_INICIAIS);
+        })
     );
 
     self.skipWaiting();
@@ -35,13 +31,8 @@ self.addEventListener("activate", (event) => {
         caches.keys().then((nomes) => {
             return Promise.all(
                 nomes
-                    .filter(
-                        (nome) =>
-                            nome !== CACHE_NAME
-                    )
-                    .map((nome) =>
-                        caches.delete(nome)
-                    )
+                    .filter((nome) => nome !== CACHE_NAME)
+                    .map((nome) => caches.delete(nome))
             );
         })
     );
@@ -65,64 +56,42 @@ self.addEventListener("fetch", (event) => {
 
     // Não interfere na API do Render
     // nem em outros domínios.
-    if (
-        url.origin !== self.location.origin
-    ) {
+    if (url.origin !== self.location.origin) {
         return;
     }
 
     // ========================================
-    // MÓDULOS .MJS
+    // PDF.JS / MÓDULOS .MJS
     // ========================================
 
-    /*
-     * O pdf.js utiliza um worker em formato .mjs.
-     *
-     * Deixamos esses arquivos serem carregados
-     * diretamente pelo navegador/servidor,
-     * sem passar pelo cache do Service Worker.
-     *
-     * Isso evita problemas com importação
-     * dinâmica do pdf.worker.
-     */
-    if (
-        url.pathname
-            .toLowerCase()
-            .endsWith(".mjs")
-    ) {
+    // O pdf.js utiliza worker .mjs.
+    // Sempre deixa esses arquivos virem da rede.
+    if (url.pathname.toLowerCase().endsWith(".mjs")) {
         return;
     }
 
     // ========================================
-    // NAVEGAÇÃO
+    // NAVEGAÇÃO / INDEX.HTML
     // ========================================
 
-    // Para páginas, tenta primeiro a internet.
-    // Se estiver offline, usa a página em cache.
-    if (
-        requisicao.mode === "navigate"
-    ) {
+    // Sempre tenta buscar a versão mais recente.
+    // Se estiver offline, usa o cache.
+    if (requisicao.mode === "navigate") {
         event.respondWith(
             fetch(requisicao)
                 .then((resposta) => {
-                    const copia =
-                        resposta.clone();
+                    if (resposta && resposta.status === 200) {
+                        const copia = resposta.clone();
 
-                    caches
-                        .open(CACHE_NAME)
-                        .then((cache) => {
-                            cache.put(
-                                "/",
-                                copia
-                            );
+                        caches.open(CACHE_NAME).then((cache) => {
+                            cache.put("/", copia);
                         });
+                    }
 
                     return resposta;
                 })
                 .catch(() => {
-                    return caches.match(
-                        "/"
-                    );
+                    return caches.match("/");
                 })
         );
 
@@ -130,53 +99,69 @@ self.addEventListener("fetch", (event) => {
     }
 
     // ========================================
-    // ARQUIVOS ESTÁTICOS
+    // JAVASCRIPT E CSS
     // ========================================
 
-    // CSS, JS, imagens, fontes etc.
-    // Primeiro procura no cache.
-    // Se não existir, baixa e guarda.
+    // Para JS e CSS:
+    // rede primeiro, cache apenas se estiver offline.
+    if (
+        url.pathname.endsWith(".js") ||
+        url.pathname.endsWith(".css")
+    ) {
+        event.respondWith(
+            fetch(requisicao)
+                .then((resposta) => {
+                    if (
+                        resposta &&
+                        resposta.status === 200 &&
+                        resposta.type !== "opaque"
+                    ) {
+                        const copia = resposta.clone();
+
+                        caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(requisicao, copia);
+                        });
+                    }
+
+                    return resposta;
+                })
+                .catch(() => {
+                    return caches.match(requisicao);
+                })
+        );
+
+        return;
+    }
+
+    // ========================================
+    // DEMAIS ARQUIVOS ESTÁTICOS
+    // ========================================
+
+    // Imagens, ícones, manifest etc.
+    // Pode usar cache primeiro.
     event.respondWith(
-        caches
-            .match(requisicao)
-            .then((respostaCache) => {
-                if (respostaCache) {
-                    return respostaCache;
+        caches.match(requisicao).then((respostaCache) => {
+            if (respostaCache) {
+                return respostaCache;
+            }
+
+            return fetch(requisicao).then((respostaRede) => {
+                if (
+                    !respostaRede ||
+                    respostaRede.status !== 200 ||
+                    respostaRede.type === "opaque"
+                ) {
+                    return respostaRede;
                 }
 
-                return fetch(
-                    requisicao
-                ).then(
-                    (respostaRede) => {
-                        if (
-                            !respostaRede ||
-                            respostaRede.status !==
-                            200 ||
-                            respostaRede.type ===
-                            "opaque"
-                        ) {
-                            return respostaRede;
-                        }
+                const copia = respostaRede.clone();
 
-                        const copia =
-                            respostaRede.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(requisicao, copia);
+                });
 
-                        caches
-                            .open(
-                                CACHE_NAME
-                            )
-                            .then(
-                                (cache) => {
-                                    cache.put(
-                                        requisicao,
-                                        copia
-                                    );
-                                }
-                            );
-
-                        return respostaRede;
-                    }
-                );
-            })
+                return respostaRede;
+            });
+        })
     );
 });
