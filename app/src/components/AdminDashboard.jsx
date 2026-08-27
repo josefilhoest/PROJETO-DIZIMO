@@ -173,6 +173,25 @@ function AdminDashboard() {
         setErroDetalhesComunidade,
     ] = useState("");
 
+    const [
+        comunidadeEmEdicao,
+        setComunidadeEmEdicao,
+    ] = useState(null);
+
+    const [
+        dadosEdicaoComunidade,
+        setDadosEdicaoComunidade,
+    ] = useState({
+        nome: "",
+        paroquia: "",
+        cidade: "",
+    });
+
+    const [
+        salvandoEdicaoComunidade,
+        setSalvandoEdicaoComunidade,
+    ] = useState(false);
+
     // ========================================
     // FORMATAR DATA
     // ========================================
@@ -673,6 +692,176 @@ function AdminDashboard() {
     };
 
     // ========================================
+    // INICIAR EDIÇÃO DE COMUNIDADE
+    // ========================================
+
+    const iniciarEdicaoComunidade = (comunidade) => {
+        setComunidadeEmEdicao(comunidade);
+
+        setDadosEdicaoComunidade({
+            nome: comunidade.nome || "",
+            paroquia: comunidade.paroquia || "",
+            cidade: comunidade.cidade || "",
+        });
+
+        setErroComunidades("");
+        setMensagemComunidades("");
+    };
+
+    // ========================================
+    // ALTERAR CAMPOS DA COMUNIDADE
+    // ========================================
+
+    const alterarCampoEdicaoComunidade = (event) => {
+        const { name, value } = event.target;
+
+        setDadosEdicaoComunidade((dadosAtuais) => ({
+            ...dadosAtuais,
+            [name]: value,
+        }));
+
+        if (erroComunidades) {
+            setErroComunidades("");
+        }
+
+        if (mensagemComunidades) {
+            setMensagemComunidades("");
+        }
+    };
+
+    // ========================================
+    // CANCELAR EDIÇÃO DE COMUNIDADE
+    // ========================================
+
+    const cancelarEdicaoComunidade = () => {
+        setComunidadeEmEdicao(null);
+
+        setDadosEdicaoComunidade({
+            nome: "",
+            paroquia: "",
+            cidade: "",
+        });
+
+        setErroComunidades("");
+    };
+
+    // ========================================
+    // SALVAR EDIÇÃO DE COMUNIDADE
+    // ========================================
+
+    const salvarEdicaoComunidade = async (event) => {
+        event.preventDefault();
+
+        if (!comunidadeEmEdicao) {
+            return;
+        }
+
+        const nome = dadosEdicaoComunidade.nome.trim();
+        const paroquia =
+            dadosEdicaoComunidade.paroquia.trim();
+        const cidade =
+            dadosEdicaoComunidade.cidade.trim();
+
+        if (!nome) {
+            setErroComunidades(
+                "O nome da comunidade é obrigatório."
+            );
+
+            return;
+        }
+
+        if (nome.length < 2) {
+            setErroComunidades(
+                "O nome da comunidade deve ter pelo menos 2 caracteres."
+            );
+
+            return;
+        }
+
+        try {
+            setSalvandoEdicaoComunidade(true);
+            setErroComunidades("");
+            setMensagemComunidades("");
+
+            const resposta = await api.patch(
+                `/admin/comunidades/${comunidadeEmEdicao.id}`,
+                {
+                    nome,
+                    paroquia,
+                    cidade,
+                }
+            );
+
+            const comunidadeAtualizada =
+                resposta.data?.comunidade;
+
+            if (comunidadeAtualizada) {
+                setComunidades((comunidadesAtuais) =>
+                    comunidadesAtuais.map((comunidade) =>
+                        Number(comunidade.id) ===
+                            Number(comunidadeAtualizada.id)
+                            ? {
+                                ...comunidade,
+                                ...comunidadeAtualizada,
+                            }
+                            : comunidade
+                    )
+                );
+
+                setComunidadeDetalhada((detalhesAtuais) => {
+                    if (
+                        !detalhesAtuais?.comunidade ||
+                        Number(
+                            detalhesAtuais.comunidade.id
+                        ) !==
+                        Number(
+                            comunidadeAtualizada.id
+                        )
+                    ) {
+                        return detalhesAtuais;
+                    }
+
+                    return {
+                        ...detalhesAtuais,
+                        comunidade: {
+                            ...detalhesAtuais.comunidade,
+                            ...comunidadeAtualizada,
+                        },
+                    };
+                });
+            } else {
+                await carregarComunidades();
+            }
+
+            setMensagemComunidades(
+                resposta.data?.mensagem ||
+                "Dados da comunidade atualizados com sucesso."
+            );
+
+            setComunidadeEmEdicao(null);
+
+            setDadosEdicaoComunidade({
+                nome: "",
+                paroquia: "",
+                cidade: "",
+            });
+        } catch (error) {
+            console.error(
+                "Erro ao editar comunidade:",
+                error
+            );
+
+            const mensagem =
+                error.response?.data?.erro ||
+                "Não foi possível atualizar a comunidade.";
+
+            setErroComunidades(mensagem);
+        } finally {
+            setSalvandoEdicaoComunidade(false);
+        }
+    };
+
+    // ========================================
     // ABRIR DETALHES DA COMUNIDADE
     // ========================================
 
@@ -753,7 +942,7 @@ function AdminDashboard() {
                 if (
                     !detalhesAtuais?.comunidade ||
                     Number(detalhesAtuais.comunidade.id) !==
-                        Number(comunidadeId)
+                    Number(comunidadeId)
                 ) {
                     return detalhesAtuais;
                 }
@@ -890,6 +1079,13 @@ function AdminDashboard() {
                 ) === Number(comunidade.id)
             ) {
                 fecharDetalhesComunidade();
+            }
+
+            if (
+                Number(comunidadeEmEdicao?.id) ===
+                Number(comunidade.id)
+            ) {
+                cancelarEdicaoComunidade();
             }
 
             // Recarrega o resumo diretamente da API para manter
@@ -1415,290 +1611,402 @@ function AdminDashboard() {
                         Gerenciamento de Comunidades
                     </h3>
 
-                    {(carregandoDetalhesComunidade ||
-                        erroDetalhesComunidade ||
-                        comunidadeDetalhada) && (
-                        <div className="admin-detalhes-comunidade">
+                    {comunidadeEmEdicao && (
+                        <form
+                            className="admin-form-usuario"
+                            onSubmit={salvarEdicaoComunidade}
+                            noValidate
+                        >
+                            <h4>
+                                Editar Comunidade
+                            </h4>
 
-                            <div className="admin-detalhes-cabecalho">
-                                <div>
-                                    <span className="admin-detalhes-legenda">
-                                        Detalhes da comunidade
-                                    </span>
+                            <p>
+                                Atualize os dados cadastrais da comunidade. As proteções de status e exclusão continuam inalteradas.
+                            </p>
 
-                                    <h4>
-                                        {comunidadeDetalhada
-                                            ?.comunidade?.nome ||
-                                            "Carregando..."}
-                                    </h4>
+                            <div className="admin-form-grid">
+                                <div className="admin-form-campo">
+                                    <label htmlFor="editar-comunidade-nome">
+                                        Nome
+                                    </label>
 
-                                    {comunidadeDetalhada && (
-                                        <span className="admin-detalhes-id">
-                                            ID da comunidade:{" "}
-                                            {comunidadeDetalhada
-                                                .comunidade?.id}
-                                        </span>
-                                    )}
+                                    <input
+                                        id="editar-comunidade-nome"
+                                        name="nome"
+                                        type="text"
+                                        value={
+                                            dadosEdicaoComunidade.nome
+                                        }
+                                        onChange={
+                                            alterarCampoEdicaoComunidade
+                                        }
+                                        disabled={
+                                            salvandoEdicaoComunidade
+                                        }
+                                        required
+                                    />
                                 </div>
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="editar-comunidade-paroquia">
+                                        Paróquia
+                                    </label>
+
+                                    <input
+                                        id="editar-comunidade-paroquia"
+                                        name="paroquia"
+                                        type="text"
+                                        placeholder="Nome da paróquia"
+                                        value={
+                                            dadosEdicaoComunidade.paroquia
+                                        }
+                                        onChange={
+                                            alterarCampoEdicaoComunidade
+                                        }
+                                        disabled={
+                                            salvandoEdicaoComunidade
+                                        }
+                                        maxLength={150}
+                                    />
+                                </div>
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="editar-comunidade-cidade">
+                                        Cidade
+                                    </label>
+
+                                    <input
+                                        id="editar-comunidade-cidade"
+                                        name="cidade"
+                                        type="text"
+                                        placeholder="Cidade"
+                                        value={
+                                            dadosEdicaoComunidade.cidade
+                                        }
+                                        onChange={
+                                            alterarCampoEdicaoComunidade
+                                        }
+                                        disabled={
+                                            salvandoEdicaoComunidade
+                                        }
+                                        maxLength={150}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="admin-form-acoes">
+                                <button
+                                    type="submit"
+                                    className="btn-salvar-usuario"
+                                    disabled={
+                                        salvandoEdicaoComunidade
+                                    }
+                                >
+                                    {salvandoEdicaoComunidade
+                                        ? "Salvando..."
+                                        : "Salvar alterações"}
+                                </button>
 
                                 <button
                                     type="button"
-                                    className="admin-detalhes-fechar"
+                                    className="btn-cancelar-usuario"
                                     onClick={
-                                        fecharDetalhesComunidade
+                                        cancelarEdicaoComunidade
                                     }
-                                    aria-label="Fechar detalhes da comunidade"
+                                    disabled={
+                                        salvandoEdicaoComunidade
+                                    }
                                 >
-                                    Fechar
+                                    Cancelar
                                 </button>
                             </div>
+                        </form>
+                    )}
 
-                            {carregandoDetalhesComunidade && (
-                                <p>
-                                    Carregando detalhes...
-                                </p>
-                            )}
+                    {(carregandoDetalhesComunidade ||
+                        erroDetalhesComunidade ||
+                        comunidadeDetalhada) && (
+                            <div className="admin-detalhes-comunidade">
 
-                            {erroDetalhesComunidade && (
-                                <p className="admin-erro">
-                                    {erroDetalhesComunidade}
-                                </p>
-                            )}
+                                <div className="admin-detalhes-cabecalho">
+                                    <div>
+                                        <span className="admin-detalhes-legenda">
+                                            Detalhes da comunidade
+                                        </span>
 
-                            {!carregandoDetalhesComunidade &&
-                                !erroDetalhesComunidade &&
-                                comunidadeDetalhada && (
-                                    <>
-                                        <div className="admin-detalhes-grid">
-
-                                            <div className="admin-detalhes-item">
-                                                <span>Nome</span>
-                                                <strong>
-                                                    {comunidadeDetalhada
-                                                        .comunidade
-                                                        ?.nome || "-"}
-                                                </strong>
-                                            </div>
-
-                                            <div className="admin-detalhes-item">
-                                                <span>Paróquia</span>
-                                                <strong>
-                                                    {comunidadeDetalhada
-                                                        .comunidade
-                                                        ?.paroquia || "-"}
-                                                </strong>
-                                            </div>
-
-                                            <div className="admin-detalhes-item">
-                                                <span>Cidade</span>
-                                                <strong>
-                                                    {comunidadeDetalhada
-                                                        .comunidade
-                                                        ?.cidade || "-"}
-                                                </strong>
-                                            </div>
-
-                                            <div className="admin-detalhes-item">
-                                                <span>Status</span>
-
-                                                {comunidadeDetalhada
-                                                    .comunidade
-                                                    ?.ativa ? (
-                                                    <strong className="status-ativo">
-                                                        Ativa
-                                                    </strong>
-                                                ) : (
-                                                    <strong className="status-inativo">
-                                                        Inativa
-                                                    </strong>
-                                                )}
-                                            </div>
-
-                                            <div className="admin-detalhes-item">
-                                                <span>Usuários</span>
-                                                <strong>
-                                                    {comunidadeDetalhada
-                                                        .indicadores
-                                                        ?.totalUsuarios ?? 0}
-                                                </strong>
-                                            </div>
-
-                                            <div className="admin-detalhes-item">
-                                                <span>Dizimistas</span>
-                                                <strong>
-                                                    {comunidadeDetalhada
-                                                        .indicadores
-                                                        ?.totalDizimistas ?? 0}
-                                                </strong>
-                                            </div>
-
-                                            <div className="admin-detalhes-item">
-                                                <span>Cadastrada em</span>
-                                                <strong>
-                                                    {formatarData(
-                                                        comunidadeDetalhada
-                                                            .comunidade
-                                                            ?.createdAt
-                                                    )}
-                                                </strong>
-                                            </div>
-
-                                            <div className="admin-detalhes-item admin-indicador-gerencial">
-                                                <span>Valor atual registrado</span>
-                                                <strong>
-                                                    {formatarMoeda(
-                                                        comunidadeDetalhada
-                                                            .indicadores
-                                                            ?.valorAtualRegistrado
-                                                    )}
-                                                </strong>
-                                            </div>
-
-                                            <div className="admin-detalhes-item admin-indicador-gerencial">
-                                                <span>Registros mensais</span>
-                                                <strong>
-                                                    {comunidadeDetalhada
-                                                        .indicadores
-                                                        ?.totalRegistrosMensais ?? 0}
-                                                </strong>
-                                            </div>
-
-                                            <div className="admin-detalhes-item admin-indicador-gerencial">
-                                                <span>Último registro</span>
-                                                <strong>
-                                                    {formatarData(
-                                                        comunidadeDetalhada
-                                                            .indicadores
-                                                            ?.ultimoRegistroData
-                                                    )}
-                                                </strong>
-                                            </div>
-
-                                            <div className="admin-detalhes-item admin-indicador-gerencial">
-                                                <span>Última movimentação</span>
-                                                <strong>
-                                                    {formatarData(
-                                                        comunidadeDetalhada
-                                                            .indicadores
-                                                            ?.ultimaMovimentacao
-                                                    )}
-                                                </strong>
-                                            </div>
-
-                                            <div className="admin-detalhes-item admin-indicador-gerencial">
-                                                <span>Dias sem movimentação</span>
-                                                <strong>
-                                                    {comunidadeDetalhada
-                                                        .indicadores
-                                                        ?.diasSemMovimentacao ??
-                                                        "-"}
-                                                </strong>
-                                            </div>
-
-                                            <div className="admin-detalhes-item admin-indicador-gerencial">
-                                                <span>Acompanhamento</span>
-                                                <strong
-                                                    className={`admin-atividade admin-atividade-${
-                                                        comunidadeDetalhada
-                                                            .indicadores
-                                                            ?.atividade ||
-                                                        "SEM_MOVIMENTACAO"
-                                                    }`}
-                                                >
-                                                    {traduzirAtividade(
-                                                        comunidadeDetalhada
-                                                            .indicadores
-                                                            ?.atividade
-                                                    )}
-                                                </strong>
-                                            </div>
-
-                                        </div>
-
-                                        <div className="admin-indicadores-aviso">
-                                            Indicadores destinados ao acompanhamento
-                                            administrativo. Os dados individuais dos
-                                            dizimistas não são exibidos neste painel.
-                                        </div>
-
-                                        <div className="admin-detalhes-usuarios">
-
-                                            <h5>
-                                                Usuários vinculados
-                                            </h5>
-
+                                        <h4>
                                             {comunidadeDetalhada
-                                                .usuarios?.length > 0 ? (
-                                                <div className="admin-detalhes-usuarios-lista">
-                                                    {comunidadeDetalhada
-                                                        .usuarios.map(
-                                                            (usuario) => (
-                                                                <div
-                                                                    className="admin-detalhes-usuario"
-                                                                    key={
-                                                                        usuario.id
-                                                                    }
-                                                                >
-                                                                    <div>
-                                                                        <strong>
-                                                                            {
-                                                                                usuario.nome
-                                                                            }
-                                                                        </strong>
-                                                                        <span>
-                                                                            {
-                                                                                usuario.email
-                                                                            }
-                                                                        </span>
+                                                ?.comunidade?.nome ||
+                                                "Carregando..."}
+                                        </h4>
 
-                                                                        <span className="admin-detalhes-perfil">
-                                                                            Perfil:{" "}
-                                                                            {
-                                                                                usuario.perfil
-                                                                            }
-                                                                        </span>
-                                                                    </div>
+                                        {comunidadeDetalhada && (
+                                            <span className="admin-detalhes-id">
+                                                ID da comunidade:{" "}
+                                                {comunidadeDetalhada
+                                                    .comunidade?.id}
+                                            </span>
+                                        )}
+                                    </div>
 
-                                                                    <div className="admin-detalhes-usuario-status">
-                                                                        {usuario.ativo ? (
-                                                                            <span className="status-ativo">
-                                                                                Ativo
-                                                                            </span>
-                                                                        ) : (
-                                                                            <span className="status-inativo">
-                                                                                Inativo
-                                                                            </span>
-                                                                        )}
+                                    <button
+                                        type="button"
+                                        className="admin-detalhes-fechar"
+                                        onClick={
+                                            fecharDetalhesComunidade
+                                        }
+                                        aria-label="Fechar detalhes da comunidade"
+                                    >
+                                        Fechar
+                                    </button>
+                                </div>
 
-                                                                        {usuario.licencaStatus ===
-                                                                        "ATIVA" ? (
-                                                                            <span className="licenca-ativa">
-                                                                                ATIVA
-                                                                            </span>
-                                                                        ) : (
-                                                                            <span className="licenca-bloqueada">
-                                                                                {usuario.licencaStatus ||
-                                                                                    "SEM STATUS"}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            )
-                                                        )}
-                                                </div>
-                                            ) : (
-                                                <p>
-                                                    Nenhum usuário vinculado
-                                                    a esta comunidade.
-                                                </p>
-                                            )}
-
-                                        </div>
-                                    </>
+                                {carregandoDetalhesComunidade && (
+                                    <p>
+                                        Carregando detalhes...
+                                    </p>
                                 )}
 
-                        </div>
-                    )}
+                                {erroDetalhesComunidade && (
+                                    <p className="admin-erro">
+                                        {erroDetalhesComunidade}
+                                    </p>
+                                )}
+
+                                {!carregandoDetalhesComunidade &&
+                                    !erroDetalhesComunidade &&
+                                    comunidadeDetalhada && (
+                                        <>
+                                            <div className="admin-detalhes-grid">
+
+                                                <div className="admin-detalhes-item">
+                                                    <span>Nome</span>
+                                                    <strong>
+                                                        {comunidadeDetalhada
+                                                            .comunidade
+                                                            ?.nome || "-"}
+                                                    </strong>
+                                                </div>
+
+                                                <div className="admin-detalhes-item">
+                                                    <span>Paróquia</span>
+                                                    <strong>
+                                                        {comunidadeDetalhada
+                                                            .comunidade
+                                                            ?.paroquia || "-"}
+                                                    </strong>
+                                                </div>
+
+                                                <div className="admin-detalhes-item">
+                                                    <span>Cidade</span>
+                                                    <strong>
+                                                        {comunidadeDetalhada
+                                                            .comunidade
+                                                            ?.cidade || "-"}
+                                                    </strong>
+                                                </div>
+
+                                                <div className="admin-detalhes-item">
+                                                    <span>Status</span>
+
+                                                    {comunidadeDetalhada
+                                                        .comunidade
+                                                        ?.ativa ? (
+                                                        <strong className="status-ativo">
+                                                            Ativa
+                                                        </strong>
+                                                    ) : (
+                                                        <strong className="status-inativo">
+                                                            Inativa
+                                                        </strong>
+                                                    )}
+                                                </div>
+
+                                                <div className="admin-detalhes-item">
+                                                    <span>Usuários</span>
+                                                    <strong>
+                                                        {comunidadeDetalhada
+                                                            .indicadores
+                                                            ?.totalUsuarios ?? 0}
+                                                    </strong>
+                                                </div>
+
+                                                <div className="admin-detalhes-item">
+                                                    <span>Dizimistas</span>
+                                                    <strong>
+                                                        {comunidadeDetalhada
+                                                            .indicadores
+                                                            ?.totalDizimistas ?? 0}
+                                                    </strong>
+                                                </div>
+
+                                                <div className="admin-detalhes-item">
+                                                    <span>Cadastrada em</span>
+                                                    <strong>
+                                                        {formatarData(
+                                                            comunidadeDetalhada
+                                                                .comunidade
+                                                                ?.createdAt
+                                                        )}
+                                                    </strong>
+                                                </div>
+
+                                                <div className="admin-detalhes-item admin-indicador-gerencial">
+                                                    <span>Valor atual registrado</span>
+                                                    <strong>
+                                                        {formatarMoeda(
+                                                            comunidadeDetalhada
+                                                                .indicadores
+                                                                ?.valorAtualRegistrado
+                                                        )}
+                                                    </strong>
+                                                </div>
+
+                                                <div className="admin-detalhes-item admin-indicador-gerencial">
+                                                    <span>Registros mensais</span>
+                                                    <strong>
+                                                        {comunidadeDetalhada
+                                                            .indicadores
+                                                            ?.totalRegistrosMensais ?? 0}
+                                                    </strong>
+                                                </div>
+
+                                                <div className="admin-detalhes-item admin-indicador-gerencial">
+                                                    <span>Último registro</span>
+                                                    <strong>
+                                                        {formatarData(
+                                                            comunidadeDetalhada
+                                                                .indicadores
+                                                                ?.ultimoRegistroData
+                                                        )}
+                                                    </strong>
+                                                </div>
+
+                                                <div className="admin-detalhes-item admin-indicador-gerencial">
+                                                    <span>Última movimentação</span>
+                                                    <strong>
+                                                        {formatarData(
+                                                            comunidadeDetalhada
+                                                                .indicadores
+                                                                ?.ultimaMovimentacao
+                                                        )}
+                                                    </strong>
+                                                </div>
+
+                                                <div className="admin-detalhes-item admin-indicador-gerencial">
+                                                    <span>Dias sem movimentação</span>
+                                                    <strong>
+                                                        {comunidadeDetalhada
+                                                            .indicadores
+                                                            ?.diasSemMovimentacao ??
+                                                            "-"}
+                                                    </strong>
+                                                </div>
+
+                                                <div className="admin-detalhes-item admin-indicador-gerencial">
+                                                    <span>Acompanhamento</span>
+                                                    <strong
+                                                        className={`admin-atividade admin-atividade-${comunidadeDetalhada
+                                                                .indicadores
+                                                                ?.atividade ||
+                                                            "SEM_MOVIMENTACAO"
+                                                            }`}
+                                                    >
+                                                        {traduzirAtividade(
+                                                            comunidadeDetalhada
+                                                                .indicadores
+                                                                ?.atividade
+                                                        )}
+                                                    </strong>
+                                                </div>
+
+                                            </div>
+
+                                            <div className="admin-indicadores-aviso">
+                                                Indicadores destinados ao acompanhamento
+                                                administrativo. Os dados individuais dos
+                                                dizimistas não são exibidos neste painel.
+                                            </div>
+
+                                            <div className="admin-detalhes-usuarios">
+
+                                                <h5>
+                                                    Usuários vinculados
+                                                </h5>
+
+                                                {comunidadeDetalhada
+                                                    .usuarios?.length > 0 ? (
+                                                    <div className="admin-detalhes-usuarios-lista">
+                                                        {comunidadeDetalhada
+                                                            .usuarios.map(
+                                                                (usuario) => (
+                                                                    <div
+                                                                        className="admin-detalhes-usuario"
+                                                                        key={
+                                                                            usuario.id
+                                                                        }
+                                                                    >
+                                                                        <div>
+                                                                            <strong>
+                                                                                {
+                                                                                    usuario.nome
+                                                                                }
+                                                                            </strong>
+                                                                            <span>
+                                                                                {
+                                                                                    usuario.email
+                                                                                }
+                                                                            </span>
+
+                                                                            <span className="admin-detalhes-perfil">
+                                                                                Perfil:{" "}
+                                                                                {
+                                                                                    usuario.perfil
+                                                                                }
+                                                                            </span>
+                                                                        </div>
+
+                                                                        <div className="admin-detalhes-usuario-status">
+                                                                            {usuario.ativo ? (
+                                                                                <span className="status-ativo">
+                                                                                    Ativo
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="status-inativo">
+                                                                                    Inativo
+                                                                                </span>
+                                                                            )}
+
+                                                                            {usuario.licencaStatus ===
+                                                                                "ATIVA" ? (
+                                                                                <span className="licenca-ativa">
+                                                                                    ATIVA
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="licenca-bloqueada">
+                                                                                    {usuario.licencaStatus ||
+                                                                                        "SEM STATUS"}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )
+                                                            )}
+                                                    </div>
+                                                ) : (
+                                                    <p>
+                                                        Nenhum usuário vinculado
+                                                        a esta comunidade.
+                                                    </p>
+                                                )}
+
+                                            </div>
+                                        </>
+                                    )}
+
+                            </div>
+                        )}
 
                     <div className="admin-filtros-comunidades">
                         <div className="admin-busca">
@@ -1839,9 +2147,9 @@ function AdminDashboard() {
                                                                     ?.comunidade
                                                                     ?.id
                                                             ) ===
-                                                            Number(
-                                                                comunidade.id
-                                                            )
+                                                                Number(
+                                                                    comunidade.id
+                                                                )
                                                                 ? "admin-comunidade-selecionada"
                                                                 : ""
                                                         }
@@ -1904,11 +2212,36 @@ function AdminDashboard() {
                                                                             ?.comunidade
                                                                             ?.id
                                                                     ) ===
-                                                                    Number(
-                                                                        comunidade.id
-                                                                    )
+                                                                        Number(
+                                                                            comunidade.id
+                                                                        )
                                                                         ? "Aberto"
                                                                         : "Detalhes"}
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn-editar-usuario"
+                                                                    disabled={
+                                                                        alterando ||
+                                                                        excluindo ||
+                                                                        salvandoEdicaoComunidade
+                                                                    }
+                                                                    onClick={() =>
+                                                                        iniciarEdicaoComunidade(
+                                                                            comunidade
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    {Number(
+                                                                        comunidadeEmEdicao
+                                                                            ?.id
+                                                                    ) ===
+                                                                        Number(
+                                                                            comunidade.id
+                                                                        )
+                                                                        ? "Editando"
+                                                                        : "Editar"}
                                                                 </button>
 
                                                                 {ehComunidadeDoSuperAdmin ? (
