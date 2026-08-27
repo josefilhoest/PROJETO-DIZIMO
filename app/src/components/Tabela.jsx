@@ -64,6 +64,13 @@ function Tabela({ usuario }) {
         useState(false);
 
     // =====================================================
+    // ESTADO DO BACKUP DA COMUNIDADE
+    // =====================================================
+
+    const [gerandoBackup, setGerandoBackup] =
+        useState(false);
+
+    // =====================================================
     // CARREGAR DIZIMISTAS
     // =====================================================
 
@@ -441,6 +448,95 @@ function Tabela({ usuario }) {
             );
         } finally {
             setExportandoCsv(false);
+        }
+    };
+
+    // =====================================================
+    // BACKUP COMPLETO DA COMUNIDADE
+    // =====================================================
+
+    const gerarBackupComunidade = async () => {
+        if (gerandoBackup) {
+            return;
+        }
+
+        try {
+            setGerandoBackup(true);
+
+            const resposta = await api.get(
+                "/dizimistas/backup",
+                {
+                    responseType: "blob",
+                }
+            );
+
+            const contentDisposition =
+                resposta.headers?.[
+                "content-disposition"
+                ] || "";
+
+            const nomeEncontrado =
+                contentDisposition.match(
+                    /filename="?([^";]+)"?/i
+                );
+
+            const nomeArquivo =
+                nomeEncontrado?.[1] ||
+                `backup-comunidade-${new Date()
+                    .toISOString()
+                    .slice(0, 10)}.json`;
+
+            const tipoConteudo =
+                resposta.headers?.[
+                "content-type"
+                ] ||
+                "application/json;charset=utf-8";
+
+            const arquivo = new Blob(
+                [resposta.data],
+                {
+                    type: tipoConteudo,
+                }
+            );
+
+            const url =
+                window.URL.createObjectURL(
+                    arquivo
+                );
+
+            const link =
+                document.createElement("a");
+
+            link.href = url;
+            link.download = nomeArquivo;
+
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            window.URL.revokeObjectURL(url);
+        } catch (erro) {
+            console.error(
+                "Erro ao gerar backup da comunidade:",
+                erro
+            );
+
+            if (
+                erro.response?.status === 401
+            ) {
+                alert(
+                    "Sua sessão expirou. Faça login novamente."
+                );
+
+                return;
+            }
+
+            alert(
+                erro.response?.data?.erro ||
+                "Não foi possível gerar o backup da comunidade."
+            );
+        } finally {
+            setGerandoBackup(false);
         }
     };
 
@@ -2041,6 +2137,24 @@ function Tabela({ usuario }) {
                     {exportandoCsv
                         ? "Exportando..."
                         : "⬇️ Exportar CSV"}
+                </button>
+
+                <button
+                    type="button"
+                    className="btn-importar"
+                    onClick={
+                        gerarBackupComunidade
+                    }
+                    disabled={
+                        gerandoBackup
+                    }
+                    style={{
+                        marginLeft: "8px",
+                    }}
+                >
+                    {gerandoBackup
+                        ? "Gerando backup..."
+                        : "💾 Backup da comunidade"}
                 </button>
 
                 {mostrarImportacao && (

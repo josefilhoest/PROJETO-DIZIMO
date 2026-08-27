@@ -2,6 +2,7 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: "https://projeto-dizimo.onrender.com/api",
+
 });
 
 // Adiciona o token automaticamente em todas as requisições
