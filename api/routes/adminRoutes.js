@@ -1,12 +1,12 @@
 import { Router } from "express";
 
 import { autenticar } from "../middlewares/authMiddleware.js";
-
 import { somenteSuperAdmin } from "../middlewares/adminMiddleware.js";
 
 import {
   listarComunidades,
   detalharComunidade,
+  editarComunidadeAdmin,
   alterarStatusComunidade,
   excluirComunidadeAdmin,
   listarUsuarios,
@@ -57,6 +57,17 @@ router.get(
   autenticar,
   somenteSuperAdmin,
   detalharComunidade
+);
+
+// ========================================
+// EDITAR DADOS DE UMA COMUNIDADE
+// ========================================
+
+router.patch(
+  "/comunidades/:id",
+  autenticar,
+  somenteSuperAdmin,
+  editarComunidadeAdmin
 );
 
 // ========================================

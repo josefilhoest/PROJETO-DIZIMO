@@ -236,6 +236,126 @@ export const detalharComunidade = async (
 };
 
 // ========================================
+// EDITAR DADOS DA COMUNIDADE PELO SUPER ADMIN
+// ========================================
+
+export const editarComunidadeAdmin = async (
+  req,
+  res
+) => {
+  try {
+    const { id } = req.params;
+
+    const comunidadeId = Number(id);
+
+    if (
+      !Number.isInteger(comunidadeId) ||
+      comunidadeId <= 0
+    ) {
+      return res.status(400).json({
+        erro: "ID da comunidade inválido.",
+      });
+    }
+
+    const {
+      nome,
+      paroquia,
+      cidade,
+    } = req.body;
+
+    const nomeLimpo = nome?.trim();
+    const paroquiaLimpa =
+      paroquia?.trim() || null;
+    const cidadeLimpa =
+      cidade?.trim() || null;
+
+    if (!nomeLimpo) {
+      return res.status(400).json({
+        erro:
+          "O nome da comunidade é obrigatório.",
+      });
+    }
+
+    if (nomeLimpo.length < 2) {
+      return res.status(400).json({
+        erro:
+          "O nome da comunidade deve ter pelo menos 2 caracteres.",
+      });
+    }
+
+    if (
+      paroquiaLimpa &&
+      paroquiaLimpa.length > 150
+    ) {
+      return res.status(400).json({
+        erro:
+          "O nome da paróquia deve ter no máximo 150 caracteres.",
+      });
+    }
+
+    if (
+      cidadeLimpa &&
+      cidadeLimpa.length > 150
+    ) {
+      return res.status(400).json({
+        erro:
+          "O nome da cidade deve ter no máximo 150 caracteres.",
+      });
+    }
+
+    const comunidade =
+      await Comunidade.findByPk(
+        comunidadeId
+      );
+
+    if (!comunidade) {
+      return res.status(404).json({
+        erro:
+          "Comunidade não encontrada.",
+      });
+    }
+
+    comunidade.nome = nomeLimpo;
+    comunidade.paroquia =
+      paroquiaLimpa;
+    comunidade.cidade =
+      cidadeLimpa;
+
+    await comunidade.save();
+
+    return res.status(200).json({
+      mensagem:
+        "Dados da comunidade atualizados com sucesso.",
+
+      comunidade: {
+        id: comunidade.id,
+        nome: comunidade.nome,
+        paroquia:
+          comunidade.paroquia,
+        cidade:
+          comunidade.cidade,
+        ativa:
+          comunidade.ativa,
+        createdAt:
+          comunidade.createdAt,
+        updatedAt:
+          comunidade.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Erro ao editar comunidade:",
+      error
+    );
+
+    return res.status(500).json({
+      erro:
+        "Erro ao editar os dados da comunidade.",
+    });
+  }
+};
+
+// ========================================
 // ALTERAR STATUS DA COMUNIDADE
 // ========================================
 
