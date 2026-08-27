@@ -5,6 +5,8 @@ const api = axios.create({
 
 });
 
+
+
 // Adiciona o token automaticamente em todas as requisições
 api.interceptors.request.use(
   (config) => {

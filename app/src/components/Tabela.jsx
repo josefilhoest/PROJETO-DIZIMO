@@ -71,6 +71,37 @@ function Tabela({ usuario }) {
         useState(false);
 
     // =====================================================
+    // ESTADO DO FECHAMENTO MENSAL
+    // =====================================================
+
+    const [fechandoMes, setFechandoMes] =
+        useState(false);
+
+    // =====================================================
+    // ESTADOS DO HISTÓRICO MENSAL
+    // =====================================================
+
+    const [mostrarHistorico, setMostrarHistorico] =
+        useState(false);
+
+    const [historicoMensal, setHistoricoMensal] =
+        useState([]);
+
+    const [carregandoHistorico, setCarregandoHistorico] =
+        useState(false);
+
+    const [erroHistorico, setErroHistorico] =
+        useState("");
+
+    const [detalheHistorico, setDetalheHistorico] =
+        useState(null);
+
+    const [
+        carregandoDetalheHistorico,
+        setCarregandoDetalheHistorico,
+    ] = useState(false);
+
+    // =====================================================
     // CARREGAR DIZIMISTAS
     // =====================================================
 
@@ -1588,6 +1619,340 @@ function Tabela({ usuario }) {
         };
 
     // =====================================================
+    // HISTÓRICO MENSAL
+    // =====================================================
+
+    const nomesMesesHistorico = [
+        "Janeiro",
+        "Fevereiro",
+        "Março",
+        "Abril",
+        "Maio",
+        "Junho",
+        "Julho",
+        "Agosto",
+        "Setembro",
+        "Outubro",
+        "Novembro",
+        "Dezembro",
+    ];
+
+    const formatarMesAnoHistorico = (
+        mes,
+        ano
+    ) => {
+        const mesNumero = Number(mes);
+
+        const nomeMes =
+            nomesMesesHistorico[
+            mesNumero - 1
+            ] || `Mês ${mesNumero}`;
+
+        return `${nomeMes}/${ano}`;
+    };
+
+    const carregarHistoricoMensal =
+        async () => {
+            try {
+                setCarregandoHistorico(
+                    true
+                );
+
+                setErroHistorico("");
+
+                const resposta =
+                    await api.get(
+                        "/registros/historico"
+                    );
+
+                setHistoricoMensal(
+                    Array.isArray(
+                        resposta.data
+                    )
+                        ? resposta.data
+                        : []
+                );
+            } catch (erro) {
+                console.error(
+                    "Erro ao carregar histórico mensal:",
+                    erro
+                );
+
+                if (
+                    erro.response?.status ===
+                    401
+                ) {
+                    alert(
+                        "Sua sessão expirou. Faça login novamente."
+                    );
+
+                    return;
+                }
+
+                setErroHistorico(
+                    erro.response?.data
+                        ?.erro ||
+                    "Não foi possível carregar o histórico mensal."
+                );
+            } finally {
+                setCarregandoHistorico(
+                    false
+                );
+            }
+        };
+
+    const abrirHistoricoMensal =
+        async () => {
+            if (mostrarHistorico) {
+                setMostrarHistorico(
+                    false
+                );
+
+                setDetalheHistorico(
+                    null
+                );
+
+                setErroHistorico("");
+
+                return;
+            }
+
+            setMostrarHistorico(true);
+            setDetalheHistorico(null);
+
+            await carregarHistoricoMensal();
+        };
+
+    const abrirDetalheHistorico =
+        async (id) => {
+            if (
+                carregandoDetalheHistorico
+            ) {
+                return;
+            }
+
+            try {
+                setCarregandoDetalheHistorico(
+                    true
+                );
+
+                setErroHistorico("");
+
+                const resposta =
+                    await api.get(
+                        `/registros/historico/${id}`
+                    );
+
+                setDetalheHistorico(
+                    resposta.data
+                );
+            } catch (erro) {
+                console.error(
+                    "Erro ao abrir detalhes do histórico:",
+                    erro
+                );
+
+                if (
+                    erro.response?.status ===
+                    401
+                ) {
+                    alert(
+                        "Sua sessão expirou. Faça login novamente."
+                    );
+
+                    return;
+                }
+
+                setErroHistorico(
+                    erro.response?.data
+                        ?.erro ||
+                    "Não foi possível abrir os detalhes deste fechamento."
+                );
+            } finally {
+                setCarregandoDetalheHistorico(
+                    false
+                );
+            }
+        };
+
+    const voltarListaHistorico = () => {
+        setDetalheHistorico(null);
+        setErroHistorico("");
+    };
+
+    // =====================================================
+    // FECHAR MÊS / INICIAR NOVA CONTAGEM
+    // =====================================================
+
+    const fecharMesNovaContagem = async () => {
+        if (fechandoMes) {
+            return;
+        }
+
+        if (!registroMensal.data) {
+            alert(
+                "Informe a data da ficha antes de fechar o mês."
+            );
+
+            return;
+        }
+
+        if (dizimistas.length === 0) {
+            alert(
+                "Não existem dizimistas cadastrados para fechar o mês."
+            );
+
+            return;
+        }
+
+        const partesData =
+            registroMensal.data.split("-");
+
+        const ano = Number(partesData[0]);
+        const mes = Number(partesData[1]);
+
+        if (
+            !Number.isInteger(mes) ||
+            mes < 1 ||
+            mes > 12 ||
+            !Number.isInteger(ano) ||
+            ano < 2000 ||
+            ano > 2100
+        ) {
+            alert(
+                "A data informada para o fechamento é inválida."
+            );
+
+            return;
+        }
+
+        const nomesMeses = [
+            "Janeiro",
+            "Fevereiro",
+            "Março",
+            "Abril",
+            "Maio",
+            "Junho",
+            "Julho",
+            "Agosto",
+            "Setembro",
+            "Outubro",
+            "Novembro",
+            "Dezembro",
+        ];
+
+        const nomeMes =
+            nomesMeses[mes - 1];
+
+        const totalAtual =
+            calcularTotal(dizimistas);
+
+        const mensagemConfirmacao =
+            `Fechar ${nomeMes}/${ano}?` +
+            `\n\nComunidade: ${usuario?.comunidadeNome || ""}` +
+            `\nTotal atual: ${formatarDinheiro(totalAtual)}` +
+            `\nDizimistas: ${dizimistas.length}` +
+            "\n\nOs valores atuais serão salvos no histórico e depois zerados para iniciar uma nova contagem." +
+            "\n\nNomes, números e folhas não serão alterados." +
+            "\n\nDeseja continuar?";
+
+        const confirmou =
+            window.confirm(
+                mensagemConfirmacao
+            );
+
+        if (!confirmou) {
+            return;
+        }
+
+        try {
+            setFechandoMes(true);
+
+            const resposta =
+                await api.post(
+                    "/registros/fechar-mes",
+                    {
+                        mes,
+                        ano,
+
+                        equipe_comunidade:
+                            registroMensal.equipe_comunidade.trim(),
+
+                        conferido_em:
+                            registroMensal.conferido_em ||
+                            null,
+
+                        responsavel_paroquia:
+                            registroMensal.responsavel_paroquia.trim(),
+                    }
+                );
+
+            await carregarDizimistas();
+            await carregarRegistroMensal();
+
+            if (mostrarHistorico) {
+                await carregarHistoricoMensal();
+                setDetalheHistorico(null);
+            }
+
+            const totalFechamento =
+                resposta.data?.fechamento?.total ??
+                totalAtual;
+
+            alert(
+                `Mês fechado com sucesso!` +
+                `\n\n${nomeMes}/${ano}` +
+                `\nTotal salvo no histórico: ${formatarDinheiro(totalFechamento)}` +
+                "\n\nOs valores foram zerados e uma nova contagem pode ser iniciada."
+            );
+        } catch (erro) {
+            console.error(
+                "Erro ao fechar o mês:",
+                erro
+            );
+
+            if (
+                erro.response?.status === 401
+            ) {
+                alert(
+                    "Sua sessão expirou. Faça login novamente."
+                );
+
+                return;
+            }
+
+            if (
+                erro.response?.status === 409
+            ) {
+                alert(
+                    erro.response?.data?.erro ||
+                    "Já existe um fechamento para este mês e ano."
+                );
+
+                return;
+            }
+
+            if (
+                erro.response?.status === 400
+            ) {
+                alert(
+                    erro.response?.data?.erro ||
+                    "Não foi possível fechar o mês com os dados informados."
+                );
+
+                return;
+            }
+
+            alert(
+                erro.response?.data?.erro ||
+                "Não foi possível fechar o mês. Nenhum valor foi alterado."
+            );
+        } finally {
+            setFechandoMes(false);
+        }
+    };
+
+    // =====================================================
     // SALVAR REGISTRO MENSAL
     // =====================================================
 
@@ -1965,6 +2330,144 @@ function Tabela({ usuario }) {
 
     return (
         <div className="registro">
+            <style>{`
+                .historico-desktop {
+                    display: block;
+                }
+
+                .historico-mobile {
+                    display: none;
+                }
+
+                .painel-historico {
+                    margin-top: 16px;
+                }
+
+                .historico-cards {
+                    display: grid;
+                    gap: 10px;
+                }
+
+                .historico-card {
+                    border: 1px solid #d9d9d9;
+                    border-radius: 10px;
+                    padding: 12px;
+                    background: #ffffff;
+                }
+
+                .historico-card-topo {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 10px;
+                    margin-bottom: 10px;
+                }
+
+                .historico-card-valores {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 8px;
+                    margin-top: 8px;
+                }
+
+                .historico-card-campo {
+                    background: #f6f6f6;
+                    border-radius: 8px;
+                    padding: 8px;
+                }
+
+                .historico-card-campo strong {
+                    display: block;
+                    margin-bottom: 3px;
+                    font-size: 0.82rem;
+                }
+
+                .historico-detalhe-resumo {
+                    margin-top: 12px;
+                    padding: 10px;
+                    border: 1px solid #ddd;
+                    border-radius: 8px;
+                    display: grid;
+                    grid-template-columns:
+                        repeat(auto-fit, minmax(180px, 1fr));
+                    gap: 8px;
+                }
+
+                .historico-detalhe-card {
+                    border: 1px solid #e0e0e0;
+                    border-radius: 10px;
+                    padding: 10px;
+                    background: #ffffff;
+                }
+
+                .historico-detalhe-card-topo {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    gap: 10px;
+                    margin-bottom: 8px;
+                }
+
+                .historico-detalhe-card-nome {
+                    font-weight: 700;
+                    overflow-wrap: anywhere;
+                }
+
+                .historico-acoes-topo {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 12px;
+                    flex-wrap: wrap;
+                }
+
+                @media (max-width: 700px) {
+                    .historico-desktop {
+                        display: none !important;
+                    }
+
+                    .historico-mobile {
+                        display: block !important;
+                    }
+
+                    .painel-historico {
+                        margin-top: 12px !important;
+                        padding: 10px !important;
+                    }
+
+                    .historico-acoes-topo {
+                        align-items: stretch;
+                    }
+
+                    .historico-acoes-topo > div:first-child {
+                        width: 100%;
+                    }
+
+                    .historico-acoes-topo button {
+                        min-height: 40px;
+                    }
+
+                    .historico-card-topo {
+                        align-items: flex-start;
+                    }
+
+                    .historico-card-valores {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .historico-detalhe-resumo {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .historico-detalhe-card-topo {
+                        align-items: flex-start;
+                    }
+
+                    .importacao-lista > button {
+                        margin-top: 6px;
+                    }
+                }
+            `}</style>
             {/* =========================================
                 CABEÇALHO
             ========================================= */}
@@ -2156,6 +2659,561 @@ function Tabela({ usuario }) {
                         ? "Gerando backup..."
                         : "💾 Backup da comunidade"}
                 </button>
+
+                <button
+                    type="button"
+                    className="btn-importar"
+                    onClick={
+                        abrirHistoricoMensal
+                    }
+                    disabled={
+                        carregandoHistorico
+                    }
+                    style={{
+                        marginLeft: "8px",
+                    }}
+                >
+                    {carregandoHistorico
+                        ? "Carregando histórico..."
+                        : mostrarHistorico
+                            ? "✖ Fechar histórico"
+                            : "📊 Histórico mensal"}
+                </button>
+
+                {mostrarHistorico && (
+                    <div
+                        className="painel-importacao painel-historico"
+                    >
+                        <div className="historico-acoes-topo">
+                            <div>
+                                <h3
+                                    style={{
+                                        marginBottom:
+                                            "4px",
+                                    }}
+                                >
+                                    📊 Histórico
+                                    mensal
+                                </h3>
+
+                                <p
+                                    style={{
+                                        marginTop: 0,
+                                    }}
+                                >
+                                    Consulte os
+                                    fechamentos já
+                                    realizados desta
+                                    comunidade.
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                className="btn-cancelar"
+                                onClick={() => {
+                                    setMostrarHistorico(
+                                        false
+                                    );
+
+                                    setDetalheHistorico(
+                                        null
+                                    );
+
+                                    setErroHistorico(
+                                        ""
+                                    );
+                                }}
+                            >
+                                Fechar
+                            </button>
+                        </div>
+
+                        {erroHistorico && (
+                            <div
+                                className="erro-importacao"
+                                role="alert"
+                                style={{
+                                    marginTop:
+                                        "10px",
+                                }}
+                            >
+                                {
+                                    erroHistorico
+                                }
+                            </div>
+                        )}
+
+                        {!detalheHistorico ? (
+                            <>
+                                {carregandoHistorico ? (
+                                    <p>
+                                        Carregando
+                                        histórico...
+                                    </p>
+                                ) : historicoMensal.length ===
+                                    0 ? (
+                                    <p>
+                                        Ainda não há
+                                        fechamentos
+                                        mensais
+                                        registrados.
+                                    </p>
+                                ) : (
+                                    <>
+                                        <div
+                                            className="historico-desktop"
+                                            style={{
+                                                overflowX:
+                                                    "auto",
+                                                width:
+                                                    "100%",
+                                                marginTop:
+                                                    "12px",
+                                            }}
+                                        >
+                                            <table
+                                                style={{
+                                                    width:
+                                                        "100%",
+                                                    minWidth:
+                                                        "620px",
+                                                }}
+                                            >
+                                                <thead>
+                                                    <tr>
+                                                        <th>
+                                                            Mês
+                                                        </th>
+
+                                                        <th>
+                                                            Total
+                                                        </th>
+
+                                                        <th>
+                                                            Paróquia
+                                                            (50%)
+                                                        </th>
+
+                                                        <th>
+                                                            Comunidade
+                                                            (50%)
+                                                        </th>
+
+                                                        <th>
+                                                            Ação
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+
+                                                <tbody>
+                                                    {historicoMensal.map(
+                                                        (
+                                                            fechamento
+                                                        ) => {
+                                                            const totalFechamento =
+                                                                Number(
+                                                                    fechamento.total ||
+                                                                    0
+                                                                );
+
+                                                            return (
+                                                                <tr
+                                                                    key={
+                                                                        fechamento.id
+                                                                    }
+                                                                >
+                                                                    <td>
+                                                                        <strong>
+                                                                            {formatarMesAnoHistorico(
+                                                                                fechamento.mes,
+                                                                                fechamento.ano
+                                                                            )}
+                                                                        </strong>
+                                                                    </td>
+
+                                                                    <td>
+                                                                        {formatarDinheiro(
+                                                                            totalFechamento
+                                                                        )}
+                                                                    </td>
+
+                                                                    <td>
+                                                                        {formatarDinheiro(
+                                                                            totalFechamento /
+                                                                            2
+                                                                        )}
+                                                                    </td>
+
+                                                                    <td>
+                                                                        {formatarDinheiro(
+                                                                            totalFechamento /
+                                                                            2
+                                                                        )}
+                                                                    </td>
+
+                                                                    <td>
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn-editar"
+                                                                            onClick={() =>
+                                                                                abrirDetalheHistorico(
+                                                                                    fechamento.id
+                                                                                )
+                                                                            }
+                                                                            disabled={
+                                                                                carregandoDetalheHistorico
+                                                                            }
+                                                                            title="Ver detalhes do fechamento"
+                                                                        >
+                                                                            👁️
+                                                                            Ver
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        }
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <div className="historico-mobile historico-cards">
+                                            {historicoMensal.map(
+                                                (
+                                                    fechamento
+                                                ) => {
+                                                    const totalFechamento =
+                                                        Number(
+                                                            fechamento.total ||
+                                                            0
+                                                        );
+
+                                                    return (
+                                                        <div
+                                                            className="historico-card"
+                                                            key={`mobile-${fechamento.id}`}
+                                                        >
+                                                            <div className="historico-card-topo">
+                                                                <div>
+                                                                    <strong>
+                                                                        {formatarMesAnoHistorico(
+                                                                            fechamento.mes,
+                                                                            fechamento.ano
+                                                                        )}
+                                                                    </strong>
+                                                                </div>
+
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn-editar"
+                                                                    onClick={() =>
+                                                                        abrirDetalheHistorico(
+                                                                            fechamento.id
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        carregandoDetalheHistorico
+                                                                    }
+                                                                    title="Ver detalhes do fechamento"
+                                                                >
+                                                                    👁️ Ver
+                                                                </button>
+                                                            </div>
+
+                                                            <div className="historico-card-valores">
+                                                                <div className="historico-card-campo">
+                                                                    <strong>
+                                                                        Total
+                                                                    </strong>
+
+                                                                    {formatarDinheiro(
+                                                                        totalFechamento
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="historico-card-campo">
+                                                                    <strong>
+                                                                        Paróquia (50%)
+                                                                    </strong>
+
+                                                                    {formatarDinheiro(
+                                                                        totalFechamento /
+                                                                        2
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="historico-card-campo">
+                                                                    <strong>
+                                                                        Comunidade (50%)
+                                                                    </strong>
+
+                                                                    {formatarDinheiro(
+                                                                        totalFechamento /
+                                                                        2
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+                                            )}
+                                        </div>
+                                    </>
+                                )}
+                            </>
+                        ) : (
+                            <div
+                                style={{
+                                    marginTop:
+                                        "14px",
+                                }}
+                            >
+                                <div className="historico-acoes-topo">
+                                    <div>
+                                        <h4
+                                            style={{
+                                                margin:
+                                                    "0 0 4px 0",
+                                            }}
+                                        >
+                                            {formatarMesAnoHistorico(
+                                                detalheHistorico
+                                                    .fechamento
+                                                    ?.mes,
+                                                detalheHistorico
+                                                    .fechamento
+                                                    ?.ano
+                                            )}
+                                        </h4>
+
+                                        <div>
+                                            <strong>
+                                                Total:
+                                            </strong>{" "}
+                                            {formatarDinheiro(
+                                                detalheHistorico
+                                                    .fechamento
+                                                    ?.total ||
+                                                0
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <strong>
+                                                Dizimistas
+                                                registrados:
+                                            </strong>{" "}
+                                            {
+                                                detalheHistorico
+                                                    .itens
+                                                    ?.length
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        className="btn-cancelar"
+                                        onClick={
+                                            voltarListaHistorico
+                                        }
+                                    >
+                                        ← Voltar
+                                    </button>
+                                </div>
+
+                                <div className="historico-detalhe-resumo">
+                                    <div>
+                                        <strong>
+                                            Total
+                                            geral:
+                                        </strong>
+                                        <br />
+                                        {formatarDinheiro(
+                                            detalheHistorico
+                                                .fechamento
+                                                ?.total ||
+                                            0
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <strong>
+                                            Paróquia
+                                            (50%):
+                                        </strong>
+                                        <br />
+                                        {formatarDinheiro(
+                                            Number(
+                                                detalheHistorico
+                                                    .fechamento
+                                                    ?.total ||
+                                                0
+                                            ) / 2
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <strong>
+                                            Comunidade
+                                            (50%):
+                                        </strong>
+                                        <br />
+                                        {formatarDinheiro(
+                                            Number(
+                                                detalheHistorico
+                                                    .fechamento
+                                                    ?.total ||
+                                                0
+                                            ) / 2
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div
+                                    className="historico-desktop"
+                                    style={{
+                                        overflowX:
+                                            "auto",
+                                        width:
+                                            "100%",
+                                        marginTop:
+                                            "14px",
+                                    }}
+                                >
+                                    <table
+                                        style={{
+                                            width:
+                                                "100%",
+                                            minWidth:
+                                                "650px",
+                                        }}
+                                    >
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    Nº
+                                                </th>
+
+                                                <th>
+                                                    Nome
+                                                </th>
+
+                                                <th>
+                                                    Folha
+                                                </th>
+
+                                                <th>
+                                                    Valor
+                                                </th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            {(
+                                                detalheHistorico.itens ||
+                                                []
+                                            ).map(
+                                                (
+                                                    item
+                                                ) => (
+                                                    <tr
+                                                        key={
+                                                            item.id
+                                                        }
+                                                    >
+                                                        <td>
+                                                            {String(
+                                                                item.numero
+                                                            ).padStart(
+                                                                2,
+                                                                "0"
+                                                            )}
+                                                        </td>
+
+                                                        <td className="nome-dizimista">
+                                                            {
+                                                                item.nome
+                                                            }
+                                                        </td>
+
+                                                        <td>
+                                                            {
+                                                                item.folha
+                                                            }
+                                                        </td>
+
+                                                        <td>
+                                                            {formatarDinheiro(
+                                                                item.valor
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div
+                                    className="historico-mobile historico-cards"
+                                    style={{
+                                        marginTop:
+                                            "14px",
+                                    }}
+                                >
+                                    {(
+                                        detalheHistorico.itens ||
+                                        []
+                                    ).map(
+                                        (
+                                            item
+                                        ) => (
+                                            <div
+                                                className="historico-detalhe-card"
+                                                key={`mobile-detalhe-${item.id}`}
+                                            >
+                                                <div className="historico-detalhe-card-topo">
+                                                    <div>
+                                                        <div className="historico-detalhe-card-nome">
+                                                            {
+                                                                item.nome
+                                                            }
+                                                        </div>
+
+                                                        <div>
+                                                            Nº{" "}
+                                                            {String(
+                                                                item.numero
+                                                            ).padStart(
+                                                                2,
+                                                                "0"
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <strong>
+                                                        {formatarDinheiro(
+                                                            item.valor
+                                                        )}
+                                                    </strong>
+                                                </div>
+
+                                                <div>
+                                                    Folha{" "}
+                                                    {
+                                                        item.folha
+                                                    }
+                                                </div>
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {mostrarImportacao && (
                     <div className="painel-importacao">
@@ -2789,6 +3847,22 @@ function Tabela({ usuario }) {
                     }
                 >
                     🖨️ Imprimir ficha
+                </button>
+
+                <button
+                    type="button"
+                    className="btn-cancelar"
+                    onClick={
+                        fecharMesNovaContagem
+                    }
+                    disabled={
+                        fechandoMes
+                    }
+                    title="Salvar o mês no histórico e zerar os valores para iniciar uma nova contagem"
+                >
+                    {fechandoMes
+                        ? "Fechando mês..."
+                        : "🔒 Fechar mês / Nova contagem"}
                 </button>
             </div>
         </div>
