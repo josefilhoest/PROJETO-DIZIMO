@@ -10,6 +10,7 @@ import sequelize from "./database/database.js";
 import Dizimista from "./models/Dizimista.js";
 import Usuario from "./models/Usuario.js";
 import RegistroMensal from "./models/RegistroMensal.js";
+import RegistroMensalItem from "./models/RegistroMensalItem.js";
 
 import dizimistaRoutes from "./routes/dizimistaRoutes.js";
 import registroMensalRoutes from "./routes/registroMensalRoutes.js";
