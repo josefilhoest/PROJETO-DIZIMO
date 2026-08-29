@@ -135,6 +135,42 @@ app.get("/", (req, res) => {
 });
 
 // ========================================
+// ROTA NÃO ENCONTRADA
+// ========================================
+
+app.use((req, res) => {
+  return res.status(404).json({
+    erro: "Rota não encontrada",
+  });
+});
+
+// ========================================
+// TRATAMENTO GLOBAL DE ERROS
+// ========================================
+
+app.use((error, req, res, next) => {
+  console.error("Erro não tratado na API:", {
+    metodo: req.method,
+    rota: req.originalUrl,
+    nome: error?.name,
+    mensagem: error?.message,
+  });
+
+  const status =
+    Number(error?.status || error?.statusCode) || 500;
+
+  if (status >= 500) {
+    return res.status(500).json({
+      erro: "Erro interno do servidor",
+    });
+  }
+
+  return res.status(status).json({
+    erro: error?.message || "Erro na requisição",
+  });
+});
+
+// ========================================
 // BANCO DE DADOS E SERVIDOR
 // ========================================
 
@@ -160,11 +196,15 @@ try {
     );
   });
 } catch (error) {
-  console.error(
-    "Erro ao iniciar o servidor:"
-  );
-
-  console.error(error);
+  console.error("Erro ao iniciar o servidor:", {
+    nome: error?.name,
+    mensagem: error?.message,
+    codigo:
+      error?.original?.code ||
+      error?.parent?.code ||
+      error?.code ||
+      null,
+  });
 
   process.exit(1);
 }
