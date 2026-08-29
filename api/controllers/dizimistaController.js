@@ -320,22 +320,71 @@ export const criarDizimista = async (req, res) => {
 
         const {
             numero,
-            folha,
             nome,
             valor,
         } = req.body;
 
+        // ========================================
+        // VALIDAR DADOS NO BACKEND
+        // ========================================
+
+        const numeroValidado = Number(numero);
+        const nomeValidado = String(
+            nome || ""
+        ).trim();
+        const valorValidado = Number(
+            valor ?? 0
+        );
+
+        if (
+            !Number.isInteger(numeroValidado) ||
+            numeroValidado < 1
+        ) {
+            return res.status(400).json({
+                erro: "Número inválido",
+            });
+        }
+
+        if (!nomeValidado) {
+            return res.status(400).json({
+                erro: "Nome inválido",
+            });
+        }
+
+        if (
+            !Number.isFinite(valorValidado) ||
+            valorValidado < 0
+        ) {
+            return res.status(400).json({
+                erro: "Valor inválido",
+            });
+        }
+
+        // A folha é sempre calculada no backend.
+        // Não confiamos no valor enviado pelo frontend.
+        const folhaCalculada =
+            Math.ceil(numeroValidado / 40);
+
         const novoDizimista = await Dizimista.create({
-            numero,
-            folha,
-            nome,
-            valor,
+            numero: numeroValidado,
+            folha: folhaCalculada,
+            nome: nomeValidado,
+            valor: valorValidado,
+
+            // Segurança:
+            // comunidadeId vem exclusivamente do
+            // usuário autenticado.
             comunidadeId,
         });
 
-        res.status(201).json(novoDizimista);
+        return res.status(201).json(
+            novoDizimista
+        );
     } catch (error) {
-        console.error("Erro ao cadastrar dizimista:", error);
+        console.error(
+            "Erro ao cadastrar dizimista:",
+            error
+        );
 
         if (
             error.name ===
@@ -347,7 +396,17 @@ export const criarDizimista = async (req, res) => {
             });
         }
 
-        res.status(500).json({
+        if (
+            error.name ===
+            "SequelizeValidationError"
+        ) {
+            return res.status(400).json({
+                erro:
+                    "Dados do dizimista são inválidos",
+            });
+        }
+
+        return res.status(500).json({
             erro: "Erro ao cadastrar dizimista",
         });
     }
@@ -578,17 +637,61 @@ export const importarDizimistas = async (req, res) => {
 
 export const atualizarDizimista = async (req, res) => {
     try {
-        const comunidadeId = req.usuario.comunidadeId;
+        const comunidadeId =
+            req.usuario.comunidadeId;
 
         const { id } = req.params;
 
         const {
             numero,
-            folha,
             nome,
             valor,
         } = req.body;
 
+        // ========================================
+        // VALIDAR DADOS NO BACKEND
+        // ========================================
+
+        const numeroValidado = Number(numero);
+        const nomeValidado = String(
+            nome || ""
+        ).trim();
+        const valorValidado = Number(
+            valor ?? 0
+        );
+
+        if (
+            !Number.isInteger(numeroValidado) ||
+            numeroValidado < 1
+        ) {
+            return res.status(400).json({
+                erro: "Número inválido",
+            });
+        }
+
+        if (!nomeValidado) {
+            return res.status(400).json({
+                erro: "Nome inválido",
+            });
+        }
+
+        if (
+            !Number.isFinite(valorValidado) ||
+            valorValidado < 0
+        ) {
+            return res.status(400).json({
+                erro: "Valor inválido",
+            });
+        }
+
+        // A folha é sempre calculada no backend.
+        // Não confiamos no valor enviado pelo frontend.
+        const folhaCalculada =
+            Math.ceil(numeroValidado / 40);
+
+        // Segurança contra acesso cruzado:
+        // o registro precisa pertencer à comunidade
+        // do usuário autenticado.
         const dizimista = await Dizimista.findOne({
             where: {
                 id,
@@ -604,13 +707,13 @@ export const atualizarDizimista = async (req, res) => {
         }
 
         await dizimista.update({
-            numero,
-            folha,
-            nome,
-            valor,
+            numero: numeroValidado,
+            folha: folhaCalculada,
+            nome: nomeValidado,
+            valor: valorValidado,
         });
 
-        res.json(dizimista);
+        return res.json(dizimista);
     } catch (error) {
         console.error(
             "Erro ao atualizar dizimista:",
@@ -627,7 +730,17 @@ export const atualizarDizimista = async (req, res) => {
             });
         }
 
-        res.status(500).json({
+        if (
+            error.name ===
+            "SequelizeValidationError"
+        ) {
+            return res.status(400).json({
+                erro:
+                    "Dados do dizimista são inválidos",
+            });
+        }
+
+        return res.status(500).json({
             erro: "Erro ao atualizar dizimista",
         });
     }
