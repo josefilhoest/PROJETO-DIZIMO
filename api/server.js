@@ -9,6 +9,7 @@ import sequelize from "./database/database.js";
 
 import Dizimista from "./models/Dizimista.js";
 import Usuario from "./models/Usuario.js";
+import Paroquia from "./models/Paroquia.js";
 import RegistroMensal from "./models/RegistroMensal.js";
 import RegistroMensalItem from "./models/RegistroMensalItem.js";
 

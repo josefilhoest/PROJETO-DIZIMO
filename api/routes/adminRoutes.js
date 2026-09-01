@@ -1,7 +1,13 @@
 import { Router } from "express";
 
 import { autenticar } from "../middlewares/authMiddleware.js";
-import { somenteSuperAdmin } from "../middlewares/adminMiddleware.js";
+import {
+  somenteSuperAdmin,
+  somenteAdminParoquia,
+} from "../middlewares/adminMiddleware.js";
+import {
+  listarComunidadesParoquia,
+} from "../controllers/paroquiaController.js";
 
 import {
   listarComunidades,
@@ -36,6 +42,7 @@ router.get(
     });
   }
 );
+
 
 // ========================================
 // LISTAR TODAS AS COMUNIDADES
@@ -178,6 +185,17 @@ router.get(
   autenticar,
   somenteSuperAdmin,
   resumoDashboard
+);
+
+// ========================================
+// LISTAR COMUNIDADES DA PARÓQUIA LOGADA
+// ========================================
+
+router.get(
+  "/paroquia/comunidades",
+  autenticar,
+  somenteAdminParoquia,
+  listarComunidadesParoquia
 );
 
 export default router;

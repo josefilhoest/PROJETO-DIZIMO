@@ -64,6 +64,7 @@ export const autenticar = async (req, res, next) => {
           "nome",
           "email",
           "perfil",
+          "paroquiaId",
           "comunidadeId",
           "ativo",
           "licencaStatus",
@@ -111,6 +112,7 @@ export const autenticar = async (req, res, next) => {
 
     req.usuario = {
       usuarioId: usuario.id,
+      paroquiaId: usuario.paroquiaId,
       comunidadeId: usuario.comunidadeId,
       perfil: usuario.perfil,
       ativo: usuario.ativo,

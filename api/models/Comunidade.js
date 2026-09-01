@@ -19,6 +19,15 @@ const Comunidade = sequelize.define(
       type: DataTypes.STRING(150),
       allowNull: true,
     },
+    paroquiaId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+
+      references: {
+        model: "paroquias",
+        key: "id",
+      },
+    },
 
     cidade: {
       type: DataTypes.STRING(100),

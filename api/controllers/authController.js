@@ -5,6 +5,7 @@ import sequelize from "../database/database.js";
 
 import Usuario from "../models/Usuario.js";
 import Comunidade from "../models/Comunidade.js";
+import Paroquia from "../models/Paroquia.js";
 
 // ========================================
 // CADASTRAR USUÁRIO LICENCIADO
@@ -17,6 +18,8 @@ export const cadastrarUsuario = async (req, res) => {
       nome,
       email,
       senha,
+      perfil = "ADMIN_COMUNIDADE",
+      paroquiaId = null,
     } = req.body;
     const nomeLimpo = nome?.trim();
 
@@ -33,10 +36,42 @@ export const cadastrarUsuario = async (req, res) => {
         erro: "Nome, email e senha são obrigatórios",
       });
     }
+    const perfisPermitidos = [
+      "ADMIN_COMUNIDADE",
+      "ADMIN_PAROQUIA",
+    ];
+
+    if (!perfisPermitidos.includes(perfil)) {
+      return res.status(400).json({
+        erro: "Perfil de usuário inválido",
+      });
+    }
     if (senha.length < 6) {
       return res.status(400).json({
         erro: "A senha deve ter pelo menos 6 caracteres.",
       });
+    }
+
+    if (perfil === "ADMIN_PAROQUIA") {
+      if (!paroquiaId) {
+        return res.status(400).json({
+          erro: "A paróquia é obrigatória para ADMIN_PAROQUIA",
+        });
+      }
+
+      const paroquia = await Paroquia.findByPk(paroquiaId);
+
+      if (!paroquia) {
+        return res.status(404).json({
+          erro: "Paróquia não encontrada",
+        });
+      }
+
+      if (!paroquia.ativa) {
+        return res.status(403).json({
+          erro: "Paróquia desativada",
+        });
+      }
     }
 
     // ========================================
@@ -82,7 +117,12 @@ export const cadastrarUsuario = async (req, res) => {
       email: emailLimpo,
       senha: senhaCriptografada,
 
-      perfil: "ADMIN_COMUNIDADE",
+      perfil,
+
+      paroquiaId:
+        perfil === "ADMIN_PAROQUIA"
+          ? Number(paroquiaId)
+          : null,
 
       comunidadeId: null,
 
@@ -99,6 +139,7 @@ export const cadastrarUsuario = async (req, res) => {
         nome: novoUsuario.nome,
         email: novoUsuario.email,
         perfil: novoUsuario.perfil,
+        paroquiaId: novoUsuario.paroquiaId,
 
         comunidadeId: novoUsuario.comunidadeId,
 
@@ -444,14 +485,44 @@ export const login = async (req, res) => {
     }
 
     // ========================================
+    // BUSCAR PARÓQUIA
+    // ========================================
+
+    let paroquia = null;
+
+    if (usuario.paroquiaId) {
+      paroquia = await Paroquia.findByPk(
+        usuario.paroquiaId
+      );
+
+      if (!paroquia) {
+        return res.status(404).json({
+          erro:
+            "Paróquia vinculada ao usuário não encontrada",
+        });
+      }
+
+      if (!paroquia.ativa) {
+        return res.status(403).json({
+          erro: "Paróquia desativada",
+        });
+      }
+    }
+
+    // ========================================
     // GERAR TOKEN JWT
     // ========================================
 
     const token = jwt.sign(
       {
         usuarioId: usuario.id,
+
+        paroquiaId:
+          usuario.paroquiaId,
+
         comunidadeId:
           usuario.comunidadeId,
+
         perfil: usuario.perfil,
       },
 
@@ -476,6 +547,11 @@ export const login = async (req, res) => {
         nome: usuario.nome,
         email: usuario.email,
         perfil: usuario.perfil,
+        paroquiaId:
+          usuario.paroquiaId,
+
+        paroquiaNome:
+          paroquia?.nome || null,
 
         comunidadeId:
           usuario.comunidadeId,

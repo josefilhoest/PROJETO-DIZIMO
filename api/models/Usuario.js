@@ -33,6 +33,20 @@ const Usuario = sequelize.define(
     },
 
     // ========================================
+    // PARÓQUIA DO USUÁRIO
+    // ========================================
+
+    paroquiaId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+
+      references: {
+        model: "paroquias",
+        key: "id",
+      },
+    },
+
+    // ========================================
     // COMUNIDADE DO USUÁRIO
     // ========================================
 
