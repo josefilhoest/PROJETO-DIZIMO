@@ -223,11 +223,11 @@ function Login({ onLogin }) {
 
                 <footer className="login-rodape">
                     <p>
-                        Paróquia Nossa Senhora da Penha
+                        Sistema de Gestão de Dízimos
                     </p>
 
                     <span>
-                        Pastoral da Partilha
+                        Gestão de Comunidades
                     </span>
                 </footer>
             </main>
