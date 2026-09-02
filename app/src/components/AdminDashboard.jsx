@@ -38,6 +38,14 @@ function AdminDashboard() {
     const [usuarios, setUsuarios] =
         useState([]);
 
+    const [paroquias, setParoquias] =
+        useState([]);
+
+    const [
+        carregandoParoquias,
+        setCarregandoParoquias,
+    ] = useState(false);
+
     const [buscaUsuario, setBuscaUsuario] =
         useState("");
 
@@ -86,6 +94,7 @@ function AdminDashboard() {
             senha: "",
             confirmarSenha: "",
             perfil: "ADMIN_COMUNIDADE",
+            paroquiaId: "",
             licencaStatus: "ATIVA",
         });
 
@@ -109,6 +118,8 @@ function AdminDashboard() {
             nome: "",
             email: "",
             perfil: "",
+            paroquiaId: null,
+            paroquiaNome: "",
             comunidadeId: null,
             comunidadeNome: "",
             novaSenha: "",
@@ -269,6 +280,7 @@ function AdminDashboard() {
         }
 
         carregarUsuarios();
+        carregarParoquias();
     }, [aba]);
 
     // ========================================
@@ -308,6 +320,34 @@ function AdminDashboard() {
             );
         } finally {
             setCarregandoUsuarios(false);
+        }
+    };
+
+    // ========================================
+    // CARREGAR PARÓQUIAS
+    // ========================================
+
+    const carregarParoquias = async () => {
+        try {
+            setCarregandoParoquias(true);
+
+            const resposta = await api.get(
+                "/admin/paroquias"
+            );
+
+            setParoquias(resposta.data);
+        } catch (error) {
+            console.error(
+                "Erro ao carregar paróquias:",
+                error
+            );
+
+            setErroUsuarios(
+                error.response?.data?.erro ||
+                "Não foi possível carregar as paróquias."
+            );
+        } finally {
+            setCarregandoParoquias(false);
         }
     };
 
@@ -401,6 +441,19 @@ function AdminDashboard() {
             return;
         }
 
+        const paroquiaIdNumero =
+            Number(novoUsuario.paroquiaId);
+
+        if (
+            !Number.isInteger(paroquiaIdNumero) ||
+            paroquiaIdNumero <= 0
+        ) {
+            setErroUsuarios(
+                "Selecione a paróquia do usuário."
+            );
+            return;
+        }
+
         try {
             setCadastrandoUsuario(true);
             setErroUsuarios("");
@@ -414,7 +467,8 @@ function AdminDashboard() {
                         .trim()
                         .toLowerCase(),
                     senha: novoUsuario.senha,
-                    perfil: "ADMIN_COMUNIDADE",
+                    perfil: novoUsuario.perfil,
+                    paroquiaId: paroquiaIdNumero,
                     licencaStatus:
                         novoUsuario.licencaStatus,
                 }
@@ -426,6 +480,7 @@ function AdminDashboard() {
                 senha: "",
                 confirmarSenha: "",
                 perfil: "ADMIN_COMUNIDADE",
+                paroquiaId: "",
                 licencaStatus: "ATIVA",
             });
 
@@ -483,6 +538,7 @@ function AdminDashboard() {
             senha: "",
             confirmarSenha: "",
             perfil: "ADMIN_COMUNIDADE",
+            paroquiaId: "",
             licencaStatus: "ATIVA",
         });
 
@@ -495,6 +551,10 @@ function AdminDashboard() {
             nome: usuario.nome || "",
             email: usuario.email || "",
             perfil: usuario.perfil || "",
+            paroquiaId: usuario.paroquiaId ?? null,
+            paroquiaNome:
+                usuario.paroquiaNome ||
+                "Sem paróquia",
             comunidadeId: usuario.comunidadeId ?? null,
             comunidadeNome:
                 usuario.comunidadeNome ||
@@ -537,6 +597,8 @@ function AdminDashboard() {
             nome: "",
             email: "",
             perfil: "",
+            paroquiaId: null,
+            paroquiaNome: "",
             comunidadeId: null,
             comunidadeNome: "",
             novaSenha: "",
@@ -670,6 +732,8 @@ function AdminDashboard() {
                 nome: "",
                 email: "",
                 perfil: "",
+                paroquiaId: null,
+                paroquiaNome: "",
                 comunidadeId: null,
                 comunidadeNome: "",
                 novaSenha: "",
@@ -1177,6 +1241,8 @@ function AdminDashboard() {
                     nome: "",
                     email: "",
                     perfil: "",
+                    paroquiaId: null,
+                    paroquiaNome: "",
                     comunidadeId: null,
                     comunidadeNome: "",
                     novaSenha: "",
@@ -1475,6 +1541,10 @@ function AdminDashboard() {
             const email =
                 usuario.email?.toLowerCase() || "";
 
+            const paroquia =
+                usuario.paroquiaNome
+                    ?.toLowerCase() || "";
+
             const comunidade =
                 usuario.comunidadeNome
                     ?.toLowerCase() || "";
@@ -1482,6 +1552,7 @@ function AdminDashboard() {
             return (
                 nome.includes(termoBuscaUsuario) ||
                 email.includes(termoBuscaUsuario) ||
+                paroquia.includes(termoBuscaUsuario) ||
                 comunidade.includes(termoBuscaUsuario)
             );
         }
@@ -1908,8 +1979,8 @@ function AdminDashboard() {
                                                     <span>Acompanhamento</span>
                                                     <strong
                                                         className={`admin-atividade admin-atividade-${comunidadeDetalhada
-                                                                .indicadores
-                                                                ?.atividade ||
+                                                            .indicadores
+                                                            ?.atividade ||
                                                             "SEM_MOVIMENTACAO"
                                                             }`}
                                                     >
@@ -2372,6 +2443,7 @@ function AdminDashboard() {
                                         senha: "",
                                         confirmarSenha: "",
                                         perfil: "ADMIN_COMUNIDADE",
+                                        paroquiaId: "",
                                         licencaStatus: "ATIVA",
                                     });
                                 }
@@ -2389,7 +2461,7 @@ function AdminDashboard() {
                     <div className="admin-busca">
                         <input
                             type="search"
-                            placeholder="Buscar por nome, e-mail ou comunidade..."
+                            placeholder="Buscar por nome, e-mail, paróquia ou comunidade..."
                             value={buscaUsuario}
                             onChange={(event) =>
                                 setBuscaUsuario(
@@ -2525,11 +2597,54 @@ function AdminDashboard() {
                                         name="perfil"
                                         value={novoUsuario.perfil}
                                         onChange={alterarCampoNovoUsuario}
-                                        disabled
+                                        disabled={cadastrandoUsuario}
                                     >
                                         <option value="ADMIN_COMUNIDADE">
                                             Administrador de Comunidade
                                         </option>
+                                        <option value="ADMIN_PAROQUIA">
+                                            Administrador de Paróquia
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="novo-usuario-paroquia">
+                                        Paróquia
+                                    </label>
+                                    <select
+                                        id="novo-usuario-paroquia"
+                                        name="paroquiaId"
+                                        value={novoUsuario.paroquiaId}
+                                        onChange={alterarCampoNovoUsuario}
+                                        disabled={
+                                            cadastrandoUsuario ||
+                                            carregandoParoquias
+                                        }
+                                        required
+                                    >
+                                        <option value="">
+                                            {carregandoParoquias
+                                                ? "Carregando paróquias..."
+                                                : "Selecione uma paróquia"}
+                                        </option>
+
+                                        {paroquias
+                                            .filter(
+                                                (paroquia) =>
+                                                    paroquia.ativa
+                                            )
+                                            .map((paroquia) => (
+                                                <option
+                                                    key={paroquia.id}
+                                                    value={paroquia.id}
+                                                >
+                                                    {paroquia.nome}
+                                                    {paroquia.cidade
+                                                        ? ` - ${paroquia.cidade}`
+                                                        : ""}
+                                                </option>
+                                            ))}
                                     </select>
                                 </div>
 
@@ -2624,6 +2739,20 @@ function AdminDashboard() {
                                         id="editar-usuario-perfil"
                                         type="text"
                                         value={dadosEdicaoUsuario.perfil}
+                                        disabled
+                                    />
+                                </div>
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="editar-usuario-paroquia">
+                                        Paróquia atual
+                                    </label>
+                                    <input
+                                        id="editar-usuario-paroquia"
+                                        type="text"
+                                        value={
+                                            dadosEdicaoUsuario.paroquiaNome
+                                        }
                                         disabled
                                     />
                                 </div>
@@ -2785,6 +2914,7 @@ function AdminDashboard() {
                                             <th>Nome</th>
                                             <th>E-mail</th>
                                             <th>Perfil</th>
+                                            <th>Paróquia</th>
                                             <th>Comunidade</th>
                                             <th>Status</th>
                                             <th>Licença</th>
@@ -2827,6 +2957,11 @@ function AdminDashboard() {
 
                                                         <td>
                                                             {usuario.perfil}
+                                                        </td>
+
+                                                        <td>
+                                                            {usuario.paroquiaNome ||
+                                                                "Sem paróquia"}
                                                         </td>
 
                                                         <td>

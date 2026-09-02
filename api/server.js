@@ -8,8 +8,7 @@ import helmet from "helmet";
 import sequelize from "./database/database.js";
 
 import Dizimista from "./models/Dizimista.js";
-import Usuario from "./models/Usuario.js";
-import Paroquia from "./models/Paroquia.js";
+import "./models/index.js";
 import RegistroMensal from "./models/RegistroMensal.js";
 import RegistroMensalItem from "./models/RegistroMensalItem.js";
 
@@ -17,6 +16,7 @@ import dizimistaRoutes from "./routes/dizimistaRoutes.js";
 import registroMensalRoutes from "./routes/registroMensalRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import paroquiaRoutes from "./routes/paroquiaRoutes.js";
 
 // ========================================
 // VALIDAR JWT_SECRET
@@ -122,6 +122,11 @@ app.use(
 app.use(
   "/api/admin",
   adminRoutes
+);
+
+app.use(
+  "/api/paroquia",
+  paroquiaRoutes
 );
 
 // ========================================

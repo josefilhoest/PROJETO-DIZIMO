@@ -19,8 +19,9 @@ export const cadastrarUsuario = async (req, res) => {
       email,
       senha,
       perfil = "ADMIN_COMUNIDADE",
-      paroquiaId = null,
+      paroquiaId,
     } = req.body;
+
     const nomeLimpo = nome?.trim();
 
     const emailLimpo = email
@@ -36,6 +37,7 @@ export const cadastrarUsuario = async (req, res) => {
         erro: "Nome, email e senha são obrigatórios",
       });
     }
+
     const perfisPermitidos = [
       "ADMIN_COMUNIDADE",
       "ADMIN_PAROQUIA",
@@ -46,32 +48,51 @@ export const cadastrarUsuario = async (req, res) => {
         erro: "Perfil de usuário inválido",
       });
     }
+
     if (senha.length < 6) {
       return res.status(400).json({
         erro: "A senha deve ter pelo menos 6 caracteres.",
       });
     }
 
-    if (perfil === "ADMIN_PAROQUIA") {
-      if (!paroquiaId) {
-        return res.status(400).json({
-          erro: "A paróquia é obrigatória para ADMIN_PAROQUIA",
-        });
-      }
+    // ========================================
+    // VALIDAR PARÓQUIA DO NOVO USUÁRIO
+    // ========================================
+    //
+    // Tanto ADMIN_PAROQUIA quanto
+    // ADMIN_COMUNIDADE precisam nascer
+    // vinculados a uma paróquia.
+    //
+    // O ADMIN_COMUNIDADE usará esse vínculo
+    // para cadastrar a própria comunidade
+    // dentro da paróquia correta.
+    // ========================================
 
-      const paroquia = await Paroquia.findByPk(paroquiaId);
+    const paroquiaIdNumero = Number(paroquiaId);
 
-      if (!paroquia) {
-        return res.status(404).json({
-          erro: "Paróquia não encontrada",
-        });
-      }
+    if (
+      !Number.isInteger(paroquiaIdNumero) ||
+      paroquiaIdNumero <= 0
+    ) {
+      return res.status(400).json({
+        erro: "A paróquia é obrigatória para o usuário",
+      });
+    }
 
-      if (!paroquia.ativa) {
-        return res.status(403).json({
-          erro: "Paróquia desativada",
-        });
-      }
+    const paroquia = await Paroquia.findByPk(
+      paroquiaIdNumero
+    );
+
+    if (!paroquia) {
+      return res.status(404).json({
+        erro: "Paróquia não encontrada",
+      });
+    }
+
+    if (!paroquia.ativa) {
+      return res.status(403).json({
+        erro: "Paróquia desativada",
+      });
     }
 
     // ========================================
@@ -103,13 +124,14 @@ export const cadastrarUsuario = async (req, res) => {
     // CRIAR USUÁRIO LICENCIADO
     // ========================================
     //
-    // O usuário nasce sem comunidade.
-    // Depois do primeiro login ele cadastra
-    // a própria comunidade.
+    // ADMIN_COMUNIDADE nasce sem comunidade,
+    // mas já vinculado à paróquia correta.
     //
-    // O perfil não vem do frontend.
-    // Isso impede alguém de tentar criar
-    // outro SUPER_ADMIN.
+    // ADMIN_PAROQUIA também nasce vinculado
+    // à paróquia que irá administrar.
+    //
+    // SUPER_ADMIN não pode ser criado por
+    // esta função.
     // ========================================
 
     const novoUsuario = await Usuario.create({
@@ -119,10 +141,7 @@ export const cadastrarUsuario = async (req, res) => {
 
       perfil,
 
-      paroquiaId:
-        perfil === "ADMIN_PAROQUIA"
-          ? Number(paroquiaId)
-          : null,
+      paroquiaId: paroquiaIdNumero,
 
       comunidadeId: null,
 
@@ -139,10 +158,11 @@ export const cadastrarUsuario = async (req, res) => {
         nome: novoUsuario.nome,
         email: novoUsuario.email,
         perfil: novoUsuario.perfil,
+
         paroquiaId: novoUsuario.paroquiaId,
+        paroquiaNome: paroquia.nome,
 
         comunidadeId: novoUsuario.comunidadeId,
-
         comunidadeNome: null,
 
         possuiComunidade: false,
@@ -187,7 +207,6 @@ export const cadastrarComunidade = async (req, res) => {
 
     const {
       nomeComunidade,
-      paroquia,
       cidade,
     } = req.body;
 
@@ -197,9 +216,6 @@ export const cadastrarComunidade = async (req, res) => {
 
     const nomeComunidadeLimpo =
       nomeComunidade?.trim();
-
-    const paroquiaLimpa =
-      paroquia?.trim() || null;
 
     const cidadeLimpa =
       cidade?.trim() || null;
@@ -262,6 +278,34 @@ export const cadastrarComunidade = async (req, res) => {
     }
 
     // ========================================
+    // VERIFICAR VÍNCULO COM PARÓQUIA
+    // ========================================
+
+    if (!usuario.paroquiaId) {
+      return res.status(403).json({
+        erro: "Usuário não vinculado a uma paróquia",
+      });
+    }
+
+    const paroquiaVinculada =
+      await Paroquia.findByPk(
+        usuario.paroquiaId
+      );
+
+    if (!paroquiaVinculada) {
+      return res.status(404).json({
+        erro:
+          "Paróquia vinculada ao usuário não encontrada",
+      });
+    }
+
+    if (!paroquiaVinculada.ativa) {
+      return res.status(403).json({
+        erro: "Paróquia desativada",
+      });
+    }
+
+    // ========================================
     // IMPEDIR MAIS DE UMA COMUNIDADE
     // ========================================
 
@@ -281,13 +325,27 @@ export const cadastrarComunidade = async (req, res) => {
     // ========================================
     // CRIAR COMUNIDADE
     // ========================================
+    //
+    // A paróquia não é escolhida pelo
+    // frontend. O backend usa sempre a
+    // paróquia vinculada ao usuário logado.
+    //
+    // O campo textual "paroquia" é mantido
+    // temporariamente por compatibilidade.
+    // O vínculo oficial passa a ser paroquiaId.
+    // ========================================
 
     const novaComunidade =
       await Comunidade.create(
         {
           nome: nomeComunidadeLimpo,
-          paroquia: paroquiaLimpa,
+
+          paroquia: paroquiaVinculada.nome,
+
+          paroquiaId: usuario.paroquiaId,
+
           cidade: cidadeLimpa,
+
           ativa: true,
         },
         {
@@ -324,7 +382,10 @@ export const cadastrarComunidade = async (req, res) => {
       comunidade: {
         id: novaComunidade.id,
         nome: novaComunidade.nome,
+
         paroquia: novaComunidade.paroquia,
+        paroquiaId: novaComunidade.paroquiaId,
+
         cidade: novaComunidade.cidade,
         ativa: novaComunidade.ativa,
       },
@@ -334,6 +395,9 @@ export const cadastrarComunidade = async (req, res) => {
         nome: usuario.nome,
         email: usuario.email,
         perfil: usuario.perfil,
+
+        paroquiaId: usuario.paroquiaId,
+        paroquiaNome: paroquiaVinculada.nome,
 
         comunidadeId: novaComunidade.id,
 

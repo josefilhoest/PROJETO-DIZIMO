@@ -1,15 +1,18 @@
 import { Router } from "express";
 
 import { autenticar } from "../middlewares/authMiddleware.js";
+
 import {
   somenteSuperAdmin,
   somenteAdminParoquia,
 } from "../middlewares/adminMiddleware.js";
+
 import {
   listarComunidadesParoquia,
 } from "../controllers/paroquiaController.js";
 
 import {
+  listarParoquias,
   listarComunidades,
   detalharComunidade,
   editarComunidadeAdmin,
@@ -43,6 +46,16 @@ router.get(
   }
 );
 
+// ========================================
+// LISTAR TODAS AS PARÓQUIAS
+// ========================================
+
+router.get(
+  "/paroquias",
+  autenticar,
+  somenteSuperAdmin,
+  listarParoquias
+);
 
 // ========================================
 // LISTAR TODAS AS COMUNIDADES

@@ -3,6 +3,38 @@ import Comunidade from "../models/Comunidade.js";
 import Usuario from "../models/Usuario.js";
 import Dizimista from "../models/Dizimista.js";
 import RegistroMensal from "../models/RegistroMensal.js";
+import Paroquia from "../models/Paroquia.js";
+
+// ========================================
+// LISTAR TODAS AS PARÓQUIAS
+// ========================================
+
+export const listarParoquias = async (req, res) => {
+  try {
+    const paroquias = await Paroquia.findAll({
+      attributes: [
+        "id",
+        "nome",
+        "cidade",
+        "ativa",
+        "createdAt",
+        "updatedAt",
+      ],
+      order: [["nome", "ASC"]],
+    });
+
+    return res.status(200).json(paroquias);
+  } catch (error) {
+    console.error(
+      "Erro ao listar paróquias:",
+      error
+    );
+
+    return res.status(500).json({
+      erro: "Erro ao listar paróquias.",
+    });
+  }
+};
 
 // ========================================
 // LISTAR TODAS AS COMUNIDADES
@@ -602,6 +634,7 @@ export const listarUsuarios = async (req, res) => {
         "nome",
         "email",
         "perfil",
+        "paroquiaId",
         "comunidadeId",
         "ativo",
         "licencaStatus",
@@ -612,6 +645,20 @@ export const listarUsuarios = async (req, res) => {
 
     const resultado = await Promise.all(
       usuarios.map(async (usuario) => {
+        const paroquia = usuario.paroquiaId
+          ? await Paroquia.findByPk(
+            usuario.paroquiaId,
+            {
+              attributes: [
+                "id",
+                "nome",
+                "cidade",
+                "ativa",
+              ],
+            }
+          )
+          : null;
+
         const comunidade = usuario.comunidadeId
           ? await Comunidade.findByPk(
             usuario.comunidadeId
@@ -623,10 +670,17 @@ export const listarUsuarios = async (req, res) => {
           nome: usuario.nome,
           email: usuario.email,
           perfil: usuario.perfil,
+
+          paroquiaId: usuario.paroquiaId,
+          paroquiaNome: paroquia
+            ? paroquia.nome
+            : null,
+
           comunidadeId: usuario.comunidadeId,
           comunidadeNome: comunidade
             ? comunidade.nome
             : null,
+
           ativo: usuario.ativo,
           licencaStatus: usuario.licencaStatus,
           createdAt: usuario.createdAt,
@@ -660,6 +714,8 @@ export const cadastrarUsuarioAdmin = async (
       nome,
       email,
       senha,
+      perfil = "ADMIN_COMUNIDADE",
+      paroquiaId,
       licencaStatus = "ATIVA",
     } = req.body;
 
@@ -701,6 +757,17 @@ export const cadastrarUsuarioAdmin = async (
       });
     }
 
+    const perfisPermitidos = [
+      "ADMIN_COMUNIDADE",
+      "ADMIN_PAROQUIA",
+    ];
+
+    if (!perfisPermitidos.includes(perfil)) {
+      return res.status(400).json({
+        erro: "Perfil de usuário inválido.",
+      });
+    }
+
     const statusPermitidos = [
       "ATIVA",
       "BLOQUEADA",
@@ -711,6 +778,42 @@ export const cadastrarUsuarioAdmin = async (
     ) {
       return res.status(400).json({
         erro: "Status de licença inválido.",
+      });
+    }
+
+    // ========================================
+    // VALIDAR PARÓQUIA
+    // ========================================
+    //
+    // Tanto ADMIN_COMUNIDADE quanto
+    // ADMIN_PAROQUIA precisam nascer
+    // vinculados a uma paróquia.
+    // ========================================
+
+    const paroquiaIdNumero = Number(paroquiaId);
+
+    if (
+      !Number.isInteger(paroquiaIdNumero) ||
+      paroquiaIdNumero <= 0
+    ) {
+      return res.status(400).json({
+        erro: "A paróquia é obrigatória para o usuário.",
+      });
+    }
+
+    const paroquia = await Paroquia.findByPk(
+      paroquiaIdNumero
+    );
+
+    if (!paroquia) {
+      return res.status(404).json({
+        erro: "Paróquia não encontrada.",
+      });
+    }
+
+    if (!paroquia.ativa) {
+      return res.status(403).json({
+        erro: "Paróquia desativada.",
       });
     }
 
@@ -740,10 +843,14 @@ export const cadastrarUsuarioAdmin = async (
 
       // O SUPER_ADMIN do sistema não é criado
       // através deste formulário.
-      perfil: "ADMIN_COMUNIDADE",
+      perfil,
 
-      // O comprador nasce sem comunidade.
-      // Ele criará a própria comunidade depois.
+      paroquiaId: paroquiaIdNumero,
+
+      // ADMIN_COMUNIDADE cria a própria
+      // comunidade depois do primeiro login.
+      // ADMIN_PAROQUIA não precisa ter
+      // comunidadeId.
       comunidadeId: null,
 
       ativo: true,
@@ -759,6 +866,9 @@ export const cadastrarUsuarioAdmin = async (
         nome: novoUsuario.nome,
         email: novoUsuario.email,
         perfil: novoUsuario.perfil,
+
+        paroquiaId: novoUsuario.paroquiaId,
+        paroquiaNome: paroquia.nome,
 
         comunidadeId:
           novoUsuario.comunidadeId,
@@ -870,6 +980,12 @@ export const editarUsuarioAdmin = async (
 
     await usuario.save();
 
+    const paroquia = usuario.paroquiaId
+      ? await Paroquia.findByPk(
+        usuario.paroquiaId
+      )
+      : null;
+
     const comunidade = usuario.comunidadeId
       ? await Comunidade.findByPk(
         usuario.comunidadeId
@@ -885,6 +1001,12 @@ export const editarUsuarioAdmin = async (
         nome: usuario.nome,
         email: usuario.email,
         perfil: usuario.perfil,
+
+        paroquiaId: usuario.paroquiaId,
+        paroquiaNome: paroquia
+          ? paroquia.nome
+          : null,
+
         comunidadeId: usuario.comunidadeId,
 
         comunidadeNome: comunidade
