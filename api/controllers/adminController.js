@@ -23,7 +23,25 @@ export const listarParoquias = async (req, res) => {
       order: [["nome", "ASC"]],
     });
 
-    return res.status(200).json(paroquias);
+    const paroquiasComTotais = await Promise.all(
+      paroquias.map(async (paroquia) => {
+        const totalComunidades =
+          await Comunidade.count({
+            where: {
+              paroquiaId: paroquia.id,
+            },
+          });
+
+        return {
+          ...paroquia.toJSON(),
+          totalComunidades,
+        };
+      })
+    );
+
+    return res.status(200).json(
+      paroquiasComTotais
+    );
   } catch (error) {
     console.error(
       "Erro ao listar paróquias:",

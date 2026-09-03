@@ -46,6 +46,11 @@ function AdminDashboard() {
         setCarregandoParoquias,
     ] = useState(false);
 
+    const [
+        erroParoquias,
+        setErroParoquias,
+    ] = useState("");
+
     const [buscaUsuario, setBuscaUsuario] =
         useState("");
 
@@ -284,6 +289,19 @@ function AdminDashboard() {
     }, [aba]);
 
     // ========================================
+    // CARREGAR PARÓQUIAS AO ABRIR A ABA
+    // ========================================
+
+    useEffect(() => {
+        if (aba !== "paroquias") {
+            return;
+        }
+
+        carregarParoquias();
+        carregarComunidades();
+    }, [aba]);
+
+    // ========================================
     // CARREGAR COMUNIDADES AO ABRIR A ABA
     // ========================================
 
@@ -330,6 +348,7 @@ function AdminDashboard() {
     const carregarParoquias = async () => {
         try {
             setCarregandoParoquias(true);
+            setErroParoquias("");
 
             const resposta = await api.get(
                 "/admin/paroquias"
@@ -342,10 +361,15 @@ function AdminDashboard() {
                 error
             );
 
-            setErroUsuarios(
+            const mensagem =
                 error.response?.data?.erro ||
-                "Não foi possível carregar as paróquias."
-            );
+                "Não foi possível carregar as paróquias.";
+
+            setErroParoquias(mensagem);
+
+            if (aba === "usuarios") {
+                setErroUsuarios(mensagem);
+            }
         } finally {
             setCarregandoParoquias(false);
         }
@@ -1609,6 +1633,15 @@ function AdminDashboard() {
                 <button
                     type="button"
                     onClick={() =>
+                        setAba("paroquias")
+                    }
+                >
+                    Paróquias
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() =>
                         setAba("comunidades")
                     }
                 >
@@ -1667,6 +1700,110 @@ function AdminDashboard() {
                             {resumo?.totalDizimistas ?? 0}
                         </strong>
                     </div>
+
+                </div>
+            )}
+
+            {/* =====================================
+          PARÓQUIAS
+      ===================================== */}
+
+            {aba === "paroquias" && (
+                <div className="admin-secao">
+
+                    <h3>
+                        Gerenciamento de Paróquias
+                    </h3>
+
+                    <p>
+                        Visão geral das paróquias cadastradas no sistema.
+                        Nesta etapa, o painel é somente para consulta.
+                    </p>
+
+                    {carregandoParoquias && (
+                        <p>
+                            Carregando paróquias...
+                        </p>
+                    )}
+
+                    {erroParoquias && (
+                        <p className="admin-erro">
+                            {erroParoquias}
+                        </p>
+                    )}
+
+                    {!carregandoParoquias &&
+                        !erroParoquias &&
+                        paroquias.length === 0 && (
+                            <p>
+                                Nenhuma paróquia cadastrada.
+                            </p>
+                        )}
+
+                    {!carregandoParoquias &&
+                        !erroParoquias &&
+                        paroquias.length > 0 && (
+
+                            <div className="admin-tabela-wrapper">
+
+                                <table className="admin-tabela admin-tabela-comunidades">
+
+                                    <thead>
+                                        <tr>
+                                            <th>Paróquia</th>
+                                            <th>Cidade</th>
+                                            <th>Comunidades</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {paroquias.map((paroquia) => {
+                                            const totalComunidades =
+                                                paroquia.totalComunidades ??
+                                                comunidades.filter(
+                                                    (comunidade) =>
+                                                        Number(
+                                                            comunidade.paroquiaId
+                                                        ) ===
+                                                        Number(paroquia.id)
+                                                ).length;
+
+                                            return (
+                                                <tr key={paroquia.id}>
+                                                    <td>
+                                                        {paroquia.nome || "-"}
+                                                    </td>
+
+                                                    <td>
+                                                        {paroquia.cidade ||
+                                                            "Não informada"}
+                                                    </td>
+
+                                                    <td>
+                                                        {totalComunidades}
+                                                    </td>
+
+                                                    <td>
+                                                        {paroquia.ativa ? (
+                                                            <span className="status-ativo">
+                                                                Ativa
+                                                            </span>
+                                                        ) : (
+                                                            <span className="status-inativo">
+                                                                Inativa
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+                        )}
 
                 </div>
             )}
