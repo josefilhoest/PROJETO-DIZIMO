@@ -9,6 +9,12 @@ import {
 
 import {
   listarComunidadesParoquia,
+  detalharComunidadeParoquia,
+  exportarDizimistasComunidadeParoquia,
+  gerarBackupComunidadeParoquia,
+  listarHistoricoComunidadeParoquia,
+  detalharHistoricoComunidadeParoquia,
+  listarDizimistasComunidadeParoquia,
 } from "../controllers/paroquiaController.js";
 
 import {
@@ -40,7 +46,8 @@ router.get(
   somenteSuperAdmin,
   (req, res) => {
     res.json({
-      mensagem: "Acesso SUPER_ADMIN autorizado",
+      mensagem:
+        "Acesso SUPER_ADMIN autorizado",
       usuario: req.usuario,
     });
   }
@@ -168,7 +175,7 @@ router.delete(
 );
 
 // ========================================
-// ALTERAR STATUS DE UM USUÁRIO
+// ALTERAR STATUS DO USUÁRIO
 // ========================================
 
 router.patch(
@@ -179,7 +186,7 @@ router.patch(
 );
 
 // ========================================
-// ALTERAR LICENÇA DE UM USUÁRIO
+// ALTERAR LICENÇA DO USUÁRIO
 // ========================================
 
 router.patch(
@@ -209,6 +216,79 @@ router.get(
   autenticar,
   somenteAdminParoquia,
   listarComunidadesParoquia
+);
+
+// ========================================
+// DETALHAR COMUNIDADE DA PARÓQUIA LOGADA
+// ========================================
+
+router.get(
+  "/paroquia/comunidades/:id",
+  autenticar,
+  somenteAdminParoquia,
+  detalharComunidadeParoquia
+);
+
+// ========================================
+// EXPORTAR DIZIMISTAS DA COMUNIDADE EM CSV
+// ADMIN_PAROQUIA
+// ========================================
+
+router.get(
+  "/paroquia/comunidades/:id/exportar",
+  autenticar,
+  somenteAdminParoquia,
+  exportarDizimistasComunidadeParoquia
+);
+
+// ========================================
+// BACKUP DA COMUNIDADE
+// ADMIN_PAROQUIA
+// ========================================
+
+router.get(
+  "/paroquia/comunidades/:id/backup",
+  autenticar,
+  somenteAdminParoquia,
+  gerarBackupComunidadeParoquia
+);
+
+
+// ========================================
+// HISTÓRICO MENSAL DA COMUNIDADE
+// ADMIN_PAROQUIA
+// ========================================
+
+router.get(
+  "/paroquia/comunidades/:id/historico",
+  autenticar,
+  somenteAdminParoquia,
+  listarHistoricoComunidadeParoquia
+);
+
+// ========================================
+// DETALHAR FECHAMENTO MENSAL DA COMUNIDADE
+// ADMIN_PAROQUIA
+// ========================================
+
+router.get(
+  "/paroquia/comunidades/:id/historico/:registroId",
+  autenticar,
+  somenteAdminParoquia,
+  detalharHistoricoComunidadeParoquia
+);
+
+
+// ========================================
+// LISTAR DIZIMISTAS DA COMUNIDADE
+// ADMIN_PAROQUIA
+// ========================================
+
+router.get(
+  "/paroquia/comunidades/:id/dizimistas",
+  autenticar,
+  somenteAdminParoquia,
+  listarDizimistasComunidadeParoquia
 );
 
 export default router;

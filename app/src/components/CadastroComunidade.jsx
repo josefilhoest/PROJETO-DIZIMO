@@ -9,7 +9,6 @@ function CadastroComunidade({
 }) {
     const [formulario, setFormulario] = useState({
         nomeComunidade: "",
-        paroquia: "",
         cidade: "",
     });
 
@@ -27,11 +26,17 @@ function CadastroComunidade({
 
     const cadastrarComunidade = async (evento) => {
         evento.preventDefault();
-
         setErro("");
 
         if (!formulario.nomeComunidade.trim()) {
             setErro("Informe o nome da comunidade.");
+            return;
+        }
+
+        if (!usuario?.paroquiaId) {
+            setErro(
+                "Seu usuário não está vinculado a uma paróquia. Entre em contato com o administrador."
+            );
             return;
         }
 
@@ -53,9 +58,6 @@ function CadastroComunidade({
                     nomeComunidade:
                         formulario.nomeComunidade.trim(),
 
-                    paroquia:
-                        formulario.paroquia.trim(),
-
                     cidade:
                         formulario.cidade.trim(),
                 },
@@ -66,10 +68,6 @@ function CadastroComunidade({
                 }
             );
 
-            /*
-              A API deve devolver o usuário atualizado,
-              já com comunidadeId.
-            */
             const usuarioAtualizado =
                 resposta.data.usuario;
 
@@ -86,6 +84,7 @@ function CadastroComunidade({
             );
 
             onCadastroConcluido(usuarioAtualizado);
+
         } catch (error) {
             console.error(
                 "Erro ao cadastrar comunidade:",
@@ -119,6 +118,7 @@ function CadastroComunidade({
                 error.response?.data?.erro ||
                 "Não foi possível cadastrar a comunidade."
             );
+
         } finally {
             setCarregando(false);
         }
@@ -126,11 +126,14 @@ function CadastroComunidade({
 
     return (
         <div className="login-container">
+
             <div className="login-decoracao login-decoracao-1"></div>
             <div className="login-decoracao login-decoracao-2"></div>
 
             <main className="login-card cadastro-comunidade-card">
+
                 <div className="login-topo">
+
                     <div
                         className="login-icone"
                         aria-hidden="true"
@@ -147,9 +150,11 @@ function CadastroComunidade({
                     <p className="login-subtitulo">
                         Complete seu primeiro acesso
                     </p>
+
                 </div>
 
                 <div className="cadastro-usuario-info">
+
                     <p>
                         Olá, <strong>{usuario?.nome}</strong>
                     </p>
@@ -158,6 +163,7 @@ function CadastroComunidade({
                         Cadastre a comunidade que será vinculada
                         ao seu acesso.
                     </span>
+
                 </div>
 
                 {erro && (
@@ -183,7 +189,9 @@ function CadastroComunidade({
                     className="login-form"
                     onSubmit={cadastrarComunidade}
                 >
+
                     <div className="login-grupo">
+
                         <label htmlFor="nomeComunidade">
                             Nome da comunidade *
                         </label>
@@ -198,24 +206,30 @@ function CadastroComunidade({
                             autoComplete="organization"
                             required
                         />
+
                     </div>
 
                     <div className="login-grupo">
+
                         <label htmlFor="paroquia">
                             Paróquia
                         </label>
 
                         <input
                             id="paroquia"
-                            name="paroquia"
                             type="text"
-                            value={formulario.paroquia}
-                            onChange={alterarCampo}
-                            placeholder="Nome da paróquia"
+                            value={
+                                usuario?.paroquiaNome ||
+                                "Paróquia não identificada"
+                            }
+                            readOnly
+                            disabled
                         />
+
                     </div>
 
                     <div className="login-grupo">
+
                         <label htmlFor="cidade">
                             Cidade
                         </label>
@@ -228,6 +242,7 @@ function CadastroComunidade({
                             onChange={alterarCampo}
                             placeholder="Cidade"
                         />
+
                     </div>
 
                     <button
@@ -248,8 +263,11 @@ function CadastroComunidade({
                     >
                         Sair
                     </button>
+
                 </form>
+
             </main>
+
         </div>
     );
 }

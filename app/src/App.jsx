@@ -4,6 +4,7 @@ import Tabela from "./components/Tabela";
 import Login from "./components/Login";
 import CadastroComunidade from "./components/CadastroComunidade";
 import AdminDashboard from "./components/AdminDashboard";
+import PainelParoquia from "./components/PainelParoquia";
 
 import "./App.css";
 
@@ -11,6 +12,7 @@ function App() {
   // ========================================
   // USUÁRIO LOGADO
   // ========================================
+
   const [usuario, setUsuario] = useState(() => {
     const usuarioSalvo = localStorage.getItem("usuario");
 
@@ -31,11 +33,14 @@ function App() {
   // TELA DO USUÁRIO LOGADO
   // sistema | admin
   // ========================================
-  const [telaLogada, setTelaLogada] = useState("sistema");
+
+  const [telaLogada, setTelaLogada] =
+    useState("sistema");
 
   // ========================================
   // LOGIN CONCLUÍDO
   // ========================================
+
   const entrar = (dadosUsuario) => {
     if (!dadosUsuario) {
       return;
@@ -53,7 +58,10 @@ function App() {
   // ========================================
   // CADASTRO DA COMUNIDADE CONCLUÍDO
   // ========================================
-  const comunidadeCadastrada = (dadosUsuarioAtualizados) => {
+
+  const comunidadeCadastrada = (
+    dadosUsuarioAtualizados
+  ) => {
     if (!dadosUsuarioAtualizados) {
       return;
     }
@@ -70,6 +78,7 @@ function App() {
   // ========================================
   // SAIR DO SISTEMA
   // ========================================
+
   const sair = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("usuario");
@@ -81,6 +90,7 @@ function App() {
   // ========================================
   // USUÁRIO NÃO LOGADO
   // ========================================
+
   if (!usuario) {
     return <Login onLogin={entrar} />;
   }
@@ -88,8 +98,10 @@ function App() {
   // ========================================
   // ADMIN_COMUNIDADE SEM COMUNIDADE
   //
-  // Só pode chegar aqui depois do login.
+  // Somente ADMIN_COMUNIDADE pode cadastrar
+  // a própria comunidade no primeiro acesso.
   // ========================================
+
   const adminSemComunidade =
     usuario.perfil === "ADMIN_COMUNIDADE" &&
     !usuario.comunidadeId;
@@ -105,8 +117,85 @@ function App() {
   }
 
   // ========================================
-  // USUÁRIO LOGADO E COM ACESSO AO SISTEMA
+  // ADMIN_PAROQUIA
+  //
+  // Possui área própria. Ele não cai na
+  // Tabela.jsx, pois não administra uma única
+  // comunidade. O backend continua sendo a
+  // autoridade de segurança e isolamento.
   // ========================================
+
+  if (usuario.perfil === "ADMIN_PAROQUIA") {
+    return (
+      <PainelParoquia
+        usuario={usuario}
+        onSair={sair}
+      />
+    );
+  }
+
+  // ========================================
+  // SEGURANÇA DE PERFIL
+  //
+  // Perfis desconhecidos não recebem acesso
+  // à tabela por padrão.
+  // ========================================
+
+  const perfisPermitidosNoSistema = [
+    "SUPER_ADMIN",
+    "ADMIN_COMUNIDADE",
+  ];
+
+  if (
+    !perfisPermitidosNoSistema.includes(
+      usuario.perfil
+    )
+  ) {
+    return (
+      <div className="container">
+        <div className="topo-sistema">
+          <div>
+            <h1 className="titulo-sistema">
+              Sistema de Dízimo
+            </h1>
+
+            <p className="usuario-logado">
+              Usuário: {usuario.nome}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="btn-sair"
+            onClick={sair}
+          >
+            Sair
+          </button>
+        </div>
+
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: "12px",
+            padding: "24px",
+            marginTop: "16px",
+          }}
+        >
+          <h2>Acesso não autorizado</h2>
+
+          <p>
+            O perfil deste usuário não possui uma
+            área liberada no sistema.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ========================================
+  // SUPER_ADMIN / ADMIN_COMUNIDADE
+  // ========================================
+
   return (
     <div className="container">
       <div className="topo-sistema">

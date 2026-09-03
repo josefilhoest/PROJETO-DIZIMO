@@ -2325,6 +2325,22 @@ function Tabela({ usuario }) {
     };
 
     // =====================================================
+    // CABEÇALHO DINÂMICO DA PARÓQUIA
+    // =====================================================
+
+    const nomeParoquiaCabecalho =
+        usuario?.paroquiaNome?.trim() ||
+        "Paróquia não identificada";
+
+    const cidadeParoquiaCabecalho =
+        usuario?.paroquiaCidade?.trim() || "";
+
+    const tituloParoquiaCabecalho =
+        cidadeParoquiaCabecalho
+            ? `${nomeParoquiaCabecalho} – ${cidadeParoquiaCabecalho}`
+            : nomeParoquiaCabecalho;
+
+    // =====================================================
     // RETURN
     // =====================================================
 
@@ -2474,9 +2490,7 @@ function Tabela({ usuario }) {
 
             <header className="cabecalho-ficha">
                 <h1>
-                    PARÓQUIA NOSSA
-                    SENHORA DA PENHA –
-                    SUCATINGA
+                    {tituloParoquiaCabecalho.toUpperCase()}
                 </h1>
 
                 <h2>

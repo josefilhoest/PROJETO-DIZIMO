@@ -161,6 +161,7 @@ export const cadastrarUsuario = async (req, res) => {
 
         paroquiaId: novoUsuario.paroquiaId,
         paroquiaNome: paroquia.nome,
+        paroquiaCidade: paroquia.cidade || null,
 
         comunidadeId: novoUsuario.comunidadeId,
         comunidadeNome: null,
@@ -398,6 +399,7 @@ export const cadastrarComunidade = async (req, res) => {
 
         paroquiaId: usuario.paroquiaId,
         paroquiaNome: paroquiaVinculada.nome,
+        paroquiaCidade: paroquiaVinculada.cidade || null,
 
         comunidadeId: novaComunidade.id,
 
@@ -616,6 +618,9 @@ export const login = async (req, res) => {
 
         paroquiaNome:
           paroquia?.nome || null,
+
+        paroquiaCidade:
+          paroquia?.cidade || null,
 
         comunidadeId:
           usuario.comunidadeId,

@@ -1,7 +1,6 @@
 // ========================================
 // PERMITIR SOMENTE SUPER ADMIN
 // ========================================
-
 export const somenteSuperAdmin = (req, res, next) => {
   try {
     if (!req.usuario) {
@@ -9,7 +8,6 @@ export const somenteSuperAdmin = (req, res, next) => {
         erro: "Usuário não autenticado",
       });
     }
-
 
     if (req.usuario.perfil !== "SUPER_ADMIN") {
       return res.status(403).json({
@@ -33,7 +31,6 @@ export const somenteSuperAdmin = (req, res, next) => {
 // ========================================
 // PERMITIR SOMENTE ADMIN DA PARÓQUIA
 // ========================================
-
 export const somenteAdminParoquia = (req, res, next) => {
   try {
     if (!req.usuario) {
@@ -48,7 +45,12 @@ export const somenteAdminParoquia = (req, res, next) => {
       });
     }
 
-    if (!req.usuario.paroquiaId) {
+    const paroquiaId = Number(req.usuario.paroquiaId);
+
+    if (
+      !Number.isInteger(paroquiaId) ||
+      paroquiaId <= 0
+    ) {
       return res.status(403).json({
         erro: "Administrador não vinculado a uma paróquia",
       });
