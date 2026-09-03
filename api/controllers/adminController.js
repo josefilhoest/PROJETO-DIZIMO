@@ -150,6 +150,118 @@ export const detalharParoquia = async (req, res) => {
   }
 };
 
+
+// ========================================
+// EDITAR DADOS DA PARÓQUIA PELO SUPER ADMIN
+// ========================================
+
+export const editarParoquia = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const paroquiaId = Number(id);
+
+    if (
+      !Number.isInteger(paroquiaId) ||
+      paroquiaId <= 0
+    ) {
+      return res.status(400).json({
+        erro: "ID da paróquia inválido.",
+      });
+    }
+
+    const { nome, cidade } = req.body;
+
+    const nomeLimpo = nome?.trim();
+    const cidadeLimpa = cidade?.trim() || null;
+
+    if (!nomeLimpo) {
+      return res.status(400).json({
+        erro: "O nome da paróquia é obrigatório.",
+      });
+    }
+
+    if (nomeLimpo.length < 2) {
+      return res.status(400).json({
+        erro:
+          "O nome da paróquia deve ter pelo menos 2 caracteres.",
+      });
+    }
+
+    if (nomeLimpo.length > 150) {
+      return res.status(400).json({
+        erro:
+          "O nome da paróquia deve ter no máximo 150 caracteres.",
+      });
+    }
+
+    if (
+      cidadeLimpa &&
+      cidadeLimpa.length > 150
+    ) {
+      return res.status(400).json({
+        erro:
+          "O nome da cidade deve ter no máximo 150 caracteres.",
+      });
+    }
+
+    const paroquia = await Paroquia.findByPk(
+      paroquiaId
+    );
+
+    if (!paroquia) {
+      return res.status(404).json({
+        erro: "Paróquia não encontrada.",
+      });
+    }
+
+    const paroquiaComMesmoNome =
+      await Paroquia.findOne({
+        where: {
+          nome: nomeLimpo,
+        },
+      });
+
+    if (
+      paroquiaComMesmoNome &&
+      Number(paroquiaComMesmoNome.id) !==
+        Number(paroquia.id)
+    ) {
+      return res.status(409).json({
+        erro:
+          "Já existe outra paróquia cadastrada com este nome.",
+      });
+    }
+
+    paroquia.nome = nomeLimpo;
+    paroquia.cidade = cidadeLimpa;
+
+    await paroquia.save();
+
+    return res.status(200).json({
+      mensagem:
+        "Dados da paróquia atualizados com sucesso.",
+
+      paroquia: {
+        id: paroquia.id,
+        nome: paroquia.nome,
+        cidade: paroquia.cidade,
+        ativa: paroquia.ativa,
+        createdAt: paroquia.createdAt,
+        updatedAt: paroquia.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Erro ao editar paróquia:",
+      error
+    );
+
+    return res.status(500).json({
+      erro: "Erro ao editar os dados da paróquia.",
+    });
+  }
+};
+
 // ========================================
 // LISTAR TODAS AS COMUNIDADES
 // ========================================

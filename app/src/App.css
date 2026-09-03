@@ -2989,6 +2989,110 @@ tfoot td:nth-child(3) {
   text-align: center;
 }
 
+
+/* ========================================
+   TABELA DE PARÓQUIAS - SUPER ADMIN
+   ======================================== */
+
+.admin-tabela-paroquias {
+  min-width: 760px;
+  table-layout: auto;
+}
+
+.admin-tabela-paroquias th:nth-child(1),
+.admin-tabela-paroquias td:nth-child(1) {
+  width: 30%;
+  min-width: 210px;
+}
+
+.admin-tabela-paroquias th:nth-child(2),
+.admin-tabela-paroquias td:nth-child(2) {
+  width: 24%;
+  min-width: 170px;
+}
+
+.admin-tabela-paroquias th:nth-child(3),
+.admin-tabela-paroquias td:nth-child(3) {
+  width: 14%;
+  min-width: 115px;
+  text-align: center;
+}
+
+.admin-tabela-paroquias th:nth-child(4),
+.admin-tabela-paroquias td:nth-child(4) {
+  width: 12%;
+  min-width: 100px;
+  text-align: center;
+}
+
+.admin-tabela-paroquias th:nth-child(5),
+.admin-tabela-paroquias td:nth-child(5) {
+  width: 20%;
+  min-width: 210px;
+  text-align: center;
+}
+
+.admin-acoes-paroquia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.btn-detalhes-paroquia,
+.btn-editar-paroquia {
+  min-height: 34px;
+  width: auto;
+  min-width: 92px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.15;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.btn-detalhes-paroquia {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.btn-detalhes-paroquia:hover {
+  background: #1d4ed8;
+}
+
+.btn-editar-paroquia {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.btn-editar-paroquia:hover {
+  background: #ffedd5;
+  border-color: #fdba74;
+}
+
+.btn-detalhes-paroquia:hover,
+.btn-editar-paroquia:hover {
+  transform: translateY(-1px);
+  opacity: 1;
+}
+
+.btn-detalhes-paroquia:disabled,
+.btn-editar-paroquia:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* ========================================
    STATUS E LICENÇAS
    ======================================== */
@@ -3489,36 +3593,36 @@ tfoot td:nth-child(3) {
   }
 
   /* Usuários / Licenças */
-  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(1)::before {
+  .admin-tabela:not(.admin-tabela-comunidades):not(.admin-tabela-paroquias) tbody td:nth-child(1)::before {
     content: "Nome";
   }
 
-  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(2)::before {
+  .admin-tabela:not(.admin-tabela-comunidades):not(.admin-tabela-paroquias) tbody td:nth-child(2)::before {
     content: "E-mail";
   }
 
-  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(3)::before {
+  .admin-tabela:not(.admin-tabela-comunidades):not(.admin-tabela-paroquias) tbody td:nth-child(3)::before {
     content: "Perfil";
   }
 
-  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(3) {
+  .admin-tabela:not(.admin-tabela-comunidades):not(.admin-tabela-paroquias) tbody td:nth-child(3) {
     font-size: 11px;
     letter-spacing: -0.1px;
   }
 
-  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(4)::before {
+  .admin-tabela:not(.admin-tabela-comunidades):not(.admin-tabela-paroquias) tbody td:nth-child(4)::before {
     content: "Comunidade";
   }
 
-  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(5)::before {
+  .admin-tabela:not(.admin-tabela-comunidades):not(.admin-tabela-paroquias) tbody td:nth-child(5)::before {
     content: "Status";
   }
 
-  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(6)::before {
+  .admin-tabela:not(.admin-tabela-comunidades):not(.admin-tabela-paroquias) tbody td:nth-child(6)::before {
     content: "Licença";
   }
 
-  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(7)::before {
+  .admin-tabela:not(.admin-tabela-comunidades):not(.admin-tabela-paroquias) tbody td:nth-child(7)::before {
     content: "Ações";
   }
 
@@ -3568,6 +3672,132 @@ tfoot td:nth-child(3) {
   }
 }
 
+
+/* ========================================
+   RESPONSIVIDADE - PARÓQUIAS
+   ======================================== */
+
+@media (max-width: 1100px) {
+  .admin-tabela-paroquias {
+    min-width: 700px;
+  }
+
+  .admin-tabela-paroquias th:nth-child(5),
+  .admin-tabela-paroquias td:nth-child(5) {
+    min-width: 205px;
+  }
+}
+
+@media (max-width: 700px) {
+  .admin-tabela-paroquias {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .admin-tabela-paroquias thead {
+    display: none;
+  }
+
+  .admin-tabela-paroquias tbody {
+    display: grid;
+    gap: 14px;
+  }
+
+  .admin-tabela-paroquias tbody tr {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .admin-tabela-paroquias tbody td {
+    display: grid;
+    grid-template-columns: minmax(105px, 38%) minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+
+    width: 100% !important;
+    min-width: 0 !important;
+
+    padding: 11px 12px;
+    border: 0;
+    border-bottom: 1px solid #eef2f7;
+
+    text-align: right !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-tabela-paroquias tbody td:last-child {
+    border-bottom: 0;
+  }
+
+  .admin-tabela-paroquias tbody td::before {
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    text-align: left;
+  }
+
+  .admin-tabela-paroquias tbody td:nth-child(1)::before {
+    content: "Paróquia";
+  }
+
+  .admin-tabela-paroquias tbody td:nth-child(2)::before {
+    content: "Cidade";
+  }
+
+  .admin-tabela-paroquias tbody td:nth-child(3)::before {
+    content: "Comunidades";
+  }
+
+  .admin-tabela-paroquias tbody td:nth-child(4)::before {
+    content: "Status";
+  }
+
+  .admin-tabela-paroquias tbody td:nth-child(5)::before {
+    content: "Ações";
+  }
+
+  .admin-acoes-paroquia {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .btn-detalhes-paroquia,
+  .btn-editar-paroquia {
+    min-width: 104px;
+  }
+}
+
+@media (max-width: 430px) {
+  .admin-tabela-paroquias tbody td {
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 8px;
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .admin-acoes-paroquia {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .btn-detalhes-paroquia,
+  .btn-editar-paroquia {
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+  }
+}
+
 /* ========================================
    CELULARES PEQUENOS
    ======================================== */
@@ -3592,7 +3822,7 @@ tfoot td:nth-child(3) {
     font-size: 12px;
   }
 
-  .admin-tabela:not(.admin-tabela-comunidades) tbody td:nth-child(3) {
+  .admin-tabela:not(.admin-tabela-comunidades):not(.admin-tabela-paroquias) tbody td:nth-child(3) {
     font-size: 10.5px;
   }
 

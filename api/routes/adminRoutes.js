@@ -20,6 +20,7 @@ import {
 import {
   listarParoquias,
   detalharParoquia,
+  editarParoquia,
   listarComunidades,
   detalharComunidade,
   editarComunidadeAdmin,
@@ -64,6 +65,7 @@ router.get(
   somenteSuperAdmin,
   listarParoquias
 );
+
 // ========================================
 // DETALHAR UMA PARÓQUIA
 // ========================================
@@ -74,6 +76,18 @@ router.get(
   somenteSuperAdmin,
   detalharParoquia
 );
+
+// ========================================
+// EDITAR DADOS DE UMA PARÓQUIA
+// ========================================
+
+router.patch(
+  "/paroquias/:id",
+  autenticar,
+  somenteSuperAdmin,
+  editarParoquia
+);
+
 // ========================================
 // LISTAR TODAS AS COMUNIDADES
 // ========================================
@@ -263,7 +277,6 @@ router.get(
   gerarBackupComunidadeParoquia
 );
 
-
 // ========================================
 // HISTÓRICO MENSAL DA COMUNIDADE
 // ADMIN_PAROQUIA
@@ -287,7 +300,6 @@ router.get(
   somenteAdminParoquia,
   detalharHistoricoComunidadeParoquia
 );
-
 
 // ========================================
 // LISTAR DIZIMISTAS DA COMUNIDADE

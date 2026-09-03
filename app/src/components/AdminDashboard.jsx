@@ -66,6 +66,29 @@ function AdminDashboard() {
         setErroDetalhesParoquia,
     ] = useState("");
 
+    const [
+        mensagemParoquias,
+        setMensagemParoquias,
+    ] = useState("");
+
+    const [
+        paroquiaEmEdicao,
+        setParoquiaEmEdicao,
+    ] = useState(null);
+
+    const [
+        dadosEdicaoParoquia,
+        setDadosEdicaoParoquia,
+    ] = useState({
+        nome: "",
+        cidade: "",
+    });
+
+    const [
+        salvandoEdicaoParoquia,
+        setSalvandoEdicaoParoquia,
+    ] = useState(false);
+
     const [buscaUsuario, setBuscaUsuario] =
         useState("");
 
@@ -429,6 +452,178 @@ function AdminDashboard() {
         setParoquiaDetalhada(null);
         setErroDetalhesParoquia("");
         setCarregandoDetalhesParoquia(false);
+    };
+
+    // ========================================
+    // INICIAR EDIÇÃO DE PARÓQUIA
+    // ========================================
+
+    const iniciarEdicaoParoquia = (paroquia) => {
+        setParoquiaEmEdicao(paroquia);
+
+        setDadosEdicaoParoquia({
+            nome: paroquia.nome || "",
+            cidade: paroquia.cidade || "",
+        });
+
+        setErroParoquias("");
+        setMensagemParoquias("");
+    };
+
+    // ========================================
+    // ALTERAR CAMPOS DA EDIÇÃO DE PARÓQUIA
+    // ========================================
+
+    const alterarCampoEdicaoParoquia = (event) => {
+        const { name, value } = event.target;
+
+        setDadosEdicaoParoquia((dadosAtuais) => ({
+            ...dadosAtuais,
+            [name]: value,
+        }));
+
+        if (erroParoquias) {
+            setErroParoquias("");
+        }
+
+        if (mensagemParoquias) {
+            setMensagemParoquias("");
+        }
+    };
+
+    // ========================================
+    // CANCELAR EDIÇÃO DE PARÓQUIA
+    // ========================================
+
+    const cancelarEdicaoParoquia = () => {
+        setParoquiaEmEdicao(null);
+
+        setDadosEdicaoParoquia({
+            nome: "",
+            cidade: "",
+        });
+
+        setErroParoquias("");
+        setMensagemParoquias("");
+    };
+
+    // ========================================
+    // SALVAR EDIÇÃO DE PARÓQUIA
+    // ========================================
+
+    const salvarEdicaoParoquia = async (event) => {
+        event.preventDefault();
+
+        if (!paroquiaEmEdicao) {
+            return;
+        }
+
+        const nome = dadosEdicaoParoquia.nome.trim();
+        const cidade = dadosEdicaoParoquia.cidade.trim();
+
+        if (!nome) {
+            setErroParoquias(
+                "O nome da paróquia é obrigatório."
+            );
+            return;
+        }
+
+        if (nome.length < 2) {
+            setErroParoquias(
+                "O nome da paróquia deve ter pelo menos 2 caracteres."
+            );
+            return;
+        }
+
+        if (nome.length > 150) {
+            setErroParoquias(
+                "O nome da paróquia deve ter no máximo 150 caracteres."
+            );
+            return;
+        }
+
+        if (cidade.length > 150) {
+            setErroParoquias(
+                "O nome da cidade deve ter no máximo 150 caracteres."
+            );
+            return;
+        }
+
+        try {
+            setSalvandoEdicaoParoquia(true);
+            setErroParoquias("");
+            setMensagemParoquias("");
+
+            const resposta = await api.patch(
+                `/admin/paroquias/${paroquiaEmEdicao.id}`,
+                {
+                    nome,
+                    cidade,
+                }
+            );
+
+            const paroquiaAtualizada =
+                resposta.data?.paroquia;
+
+            if (paroquiaAtualizada) {
+                setParoquias((paroquiasAtuais) =>
+                    paroquiasAtuais.map((paroquia) =>
+                        Number(paroquia.id) ===
+                            Number(paroquiaAtualizada.id)
+                            ? {
+                                ...paroquia,
+                                ...paroquiaAtualizada,
+                            }
+                            : paroquia
+                    )
+                );
+
+                setParoquiaDetalhada((detalhesAtuais) => {
+                    if (
+                        !detalhesAtuais?.paroquia ||
+                        Number(detalhesAtuais.paroquia.id) !==
+                            Number(paroquiaAtualizada.id)
+                    ) {
+                        return detalhesAtuais;
+                    }
+
+                    return {
+                        ...detalhesAtuais,
+                        paroquia: {
+                            ...detalhesAtuais.paroquia,
+                            ...paroquiaAtualizada,
+                        },
+                    };
+                });
+            } else {
+                await carregarParoquias();
+            }
+
+            setMensagemParoquias(
+                resposta.data?.mensagem ||
+                    "Dados da paróquia atualizados com sucesso."
+            );
+
+            setParoquiaEmEdicao(null);
+
+            setDadosEdicaoParoquia({
+                nome: "",
+                cidade: "",
+            });
+        } catch (error) {
+            console.error(
+                "Erro ao editar paróquia:",
+                error
+            );
+
+            const mensagem =
+                error.response?.data?.erro ||
+                "Não foi possível atualizar a paróquia.";
+
+            setErroParoquias(mensagem);
+        } finally {
+            setSalvandoEdicaoParoquia(false);
+        }
     };
 
     // ========================================
@@ -1773,8 +1968,109 @@ function AdminDashboard() {
 
                     <p>
                         Visão geral das paróquias cadastradas no sistema.
-                        Nesta etapa, os detalhes são somente para consulta.
+                        O SUPER_ADMIN pode consultar e editar nome e cidade.
                     </p>
+
+                    {paroquiaEmEdicao && (
+                        <form
+                            className="admin-form-usuario"
+                            onSubmit={salvarEdicaoParoquia}
+                            noValidate
+                        >
+                            <h4>
+                                Editar Paróquia
+                            </h4>
+
+                            <p>
+                                Atualize somente os dados cadastrais da paróquia.
+                                Status e vínculos não são alterados nesta etapa.
+                            </p>
+
+                            <div className="admin-form-grid">
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="editar-paroquia-nome">
+                                        Nome
+                                    </label>
+
+                                    <input
+                                        id="editar-paroquia-nome"
+                                        name="nome"
+                                        type="text"
+                                        value={
+                                            dadosEdicaoParoquia.nome
+                                        }
+                                        onChange={
+                                            alterarCampoEdicaoParoquia
+                                        }
+                                        disabled={
+                                            salvandoEdicaoParoquia
+                                        }
+                                        maxLength={150}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="editar-paroquia-cidade">
+                                        Cidade
+                                    </label>
+
+                                    <input
+                                        id="editar-paroquia-cidade"
+                                        name="cidade"
+                                        type="text"
+                                        value={
+                                            dadosEdicaoParoquia.cidade
+                                        }
+                                        onChange={
+                                            alterarCampoEdicaoParoquia
+                                        }
+                                        disabled={
+                                            salvandoEdicaoParoquia
+                                        }
+                                        maxLength={150}
+                                    />
+                                </div>
+
+                            </div>
+
+                            <div className="admin-form-acoes">
+
+                                <button
+                                    type="submit"
+                                    className="btn-salvar-usuario"
+                                    disabled={
+                                        salvandoEdicaoParoquia
+                                    }
+                                >
+                                    {salvandoEdicaoParoquia
+                                        ? "Salvando..."
+                                        : "Salvar alterações"}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="btn-cancelar-usuario"
+                                    onClick={
+                                        cancelarEdicaoParoquia
+                                    }
+                                    disabled={
+                                        salvandoEdicaoParoquia
+                                    }
+                                >
+                                    Cancelar
+                                </button>
+
+                            </div>
+                        </form>
+                    )}
+
+                    {mensagemParoquias && (
+                        <p className="admin-sucesso">
+                            {mensagemParoquias}
+                        </p>
+                    )}
 
                     {(carregandoDetalhesParoquia ||
                         erroDetalhesParoquia ||
@@ -2053,7 +2349,7 @@ function AdminDashboard() {
 
                             <div className="admin-tabela-wrapper">
 
-                                <table className="admin-tabela admin-tabela-comunidades">
+                                <table className="admin-tabela admin-tabela-paroquias">
 
                                     <thead>
                                         <tr>
@@ -2105,20 +2401,38 @@ function AdminDashboard() {
                                                     </td>
 
                                                     <td>
-                                                        <button
-                                                            type="button"
-                                                            className="btn-editar"
-                                                            onClick={() =>
-                                                                abrirDetalhesParoquia(
-                                                                    paroquia
-                                                                )
-                                                            }
-                                                            disabled={
-                                                                carregandoDetalhesParoquia
-                                                            }
-                                                        >
-                                                            Ver detalhes
-                                                        </button>
+                                                        <div className="admin-acoes-paroquia">
+                                                            <button
+                                                                type="button"
+                                                                className="btn-detalhes-paroquia"
+                                                                onClick={() =>
+                                                                    abrirDetalhesParoquia(
+                                                                        paroquia
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    carregandoDetalhesParoquia ||
+                                                                    salvandoEdicaoParoquia
+                                                                }
+                                                            >
+                                                                Ver detalhes
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                className="btn-editar-paroquia"
+                                                                onClick={() =>
+                                                                    iniciarEdicaoParoquia(
+                                                                        paroquia
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    salvandoEdicaoParoquia
+                                                                }
+                                                            >
+                                                                Editar
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             );
