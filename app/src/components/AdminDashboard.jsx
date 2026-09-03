@@ -326,6 +326,19 @@ function AdminDashboard() {
     }, []);
 
     // ========================================
+    // CARREGAR DADOS DA VISÃO GERAL
+    // ========================================
+
+    useEffect(() => {
+        if (aba !== "visao-geral") {
+            return;
+        }
+
+        carregarUsuarios();
+        carregarParoquias();
+    }, [aba]);
+
+    // ========================================
     // CARREGAR USUÁRIOS AO ABRIR A ABA
     // ========================================
 
@@ -1886,6 +1899,47 @@ function AdminDashboard() {
     };
 
     // ========================================
+    // INDICADORES COMERCIAIS DO SUPER ADMIN
+    // ========================================
+
+    const totalParoquias = paroquias.length;
+
+    const paroquiasAtivas = paroquias.filter(
+        (paroquia) => paroquia.ativa
+    ).length;
+
+    const paroquiasInativas =
+        totalParoquias - paroquiasAtivas;
+
+    const totalAdminParoquia = usuarios.filter(
+        (usuario) =>
+            usuario.perfil === "ADMIN_PAROQUIA"
+    ).length;
+
+    const totalAdminComunidade = usuarios.filter(
+        (usuario) =>
+            usuario.perfil === "ADMIN_COMUNIDADE"
+    ).length;
+
+    const licencasAtivas = usuarios.filter(
+        (usuario) =>
+            usuario.perfil !== "SUPER_ADMIN" &&
+            usuario.licencaStatus === "ATIVA"
+    ).length;
+
+    const licencasBloqueadas = usuarios.filter(
+        (usuario) =>
+            usuario.perfil !== "SUPER_ADMIN" &&
+            usuario.licencaStatus === "BLOQUEADA"
+    ).length;
+
+    const usuariosInativos = usuarios.filter(
+        (usuario) =>
+            usuario.perfil !== "SUPER_ADMIN" &&
+            !usuario.ativo
+    ).length;
+
+    // ========================================
     // CARREGANDO DASHBOARD
     // ========================================
 
@@ -1967,41 +2021,112 @@ function AdminDashboard() {
       ===================================== */}
 
             {aba === "visao-geral" && (
-                <div className="admin-cards">
+                <div className="admin-secao">
 
-                    <div className="admin-card">
-                        <h3>Comunidades</h3>
-                        <strong>
-                            {resumo?.totalComunidades ?? 0}
-                        </strong>
+                    <div className="admin-secao-cabecalho">
+                        <div>
+                            <h3>Visão Geral</h3>
+                            <p>
+                                Resumo administrativo e comercial do sistema.
+                            </p>
+                        </div>
                     </div>
 
-                    <div className="admin-card">
-                        <h3>Comunidades Ativas</h3>
-                        <strong>
-                            {resumo?.comunidadesAtivas ?? 0}
-                        </strong>
-                    </div>
+                    <div className="admin-cards">
 
-                    <div className="admin-card">
-                        <h3>Usuários</h3>
-                        <strong>
-                            {resumo?.totalUsuarios ?? 0}
-                        </strong>
-                    </div>
+                        <div className="admin-card">
+                            <h3>Paróquias</h3>
+                            <strong>
+                                {totalParoquias}
+                            </strong>
+                            <span>
+                                {paroquiasAtivas} ativas
+                                {paroquiasInativas > 0
+                                    ? ` • ${paroquiasInativas} inativas`
+                                    : ""}
+                            </span>
+                        </div>
 
-                    <div className="admin-card">
-                        <h3>Usuários Ativos</h3>
-                        <strong>
-                            {resumo?.usuariosAtivos ?? 0}
-                        </strong>
-                    </div>
+                        <div className="admin-card">
+                            <h3>Comunidades</h3>
+                            <strong>
+                                {resumo?.totalComunidades ?? 0}
+                            </strong>
+                            <span>
+                                {resumo?.comunidadesAtivas ?? 0} ativas
+                            </span>
+                        </div>
 
-                    <div className="admin-card">
-                        <h3>Dizimistas</h3>
-                        <strong>
-                            {resumo?.totalDizimistas ?? 0}
-                        </strong>
+                        <div className="admin-card">
+                            <h3>Usuários</h3>
+                            <strong>
+                                {resumo?.totalUsuarios ?? usuarios.length}
+                            </strong>
+                            <span>
+                                {resumo?.usuariosAtivos ?? 0} ativos
+                            </span>
+                        </div>
+
+                        <div className="admin-card">
+                            <h3>Admin Paróquia</h3>
+                            <strong>
+                                {totalAdminParoquia}
+                            </strong>
+                            <span>
+                                Administradores paroquiais
+                            </span>
+                        </div>
+
+                        <div className="admin-card">
+                            <h3>Admin Comunidade</h3>
+                            <strong>
+                                {totalAdminComunidade}
+                            </strong>
+                            <span>
+                                Administradores comunitários
+                            </span>
+                        </div>
+
+                        <div className="admin-card">
+                            <h3>Licenças Ativas</h3>
+                            <strong>
+                                {licencasAtivas}
+                            </strong>
+                            <span>
+                                Acessos comerciais liberados
+                            </span>
+                        </div>
+
+                        <div className="admin-card">
+                            <h3>Licenças Bloqueadas</h3>
+                            <strong>
+                                {licencasBloqueadas}
+                            </strong>
+                            <span>
+                                Acessos comerciais suspensos
+                            </span>
+                        </div>
+
+                        <div className="admin-card">
+                            <h3>Usuários Inativos</h3>
+                            <strong>
+                                {usuariosInativos}
+                            </strong>
+                            <span>
+                                Contas administrativas desativadas
+                            </span>
+                        </div>
+
+                        <div className="admin-card">
+                            <h3>Dizimistas</h3>
+                            <strong>
+                                {resumo?.totalDizimistas ?? 0}
+                            </strong>
+                            <span>
+                                Total cadastrado no sistema
+                            </span>
+                        </div>
+
                     </div>
 
                 </div>
