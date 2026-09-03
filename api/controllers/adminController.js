@@ -53,6 +53,102 @@ export const listarParoquias = async (req, res) => {
     });
   }
 };
+export const detalharParoquia = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const paroquiaId = Number(id);
+
+    if (
+      !Number.isInteger(paroquiaId) ||
+      paroquiaId <= 0
+    ) {
+      return res.status(400).json({
+        erro: "ID da paróquia inválido.",
+      });
+    }
+
+    const paroquia = await Paroquia.findByPk(
+      paroquiaId,
+      {
+        attributes: [
+          "id",
+          "nome",
+          "cidade",
+          "ativa",
+          "createdAt",
+          "updatedAt",
+        ],
+      }
+    );
+
+    if (!paroquia) {
+      return res.status(404).json({
+        erro: "Paróquia não encontrada.",
+      });
+    }
+
+    const comunidades = await Comunidade.findAll({
+      where: {
+        paroquiaId,
+      },
+      attributes: [
+        "id",
+        "nome",
+        "cidade",
+        "ativa",
+        "createdAt",
+      ],
+      order: [["nome", "ASC"]],
+    });
+
+    const administradores = await Usuario.findAll({
+      where: {
+        paroquiaId,
+        perfil: "ADMIN_PAROQUIA",
+      },
+      attributes: [
+        "id",
+        "nome",
+        "email",
+        "ativo",
+        "licencaStatus",
+      ],
+      order: [["nome", "ASC"]],
+    });
+
+    return res.status(200).json({
+      paroquia,
+      indicadores: {
+        totalComunidades:
+          comunidades.length,
+        comunidadesAtivas:
+          comunidades.filter(
+            (comunidade) =>
+              comunidade.ativa
+          ).length,
+        comunidadesInativas:
+          comunidades.filter(
+            (comunidade) =>
+              !comunidade.ativa
+          ).length,
+        totalAdministradores:
+          administradores.length,
+      },
+      comunidades,
+      administradores,
+    });
+  } catch (error) {
+    console.error(
+      "Erro ao detalhar paróquia:",
+      error
+    );
+
+    return res.status(500).json({
+      erro: "Erro ao detalhar paróquia.",
+    });
+  }
+};
 
 // ========================================
 // LISTAR TODAS AS COMUNIDADES

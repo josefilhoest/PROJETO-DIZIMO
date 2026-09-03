@@ -51,6 +51,21 @@ function AdminDashboard() {
         setErroParoquias,
     ] = useState("");
 
+    const [
+        paroquiaDetalhada,
+        setParoquiaDetalhada,
+    ] = useState(null);
+
+    const [
+        carregandoDetalhesParoquia,
+        setCarregandoDetalhesParoquia,
+    ] = useState(false);
+
+    const [
+        erroDetalhesParoquia,
+        setErroDetalhesParoquia,
+    ] = useState("");
+
     const [buscaUsuario, setBuscaUsuario] =
         useState("");
 
@@ -373,6 +388,47 @@ function AdminDashboard() {
         } finally {
             setCarregandoParoquias(false);
         }
+    };
+
+    // ========================================
+    // ABRIR DETALHES DA PARÓQUIA
+    // ========================================
+
+    const abrirDetalhesParoquia = async (paroquia) => {
+        try {
+            setCarregandoDetalhesParoquia(true);
+            setErroDetalhesParoquia("");
+            setParoquiaDetalhada(null);
+
+            const resposta = await api.get(
+                `/admin/paroquias/${paroquia.id}`
+            );
+
+            setParoquiaDetalhada(resposta.data);
+        } catch (error) {
+            console.error(
+                "Erro ao carregar detalhes da paróquia:",
+                error
+            );
+
+            const mensagem =
+                error.response?.data?.erro ||
+                "Não foi possível carregar os detalhes da paróquia.";
+
+            setErroDetalhesParoquia(mensagem);
+        } finally {
+            setCarregandoDetalhesParoquia(false);
+        }
+    };
+
+    // ========================================
+    // FECHAR DETALHES DA PARÓQUIA
+    // ========================================
+
+    const fecharDetalhesParoquia = () => {
+        setParoquiaDetalhada(null);
+        setErroDetalhesParoquia("");
+        setCarregandoDetalhesParoquia(false);
     };
 
     // ========================================
@@ -1717,8 +1773,259 @@ function AdminDashboard() {
 
                     <p>
                         Visão geral das paróquias cadastradas no sistema.
-                        Nesta etapa, o painel é somente para consulta.
+                        Nesta etapa, os detalhes são somente para consulta.
                     </p>
+
+                    {(carregandoDetalhesParoquia ||
+                        erroDetalhesParoquia ||
+                        paroquiaDetalhada) && (
+                            <div className="admin-detalhes-comunidade">
+
+                                <div className="admin-detalhes-cabecalho">
+                                    <div>
+                                        <span className="admin-detalhes-legenda">
+                                            Detalhes da paróquia
+                                        </span>
+
+                                        <h4>
+                                            {paroquiaDetalhada
+                                                ?.paroquia?.nome ||
+                                                "Carregando..."}
+                                        </h4>
+
+                                        {paroquiaDetalhada && (
+                                            <span className="admin-detalhes-id">
+                                                ID da paróquia:{" "}
+                                                {paroquiaDetalhada
+                                                    .paroquia?.id}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        className="admin-detalhes-fechar"
+                                        onClick={fecharDetalhesParoquia}
+                                        aria-label="Fechar detalhes da paróquia"
+                                    >
+                                        Fechar
+                                    </button>
+                                </div>
+
+                                {carregandoDetalhesParoquia && (
+                                    <p>
+                                        Carregando detalhes...
+                                    </p>
+                                )}
+
+                                {erroDetalhesParoquia && (
+                                    <p className="admin-erro">
+                                        {erroDetalhesParoquia}
+                                    </p>
+                                )}
+
+                                {!carregandoDetalhesParoquia &&
+                                    !erroDetalhesParoquia &&
+                                    paroquiaDetalhada && (
+                                        <>
+                                            <div className="admin-detalhes-grid">
+
+                                                <div className="admin-detalhes-item">
+                                                    <span>Paróquia</span>
+                                                    <strong>
+                                                        {paroquiaDetalhada
+                                                            .paroquia
+                                                            ?.nome || "-"}
+                                                    </strong>
+                                                </div>
+
+                                                <div className="admin-detalhes-item">
+                                                    <span>Cidade</span>
+                                                    <strong>
+                                                        {paroquiaDetalhada
+                                                            .paroquia
+                                                            ?.cidade ||
+                                                            "Não informada"}
+                                                    </strong>
+                                                </div>
+
+                                                <div className="admin-detalhes-item">
+                                                    <span>Status</span>
+
+                                                    {paroquiaDetalhada
+                                                        .paroquia
+                                                        ?.ativa ? (
+                                                        <strong className="status-ativo">
+                                                            Ativa
+                                                        </strong>
+                                                    ) : (
+                                                        <strong className="status-inativo">
+                                                            Inativa
+                                                        </strong>
+                                                    )}
+                                                </div>
+
+                                                <div className="admin-detalhes-item">
+                                                    <span>Comunidades</span>
+                                                    <strong>
+                                                        {paroquiaDetalhada
+                                                            .indicadores
+                                                            ?.totalComunidades ?? 0}
+                                                    </strong>
+                                                </div>
+
+                                                <div className="admin-detalhes-item">
+                                                    <span>Comunidades ativas</span>
+                                                    <strong>
+                                                        {paroquiaDetalhada
+                                                            .indicadores
+                                                            ?.comunidadesAtivas ?? 0}
+                                                    </strong>
+                                                </div>
+
+                                                <div className="admin-detalhes-item">
+                                                    <span>Comunidades inativas</span>
+                                                    <strong>
+                                                        {paroquiaDetalhada
+                                                            .indicadores
+                                                            ?.comunidadesInativas ?? 0}
+                                                    </strong>
+                                                </div>
+
+                                                <div className="admin-detalhes-item">
+                                                    <span>Administradores da paróquia</span>
+                                                    <strong>
+                                                        {paroquiaDetalhada
+                                                            .indicadores
+                                                            ?.totalAdministradores ?? 0}
+                                                    </strong>
+                                                </div>
+
+                                            </div>
+
+                                            <div className="admin-detalhes-usuarios">
+
+                                                <h5>
+                                                    Comunidades vinculadas
+                                                </h5>
+
+                                                {paroquiaDetalhada
+                                                    .comunidades?.length > 0 ? (
+                                                    <div className="admin-detalhes-usuarios-lista">
+                                                        {paroquiaDetalhada
+                                                            .comunidades.map(
+                                                                (comunidade) => (
+                                                                    <div
+                                                                        className="admin-detalhes-usuario"
+                                                                        key={comunidade.id}
+                                                                    >
+                                                                        <div>
+                                                                            <strong>
+                                                                                {comunidade.nome}
+                                                                            </strong>
+
+                                                                            <span>
+                                                                                Cidade:{" "}
+                                                                                {comunidade.cidade ||
+                                                                                    "Não informada"}
+                                                                            </span>
+                                                                        </div>
+
+                                                                        <div className="admin-detalhes-usuario-status">
+                                                                            {comunidade.ativa ? (
+                                                                                <span className="status-ativo">
+                                                                                    Ativa
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="status-inativo">
+                                                                                    Inativa
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )
+                                                            )}
+                                                    </div>
+                                                ) : (
+                                                    <p>
+                                                        Nenhuma comunidade vinculada
+                                                        a esta paróquia.
+                                                    </p>
+                                                )}
+
+                                            </div>
+
+                                            <div className="admin-detalhes-usuarios">
+
+                                                <h5>
+                                                    Administradores da Paróquia
+                                                </h5>
+
+                                                {paroquiaDetalhada
+                                                    .administradores?.length > 0 ? (
+                                                    <div className="admin-detalhes-usuarios-lista">
+                                                        {paroquiaDetalhada
+                                                            .administradores.map(
+                                                                (administrador) => (
+                                                                    <div
+                                                                        className="admin-detalhes-usuario"
+                                                                        key={administrador.id}
+                                                                    >
+                                                                        <div>
+                                                                            <strong>
+                                                                                {administrador.nome}
+                                                                            </strong>
+
+                                                                            <span>
+                                                                                {administrador.email}
+                                                                            </span>
+
+                                                                            <span className="admin-detalhes-perfil">
+                                                                                Perfil: ADMIN_PAROQUIA
+                                                                            </span>
+                                                                        </div>
+
+                                                                        <div className="admin-detalhes-usuario-status">
+                                                                            {administrador.ativo ? (
+                                                                                <span className="status-ativo">
+                                                                                    Ativo
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="status-inativo">
+                                                                                    Inativo
+                                                                                </span>
+                                                                            )}
+
+                                                                            {administrador.licencaStatus ===
+                                                                                "ATIVA" ? (
+                                                                                <span className="licenca-ativa">
+                                                                                    ATIVA
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="licenca-bloqueada">
+                                                                                    {administrador
+                                                                                        .licencaStatus ||
+                                                                                        "SEM STATUS"}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )
+                                                            )}
+                                                    </div>
+                                                ) : (
+                                                    <p>
+                                                        Nenhum ADMIN_PAROQUIA vinculado
+                                                        a esta paróquia.
+                                                    </p>
+                                                )}
+
+                                            </div>
+                                        </>
+                                    )}
+
+                            </div>
+                        )}
 
                     {carregandoParoquias && (
                         <p>
@@ -1754,6 +2061,7 @@ function AdminDashboard() {
                                             <th>Cidade</th>
                                             <th>Comunidades</th>
                                             <th>Status</th>
+                                            <th>Ações</th>
                                         </tr>
                                     </thead>
 
@@ -1794,6 +2102,23 @@ function AdminDashboard() {
                                                                 Inativa
                                                             </span>
                                                         )}
+                                                    </td>
+
+                                                    <td>
+                                                        <button
+                                                            type="button"
+                                                            className="btn-editar"
+                                                            onClick={() =>
+                                                                abrirDetalhesParoquia(
+                                                                    paroquia
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                carregandoDetalhesParoquia
+                                                            }
+                                                        >
+                                                            Ver detalhes
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             );

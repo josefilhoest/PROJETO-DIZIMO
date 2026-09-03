@@ -19,6 +19,7 @@ import {
 
 import {
   listarParoquias,
+  detalharParoquia,
   listarComunidades,
   detalharComunidade,
   editarComunidadeAdmin,
@@ -63,7 +64,16 @@ router.get(
   somenteSuperAdmin,
   listarParoquias
 );
+// ========================================
+// DETALHAR UMA PARÓQUIA
+// ========================================
 
+router.get(
+  "/paroquias/:id",
+  autenticar,
+  somenteSuperAdmin,
+  detalharParoquia
+);
 // ========================================
 // LISTAR TODAS AS COMUNIDADES
 // ========================================
