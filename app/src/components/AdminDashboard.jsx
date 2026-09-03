@@ -92,6 +92,18 @@ function AdminDashboard() {
     const [buscaUsuario, setBuscaUsuario] =
         useState("");
 
+    const [filtroPerfilUsuario, setFiltroPerfilUsuario] =
+        useState("TODOS");
+
+    const [filtroParoquiaUsuario, setFiltroParoquiaUsuario] =
+        useState("TODAS");
+
+    const [filtroStatusUsuario, setFiltroStatusUsuario] =
+        useState("TODOS");
+
+    const [filtroLicencaUsuario, setFiltroLicencaUsuario] =
+        useState("TODAS");
+
     const [
         carregandoUsuarios,
         setCarregandoUsuarios,
@@ -1798,7 +1810,7 @@ function AdminDashboard() {
     };
 
     // ========================================
-    // FILTRAR USUÁRIOS
+    // FILTRAR USUÁRIOS / LICENÇAS
     // ========================================
 
     const termoBuscaUsuario =
@@ -1806,10 +1818,6 @@ function AdminDashboard() {
 
     const usuariosFiltrados = usuarios.filter(
         (usuario) => {
-            if (!termoBuscaUsuario) {
-                return true;
-            }
-
             const nome =
                 usuario.nome?.toLowerCase() || "";
 
@@ -1824,14 +1832,58 @@ function AdminDashboard() {
                 usuario.comunidadeNome
                     ?.toLowerCase() || "";
 
-            return (
+            const correspondeBusca =
+                !termoBuscaUsuario ||
                 nome.includes(termoBuscaUsuario) ||
                 email.includes(termoBuscaUsuario) ||
                 paroquia.includes(termoBuscaUsuario) ||
-                comunidade.includes(termoBuscaUsuario)
+                comunidade.includes(termoBuscaUsuario);
+
+            const correspondePerfil =
+                filtroPerfilUsuario === "TODOS" ||
+                usuario.perfil === filtroPerfilUsuario;
+
+            const correspondeParoquia =
+                filtroParoquiaUsuario === "TODAS" ||
+                Number(usuario.paroquiaId) ===
+                    Number(filtroParoquiaUsuario);
+
+            const correspondeStatus =
+                filtroStatusUsuario === "TODOS" ||
+                (filtroStatusUsuario === "ATIVOS" &&
+                    usuario.ativo) ||
+                (filtroStatusUsuario === "INATIVOS" &&
+                    !usuario.ativo);
+
+            const correspondeLicenca =
+                filtroLicencaUsuario === "TODAS" ||
+                usuario.licencaStatus ===
+                    filtroLicencaUsuario;
+
+            return (
+                correspondeBusca &&
+                correspondePerfil &&
+                correspondeParoquia &&
+                correspondeStatus &&
+                correspondeLicenca
             );
         }
     );
+
+    const filtrosUsuariosAtivos =
+        buscaUsuario.trim() !== "" ||
+        filtroPerfilUsuario !== "TODOS" ||
+        filtroParoquiaUsuario !== "TODAS" ||
+        filtroStatusUsuario !== "TODOS" ||
+        filtroLicencaUsuario !== "TODAS";
+
+    const limparFiltrosUsuarios = () => {
+        setBuscaUsuario("");
+        setFiltroPerfilUsuario("TODOS");
+        setFiltroParoquiaUsuario("TODAS");
+        setFiltroStatusUsuario("TODOS");
+        setFiltroLicencaUsuario("TODAS");
+    };
 
     // ========================================
     // CARREGANDO DASHBOARD
@@ -3234,31 +3286,158 @@ function AdminDashboard() {
                         </button>
                     </div>
 
-                    <div className="admin-busca">
-                        <input
-                            type="search"
-                            placeholder="Buscar por nome, e-mail, paróquia ou comunidade..."
-                            value={buscaUsuario}
-                            onChange={(event) =>
-                                setBuscaUsuario(
-                                    event.target.value
-                                )
-                            }
-                            aria-label="Buscar usuários"
-                        />
+                    <div className="admin-filtros-usuarios">
 
-                        {buscaUsuario && (
-                            <button
-                                type="button"
-                                className="admin-busca-limpar"
-                                onClick={() =>
-                                    setBuscaUsuario("")
+                        <div className="admin-busca">
+                            <input
+                                type="search"
+                                placeholder="Buscar por nome, e-mail, paróquia ou comunidade..."
+                                value={buscaUsuario}
+                                onChange={(event) =>
+                                    setBuscaUsuario(
+                                        event.target.value
+                                    )
+                                }
+                                aria-label="Buscar usuários"
+                            />
+                        </div>
+
+                        <div className="admin-filtro-campo">
+                            <label htmlFor="filtro-perfil-usuario">
+                                Perfil
+                            </label>
+
+                            <select
+                                id="filtro-perfil-usuario"
+                                value={filtroPerfilUsuario}
+                                onChange={(event) =>
+                                    setFiltroPerfilUsuario(
+                                        event.target.value
+                                    )
                                 }
                             >
-                                Limpar
-                            </button>
-                        )}
+                                <option value="TODOS">
+                                    Todos
+                                </option>
+
+                                <option value="ADMIN_PAROQUIA">
+                                    Admin Paróquia
+                                </option>
+
+                                <option value="ADMIN_COMUNIDADE">
+                                    Admin Comunidade
+                                </option>
+
+                                <option value="SUPER_ADMIN">
+                                    Super Admin
+                                </option>
+                            </select>
+                        </div>
+
+                        <div className="admin-filtro-campo">
+                            <label htmlFor="filtro-paroquia-usuario">
+                                Paróquia
+                            </label>
+
+                            <select
+                                id="filtro-paroquia-usuario"
+                                value={filtroParoquiaUsuario}
+                                onChange={(event) =>
+                                    setFiltroParoquiaUsuario(
+                                        event.target.value
+                                    )
+                                }
+                                disabled={carregandoParoquias}
+                            >
+                                <option value="TODAS">
+                                    Todas
+                                </option>
+
+                                {paroquias.map((paroquia) => (
+                                    <option
+                                        key={paroquia.id}
+                                        value={paroquia.id}
+                                    >
+                                        {paroquia.nome}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="admin-filtro-campo">
+                            <label htmlFor="filtro-status-usuario">
+                                Status
+                            </label>
+
+                            <select
+                                id="filtro-status-usuario"
+                                value={filtroStatusUsuario}
+                                onChange={(event) =>
+                                    setFiltroStatusUsuario(
+                                        event.target.value
+                                    )
+                                }
+                            >
+                                <option value="TODOS">
+                                    Todos
+                                </option>
+
+                                <option value="ATIVOS">
+                                    Ativos
+                                </option>
+
+                                <option value="INATIVOS">
+                                    Inativos
+                                </option>
+                            </select>
+                        </div>
+
+                        <div className="admin-filtro-campo">
+                            <label htmlFor="filtro-licenca-usuario">
+                                Licença
+                            </label>
+
+                            <select
+                                id="filtro-licenca-usuario"
+                                value={filtroLicencaUsuario}
+                                onChange={(event) =>
+                                    setFiltroLicencaUsuario(
+                                        event.target.value
+                                    )
+                                }
+                            >
+                                <option value="TODAS">
+                                    Todas
+                                </option>
+
+                                <option value="ATIVA">
+                                    Ativa
+                                </option>
+
+                                <option value="BLOQUEADA">
+                                    Bloqueada
+                                </option>
+                            </select>
+                        </div>
+
+                        <button
+                            type="button"
+                            className="admin-busca-limpar"
+                            onClick={limparFiltrosUsuarios}
+                            disabled={!filtrosUsuariosAtivos}
+                        >
+                            Limpar filtros
+                        </button>
+
                     </div>
+
+                    {!carregandoUsuarios &&
+                        usuariosFiltrados.length === 0 &&
+                        usuarios.length > 0 && (
+                            <p className="admin-sem-resultados">
+                                Nenhum usuário corresponde aos filtros selecionados.
+                            </p>
+                        )}
 
                     {mensagemUsuario && (
                         <p className="admin-sucesso">
