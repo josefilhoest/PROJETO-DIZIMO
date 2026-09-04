@@ -72,6 +72,22 @@ function AdminDashboard() {
     ] = useState("");
 
     const [
+        mostrarFormularioParoquia,
+        setMostrarFormularioParoquia,
+    ] = useState(false);
+
+    const [novaParoquia, setNovaParoquia] =
+        useState({
+            nome: "",
+            cidade: "",
+        });
+
+    const [
+        cadastrandoParoquia,
+        setCadastrandoParoquia,
+    ] = useState(false);
+
+    const [
         paroquiaEmEdicao,
         setParoquiaEmEdicao,
     ] = useState(null);
@@ -439,6 +455,116 @@ function AdminDashboard() {
     };
 
     // ========================================
+    // ALTERAR CAMPOS DA NOVA PARÓQUIA
+    // ========================================
+
+    const alterarCampoNovaParoquia = (event) => {
+        const { name, value } = event.target;
+
+        setNovaParoquia((dadosAtuais) => ({
+            ...dadosAtuais,
+            [name]: value,
+        }));
+
+        if (erroParoquias) {
+            setErroParoquias("");
+        }
+
+        if (mensagemParoquias) {
+            setMensagemParoquias("");
+        }
+    };
+
+    // ========================================
+    // CADASTRAR NOVA PARÓQUIA
+    // SOMENTE SUPER_ADMIN
+    // ========================================
+
+    const cadastrarNovaParoquia = async (event) => {
+        event.preventDefault();
+
+        const nome = novaParoquia.nome
+            .trim()
+            .replace(/\s+/g, " ");
+
+        const cidade = novaParoquia.cidade
+            .trim()
+            .replace(/\s+/g, " ");
+
+        if (!nome) {
+            setErroParoquias(
+                "O nome da paróquia é obrigatório."
+            );
+            return;
+        }
+
+        if (nome.length < 2) {
+            setErroParoquias(
+                "O nome da paróquia deve ter pelo menos 2 caracteres."
+            );
+            return;
+        }
+
+        if (nome.length > 150) {
+            setErroParoquias(
+                "O nome da paróquia deve ter no máximo 150 caracteres."
+            );
+            return;
+        }
+
+        if (cidade.length > 150) {
+            setErroParoquias(
+                "O nome da cidade deve ter no máximo 150 caracteres."
+            );
+            return;
+        }
+
+        try {
+            setCadastrandoParoquia(true);
+            setErroParoquias("");
+            setMensagemParoquias("");
+
+            const resposta = await api.post(
+                "/admin/paroquias",
+                {
+                    nome,
+                    cidade: cidade || null,
+                }
+            );
+
+            setNovaParoquia({
+                nome: "",
+                cidade: "",
+            });
+
+            setMostrarFormularioParoquia(false);
+
+            setMensagemParoquias(
+                resposta.data?.mensagem ||
+                "Paróquia cadastrada com sucesso."
+            );
+
+            // Recarrega a fonte oficial do backend.
+            // Assim a nova paróquia já fica disponível
+            // também no cadastro de usuários.
+            await carregarParoquias();
+        } catch (error) {
+            console.error(
+                "Erro ao cadastrar paróquia:",
+                error
+            );
+
+            const mensagem =
+                error.response?.data?.erro ||
+                "Não foi possível cadastrar a paróquia.";
+
+            setErroParoquias(mensagem);
+        } finally {
+            setCadastrandoParoquia(false);
+        }
+    };
+
+    // ========================================
     // ABRIR DETALHES DA PARÓQUIA
     // ========================================
 
@@ -484,6 +610,12 @@ function AdminDashboard() {
     // ========================================
 
     const iniciarEdicaoParoquia = (paroquia) => {
+        setMostrarFormularioParoquia(false);
+        setNovaParoquia({
+            nome: "",
+            cidade: "",
+        });
+
         setParoquiaEmEdicao(paroquia);
 
         setDadosEdicaoParoquia({
@@ -2139,14 +2271,116 @@ function AdminDashboard() {
             {aba === "paroquias" && (
                 <div className="admin-secao">
 
-                    <h3>
-                        Gerenciamento de Paróquias
-                    </h3>
+                    <div className="admin-secao-cabecalho">
+                        <div>
+                            <h3>
+                                Gerenciamento de Paróquias
+                            </h3>
 
-                    <p>
-                        Visão geral das paróquias cadastradas no sistema.
-                        O SUPER_ADMIN pode consultar e editar nome e cidade.
-                    </p>
+                            <p>
+                                Cadastre a paróquia antes de criar os usuários comerciais vinculados a ela.
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            className="btn-novo-usuario"
+                            disabled={cadastrandoParoquia}
+                            onClick={() => {
+                                const novoEstado =
+                                    !mostrarFormularioParoquia;
+
+                                setMostrarFormularioParoquia(
+                                    novoEstado
+                                );
+
+                                if (novoEstado) {
+                                    setParoquiaEmEdicao(null);
+                                    setDadosEdicaoParoquia({
+                                        nome: "",
+                                        cidade: "",
+                                    });
+                                } else {
+                                    setNovaParoquia({
+                                        nome: "",
+                                        cidade: "",
+                                    });
+                                }
+
+                                setErroParoquias("");
+                                setMensagemParoquias("");
+                            }}
+                        >
+                            {mostrarFormularioParoquia
+                                ? "Cancelar"
+                                : "+ Nova Paróquia"}
+                        </button>
+                    </div>
+
+                    {mostrarFormularioParoquia && (
+                        <form
+                            className="admin-form-usuario"
+                            onSubmit={cadastrarNovaParoquia}
+                            noValidate
+                        >
+                            <h4>
+                                Cadastrar Nova Paróquia
+                            </h4>
+
+                            <p>
+                                A paróquia será criada ativa. Depois, use a aba Usuários / Licenças para criar o ADMIN_PAROQUIA ou ADMIN_COMUNIDADE vinculado a ela.
+                            </p>
+
+                            <div className="admin-form-grid">
+                                <div className="admin-form-campo">
+                                    <label htmlFor="nova-paroquia-nome">
+                                        Nome
+                                    </label>
+
+                                    <input
+                                        id="nova-paroquia-nome"
+                                        name="nome"
+                                        type="text"
+                                        placeholder="Nome da paróquia"
+                                        value={novaParoquia.nome}
+                                        onChange={alterarCampoNovaParoquia}
+                                        disabled={cadastrandoParoquia}
+                                        maxLength={150}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="nova-paroquia-cidade">
+                                        Cidade
+                                    </label>
+
+                                    <input
+                                        id="nova-paroquia-cidade"
+                                        name="cidade"
+                                        type="text"
+                                        placeholder="Cidade"
+                                        value={novaParoquia.cidade}
+                                        onChange={alterarCampoNovaParoquia}
+                                        disabled={cadastrandoParoquia}
+                                        maxLength={150}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="admin-form-acoes">
+                                <button
+                                    type="submit"
+                                    className="btn-salvar-usuario"
+                                    disabled={cadastrandoParoquia}
+                                >
+                                    {cadastrandoParoquia
+                                        ? "Cadastrando..."
+                                        : "Cadastrar Paróquia"}
+                                </button>
+                            </div>
+                        </form>
+                    )}
 
                     {paroquiaEmEdicao && (
                         <form

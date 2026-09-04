@@ -1251,17 +1251,174 @@ function PainelParoquia({ usuario }) {
         }
 
         @media (max-width: 700px) {
-          .painel-paroquia-resumo {
-            grid-template-columns: 1fr;
+          .painel-paroquia {
+            width: 100%;
+            margin-top: 12px;
           }
 
           .painel-paroquia-cabecalho,
           .painel-paroquia-conteudo {
-            padding: 15px;
+            padding: 14px;
+            border-radius: 10px;
           }
 
-          .painel-paroquia-detalhes-grid {
+          .painel-paroquia-cabecalho h2 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+          }
+
+          .painel-paroquia-info {
+            flex-direction: column;
+            gap: 6px;
+          }
+
+          .painel-paroquia-resumo {
             grid-template-columns: 1fr;
+            gap: 8px;
+          }
+
+          .painel-paroquia-card {
+            padding: 14px;
+          }
+
+          .painel-paroquia-card strong {
+            font-size: 1.3rem;
+          }
+
+          .painel-paroquia-acoes {
+            display: block;
+          }
+
+          .painel-paroquia-acoes h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+          }
+
+          .painel-paroquia-busca {
+            width: 100%;
+            box-sizing: border-box;
+          }
+
+          .painel-paroquia-tabela-wrapper {
+            overflow: visible;
+            width: 100%;
+          }
+
+          .painel-paroquia-tabela,
+          .painel-paroquia-tabela tbody,
+          .painel-paroquia-tabela tr,
+          .painel-paroquia-tabela td {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+          }
+
+          .painel-paroquia-tabela thead {
+            display: none;
+          }
+
+          .painel-paroquia-tabela {
+            border-collapse: separate;
+          }
+
+          .painel-paroquia-tabela tr {
+            margin-bottom: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #ffffff;
+          }
+
+          .painel-paroquia-tabela td {
+            display: grid;
+            grid-template-columns: minmax(92px, 34%) 1fr;
+            gap: 10px;
+            align-items: start;
+            padding: 10px 12px;
+            border-bottom: 1px solid #edf0f3;
+            overflow-wrap: anywhere;
+          }
+
+          .painel-paroquia-tabela td:last-child {
+            display: block;
+            border-bottom: 0;
+          }
+
+          .painel-paroquia-tabela td::before {
+            font-weight: 700;
+            color: #374151;
+          }
+
+          .painel-paroquia-tabela td:nth-child(1)::before {
+            content: "Comunidade";
+          }
+
+          .painel-paroquia-tabela td:nth-child(2)::before {
+            content: "Cidade";
+          }
+
+          .painel-paroquia-tabela td:nth-child(3)::before {
+            content: "Status";
+          }
+
+          .painel-paroquia-tabela td:nth-child(4)::before {
+            content: "Ações";
+            display: block;
+            margin-bottom: 8px;
+          }
+
+          .painel-paroquia-acoes-linha {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 7px;
+          }
+
+          .painel-paroquia-btn {
+            width: 100%;
+            min-height: 42px;
+            padding: 9px 10px;
+          }
+
+          .painel-paroquia-detalhes,
+          .painel-paroquia-historico {
+            padding: 14px;
+          }
+
+          .painel-paroquia-detalhes-grid,
+          .painel-paroquia-fechamento-resumo {
+            grid-template-columns: 1fr;
+          }
+
+          .painel-paroquia-detalhes-topo,
+          .painel-paroquia-historico-topo,
+          .painel-paroquia-historico-item {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .painel-paroquia-fechar {
+            width: 100%;
+            min-height: 40px;
+          }
+
+          .painel-paroquia-fechamento-tabela {
+            min-width: 560px;
+          }
+        }
+
+        @media (max-width: 420px) {
+          .painel-paroquia-cabecalho,
+          .painel-paroquia-conteudo {
+            padding: 12px;
+          }
+
+          .painel-paroquia-tabela td {
+            grid-template-columns: 1fr;
+            gap: 4px;
+          }
+
+          .painel-paroquia-tabela td::before {
+            margin-bottom: 2px;
           }
         }
       `}</style>

@@ -18,6 +18,7 @@ import {
 } from "../controllers/paroquiaController.js";
 
 import {
+  cadastrarParoquia,
   listarParoquias,
   detalharParoquia,
   editarParoquia,
@@ -48,11 +49,22 @@ router.get(
   somenteSuperAdmin,
   (req, res) => {
     res.json({
-      mensagem:
-        "Acesso SUPER_ADMIN autorizado",
+      mensagem: "Acesso SUPER_ADMIN autorizado",
       usuario: req.usuario,
     });
   }
+);
+
+// ========================================
+// CADASTRAR NOVA PARÓQUIA
+// SOMENTE SUPER_ADMIN
+// ========================================
+
+router.post(
+  "/paroquias",
+  autenticar,
+  somenteSuperAdmin,
+  cadastrarParoquia
 );
 
 // ========================================

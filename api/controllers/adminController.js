@@ -53,6 +53,134 @@ export const listarParoquias = async (req, res) => {
     });
   }
 };
+// ========================================
+// CADASTRAR NOVA PARÓQUIA PELO SUPER ADMIN
+// ========================================
+
+export const cadastrarParoquia = async (req, res) => {
+  try {
+    const { nome, cidade } = req.body;
+
+    const nomeLimpo = nome
+      ?.trim()
+      .replace(/\s+/g, " ");
+
+    const cidadeLimpa = cidade
+      ?.trim()
+      .replace(/\s+/g, " ") || null;
+
+    // ========================================
+    // VALIDAR DADOS DA PARÓQUIA
+    // ========================================
+
+    if (!nomeLimpo) {
+      return res.status(400).json({
+        erro: "O nome da paróquia é obrigatório.",
+      });
+    }
+
+    if (nomeLimpo.length < 2) {
+      return res.status(400).json({
+        erro:
+          "O nome da paróquia deve ter pelo menos 2 caracteres.",
+      });
+    }
+
+    if (nomeLimpo.length > 150) {
+      return res.status(400).json({
+        erro:
+          "O nome da paróquia deve ter no máximo 150 caracteres.",
+      });
+    }
+
+    if (
+      cidadeLimpa &&
+      cidadeLimpa.length > 150
+    ) {
+      return res.status(400).json({
+        erro:
+          "O nome da cidade deve ter no máximo 150 caracteres.",
+      });
+    }
+
+    // ========================================
+    // IMPEDIR PARÓQUIA DUPLICADA
+    // ========================================
+    //
+    // A comparação é feita também no backend,
+    // ignorando diferenças de maiúsculas e
+    // minúsculas e espaços extras.
+    //
+    // ========================================
+
+    const paroquiasExistentes =
+      await Paroquia.findAll({
+        attributes: ["id", "nome"],
+      });
+
+    const nomeNormalizado =
+      nomeLimpo.toLocaleLowerCase("pt-BR");
+
+    const paroquiaExistente =
+      paroquiasExistentes.find((paroquia) => {
+        const nomeExistente = paroquia.nome
+          ?.trim()
+          .replace(/\s+/g, " ")
+          .toLocaleLowerCase("pt-BR");
+
+        return nomeExistente === nomeNormalizado;
+      });
+
+    if (paroquiaExistente) {
+      return res.status(409).json({
+        erro:
+          "Já existe uma paróquia cadastrada com este nome.",
+      });
+    }
+
+    // ========================================
+    // CRIAR PARÓQUIA
+    // ========================================
+    //
+    // O status nasce sempre ATIVO pelo backend.
+    // O frontend não decide ID, status, usuários
+    // nem comunidades durante este cadastro.
+    //
+    // ========================================
+
+    const novaParoquia =
+      await Paroquia.create({
+        nome: nomeLimpo,
+        cidade: cidadeLimpa,
+        ativa: true,
+      });
+
+    return res.status(201).json({
+      mensagem:
+        "Paróquia cadastrada com sucesso.",
+
+      paroquia: {
+        id: novaParoquia.id,
+        nome: novaParoquia.nome,
+        cidade: novaParoquia.cidade,
+        ativa: novaParoquia.ativa,
+        createdAt: novaParoquia.createdAt,
+        updatedAt: novaParoquia.updatedAt,
+        totalComunidades: 0,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Erro ao cadastrar paróquia:",
+      error
+    );
+
+    return res.status(500).json({
+      erro: "Erro ao cadastrar paróquia.",
+    });
+  }
+};
+
 export const detalharParoquia = async (req, res) => {
   try {
     const { id } = req.params;
@@ -171,8 +299,13 @@ export const editarParoquia = async (req, res) => {
 
     const { nome, cidade } = req.body;
 
-    const nomeLimpo = nome?.trim();
-    const cidadeLimpa = cidade?.trim() || null;
+    const nomeLimpo = nome
+      ?.trim()
+      .replace(/\s+/g, " ");
+
+    const cidadeLimpa = cidade
+      ?.trim()
+      .replace(/\s+/g, " ") || null;
 
     if (!nomeLimpo) {
       return res.status(400).json({
@@ -214,18 +347,32 @@ export const editarParoquia = async (req, res) => {
       });
     }
 
-    const paroquiaComMesmoNome =
-      await Paroquia.findOne({
-        where: {
-          nome: nomeLimpo,
-        },
+    const paroquiasExistentes =
+      await Paroquia.findAll({
+        attributes: ["id", "nome"],
       });
 
-    if (
-      paroquiaComMesmoNome &&
-      Number(paroquiaComMesmoNome.id) !==
-        Number(paroquia.id)
-    ) {
+    const nomeNormalizado =
+      nomeLimpo.toLocaleLowerCase("pt-BR");
+
+    const paroquiaComMesmoNome =
+      paroquiasExistentes.find((item) => {
+        if (
+          Number(item.id) ===
+          Number(paroquia.id)
+        ) {
+          return false;
+        }
+
+        const nomeExistente = item.nome
+          ?.trim()
+          .replace(/\s+/g, " ")
+          .toLocaleLowerCase("pt-BR");
+
+        return nomeExistente === nomeNormalizado;
+      });
+
+    if (paroquiaComMesmoNome) {
       return res.status(409).json({
         erro:
           "Já existe outra paróquia cadastrada com este nome.",
@@ -1073,10 +1220,11 @@ export const cadastrarUsuarioAdmin = async (
 
       paroquiaId: paroquiaIdNumero,
 
-      // ADMIN_COMUNIDADE cria a própria
-      // comunidade depois do primeiro login.
-      // ADMIN_PAROQUIA não precisa ter
-      // comunidadeId.
+      // ADMIN_COMUNIDADE e ADMIN_PAROQUIA
+      // nascem sem comunidade. No primeiro
+      // acesso, cada perfil cadastra a própria
+      // comunidade. Para ADMIN_PAROQUIA, ela
+      // será a comunidade-sede.
       comunidadeId: null,
 
       ativo: true,
