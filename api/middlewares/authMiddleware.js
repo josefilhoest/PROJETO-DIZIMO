@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+
 import Usuario from "../models/Usuario.js";
 
 // ========================================
@@ -7,6 +8,10 @@ import Usuario from "../models/Usuario.js";
 
 export const autenticar = async (req, res, next) => {
   try {
+    // ========================================
+    // VERIFICAR HEADER DE AUTORIZAÇÃO
+    // ========================================
+
     const authorization =
       req.headers.authorization;
 
@@ -25,6 +30,10 @@ export const autenticar = async (req, res, next) => {
       });
     }
 
+    // ========================================
+    // VERIFICAR CONFIGURAÇÃO DO JWT
+    // ========================================
+
     if (!process.env.JWT_SECRET) {
       console.error(
         "JWT_SECRET não configurado no servidor."
@@ -34,6 +43,10 @@ export const autenticar = async (req, res, next) => {
         erro: "Erro interno de autenticação",
       });
     }
+
+    // ========================================
+    // VALIDAR TOKEN
+    // ========================================
 
     const dadosToken = jwt.verify(
       token,
@@ -53,12 +66,28 @@ export const autenticar = async (req, res, next) => {
     }
 
     // ========================================
-    // CONFIRMAR USUÁRIO NO BANCO
+    // CONFIRMAR USUÁRIO ATUAL NO BANCO
+    // ========================================
+    //
+    // IMPORTANTE:
+    // Não confiamos no perfil, paróquia ou
+    // comunidade gravados no token.
+    //
+    // O banco é sempre a fonte atual.
+    //
+    // Assim, alterações de:
+    // - perfil
+    // - paróquia
+    // - comunidade
+    // - licença
+    // - status do usuário
+    //
+    // passam a valer imediatamente.
+    //
     // ========================================
 
-    const usuario = await Usuario.findByPk(
-      usuarioId,
-      {
+    const usuario =
+      await Usuario.findByPk(usuarioId, {
         attributes: [
           "id",
           "nome",
@@ -69,8 +98,7 @@ export const autenticar = async (req, res, next) => {
           "ativo",
           "licencaStatus",
         ],
-      }
-    );
+      });
 
     if (!usuario) {
       return res.status(401).json({
@@ -91,10 +119,13 @@ export const autenticar = async (req, res, next) => {
     // ========================================
     // VERIFICAR LICENÇA
     // ========================================
-    // O SUPER_ADMIN é tratado como conta
-    // administrativa do sistema.
-    // A licença comercial é aplicada aos
-    // administradores de comunidade.
+    //
+    // SUPER_ADMIN:
+    // conta administrativa geral do sistema.
+    //
+    // ADMIN_PAROQUIA e ADMIN_COMUNIDADE:
+    // dependem de licença ATIVA.
+    //
     // ========================================
 
     if (
@@ -107,13 +138,38 @@ export const autenticar = async (req, res, next) => {
     }
 
     // ========================================
+    // NORMALIZAR VÍNCULOS
+    // ========================================
+
+    const paroquiaId =
+      usuario.paroquiaId === null
+        ? null
+        : Number(usuario.paroquiaId);
+
+    const comunidadeId =
+      usuario.comunidadeId === null
+        ? null
+        : Number(usuario.comunidadeId);
+
+    // ========================================
     // USAR SEMPRE OS DADOS ATUAIS DO BANCO
+    // ========================================
+    //
+    // ADMIN_PAROQUIA poderá possuir:
+    //
+    // paroquiaId
+    //   -> paróquia que administra
+    //
+    // comunidadeId
+    //   -> comunidade-sede onde trabalha
+    //      com os próprios dizimistas
+    //
     // ========================================
 
     req.usuario = {
       usuarioId: usuario.id,
-      paroquiaId: usuario.paroquiaId,
-      comunidadeId: usuario.comunidadeId,
+      paroquiaId,
+      comunidadeId,
       perfil: usuario.perfil,
       ativo: usuario.ativo,
       licencaStatus: usuario.licencaStatus,
@@ -121,6 +177,10 @@ export const autenticar = async (req, res, next) => {
 
     next();
   } catch (error) {
+    // ========================================
+    // TOKEN EXPIRADO
+    // ========================================
+
     if (
       error?.name === "TokenExpiredError"
     ) {
@@ -128,6 +188,10 @@ export const autenticar = async (req, res, next) => {
         erro: "Token expirado",
       });
     }
+
+    // ========================================
+    // TOKEN INVÁLIDO
+    // ========================================
 
     if (
       error?.name === "JsonWebTokenError" ||
@@ -137,6 +201,10 @@ export const autenticar = async (req, res, next) => {
         erro: "Token inválido",
       });
     }
+
+    // ========================================
+    // ERRO INTERNO
+    // ========================================
 
     console.error(
       "Erro ao validar autenticação:",

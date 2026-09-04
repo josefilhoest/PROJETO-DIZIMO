@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://projeto-dizimo.onrender.com/api",
-  /*baseURL: "http://localhost:8080/api",*/
+  /*baseURL: "https://projeto-dizimo.onrender.com/api",*/
+  baseURL: "http://localhost:8080/api",
 
 });
 

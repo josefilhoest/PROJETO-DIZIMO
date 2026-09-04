@@ -2549,7 +2549,7 @@ tfoot td:nth-child(3) {
   background: #f8fafc;
 }
 
-.admin-detalhes-item > span:first-child {
+.admin-detalhes-item>span:first-child {
   display: block;
   margin-bottom: 6px;
   color: #64748b;
@@ -2593,7 +2593,7 @@ tfoot td:nth-child(3) {
   background: #ffffff;
 }
 
-.admin-detalhes-usuario > div:first-child {
+.admin-detalhes-usuario>div:first-child {
   min-width: 0;
 }
 
@@ -2603,7 +2603,7 @@ tfoot td:nth-child(3) {
   font-size: 13px;
 }
 
-.admin-detalhes-usuario > div:first-child span {
+.admin-detalhes-usuario>div:first-child span {
   display: block;
   margin-top: 3px;
   color: #64748b;
@@ -3846,5 +3846,138 @@ tfoot td:nth-child(3) {
 @media print {
   .admin-dashboard {
     display: none !important;
+  }
+}
+
+/* =====================================================
+   TOPO DO SISTEMA / ADMIN PARÓQUIA
+   ===================================================== */
+
+.topo-sistema {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.topo-sistema>div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.topo-sistema .titulo-sistema {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.topo-sistema .usuario-logado {
+  margin: 4px 0;
+}
+
+.btn-sair {
+  background-color: #dc3545;
+  color: #ffffff;
+}
+
+/* =====================================================
+   AÇÕES DA MINHA COMUNIDADE
+   ===================================================== */
+
+.importacao-lista {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+/* Remove a dependência das margens inline entre botões */
+.importacao-lista>button {
+  margin-left: 0 !important;
+}
+
+/* Painéis internos ocupam uma linha inteira */
+.importacao-lista>.painel-importacao {
+  width: 100%;
+  flex-basis: 100%;
+}
+
+/* =====================================================
+   RESPONSIVIDADE DO TOPO E DAS AÇÕES
+   ===================================================== */
+
+@media (max-width: 768px) {
+  .topo-sistema {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .topo-sistema>div:last-child {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+  }
+
+  .topo-sistema>div:last-child button {
+    flex: 1;
+    min-height: 42px;
+  }
+
+  .importacao-lista {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .importacao-lista>button {
+    width: 100%;
+    min-height: 42px;
+    margin: 0 !important;
+  }
+
+  .importacao-lista>.painel-importacao {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .topo-sistema {
+    text-align: left;
+  }
+
+  .topo-sistema>div:last-child {
+    flex-direction: column;
+  }
+
+  .topo-sistema>div:last-child button {
+    width: 100%;
+  }
+
+  .importacao-lista {
+    grid-template-columns: 1fr;
+  }
+
+  .importacao-lista>.painel-importacao {
+    grid-column: 1;
+  }
+
+  .resumo-geral div {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .importacao-lista>button {
+    width: 100%;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
 }

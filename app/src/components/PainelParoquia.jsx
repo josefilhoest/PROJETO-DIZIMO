@@ -2,10 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import api from "../api/api";
 
-function PainelParoquia({
-  usuario,
-  onSair,
-}) {
+function PainelParoquia({ usuario }) {
   // ========================================
   // ESTADOS
   // ========================================
@@ -1273,25 +1270,7 @@ function PainelParoquia({
           TOPO
       ====================================== */}
 
-      <div className="topo-sistema">
-        <div>
-          <h1 className="titulo-sistema">
-            Sistema de Dízimo
-          </h1>
 
-          <p className="usuario-logado">
-            Usuário: {usuario?.nome}
-          </p>
-        </div>
-
-        <button
-          type="button"
-          className="btn-sair"
-          onClick={onSair}
-        >
-          Sair
-        </button>
-      </div>
 
       <main className="painel-paroquia">
 

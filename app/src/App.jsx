@@ -14,7 +14,8 @@ function App() {
   // ========================================
 
   const [usuario, setUsuario] = useState(() => {
-    const usuarioSalvo = localStorage.getItem("usuario");
+    const usuarioSalvo =
+      localStorage.getItem("usuario");
 
     if (!usuarioSalvo) {
       return null;
@@ -25,13 +26,19 @@ function App() {
     } catch {
       localStorage.removeItem("usuario");
       localStorage.removeItem("token");
+
       return null;
     }
   });
 
   // ========================================
   // TELA DO USUÁRIO LOGADO
-  // sistema | admin
+  // ========================================
+  //
+  // sistema  -> tabela / própria comunidade
+  // admin    -> painel SUPER_ADMIN
+  // paroquia -> painel ADMIN_PAROQUIA
+  //
   // ========================================
 
   const [telaLogada, setTelaLogada] =
@@ -52,6 +59,20 @@ function App() {
     );
 
     setUsuario(dadosUsuario);
+
+    // ========================================
+    // TELA INICIAL POR PERFIL
+    // ========================================
+
+    if (
+      dadosUsuario.perfil ===
+      "ADMIN_PAROQUIA" &&
+      dadosUsuario.comunidadeId
+    ) {
+      setTelaLogada("paroquia");
+      return;
+    }
+
     setTelaLogada("sistema");
   };
 
@@ -68,10 +89,35 @@ function App() {
 
     localStorage.setItem(
       "usuario",
-      JSON.stringify(dadosUsuarioAtualizados)
+      JSON.stringify(
+        dadosUsuarioAtualizados
+      )
     );
 
-    setUsuario(dadosUsuarioAtualizados);
+    setUsuario(
+      dadosUsuarioAtualizados
+    );
+
+    // ========================================
+    // ADMIN_PAROQUIA
+    // ========================================
+    //
+    // Depois de cadastrar sua comunidade-sede,
+    // entra no Painel da Paróquia.
+    //
+    // ADMIN_COMUNIDADE continua indo
+    // diretamente para sua tabela.
+    //
+    // ========================================
+
+    if (
+      dadosUsuarioAtualizados.perfil ===
+      "ADMIN_PAROQUIA"
+    ) {
+      setTelaLogada("paroquia");
+      return;
+    }
+
     setTelaLogada("sistema");
   };
 
@@ -92,43 +138,40 @@ function App() {
   // ========================================
 
   if (!usuario) {
-    return <Login onLogin={entrar} />;
-  }
-
-  // ========================================
-  // ADMIN_COMUNIDADE SEM COMUNIDADE
-  //
-  // Somente ADMIN_COMUNIDADE pode cadastrar
-  // a própria comunidade no primeiro acesso.
-  // ========================================
-
-  const adminSemComunidade =
-    usuario.perfil === "ADMIN_COMUNIDADE" &&
-    !usuario.comunidadeId;
-
-  if (adminSemComunidade) {
     return (
-      <CadastroComunidade
-        usuario={usuario}
-        onCadastroConcluido={comunidadeCadastrada}
-        onSair={sair}
-      />
+      <Login onLogin={entrar} />
     );
   }
 
   // ========================================
-  // ADMIN_PAROQUIA
+  // USUÁRIO LICENCIADO SEM COMUNIDADE
+  // ========================================
   //
-  // Possui área própria. Ele não cai na
-  // Tabela.jsx, pois não administra uma única
-  // comunidade. O backend continua sendo a
-  // autoridade de segurança e isolamento.
+  // ADMIN_COMUNIDADE:
+  // cadastra sua comunidade.
+  //
+  // ADMIN_PAROQUIA:
+  // cadastra sua comunidade-sede.
+  //
   // ========================================
 
-  if (usuario.perfil === "ADMIN_PAROQUIA") {
+  const perfilPodeCadastrarComunidade =
+    usuario.perfil ===
+    "ADMIN_COMUNIDADE" ||
+    usuario.perfil ===
+    "ADMIN_PAROQUIA";
+
+  const usuarioSemComunidade =
+    perfilPodeCadastrarComunidade &&
+    !usuario.comunidadeId;
+
+  if (usuarioSemComunidade) {
     return (
-      <PainelParoquia
+      <CadastroComunidade
         usuario={usuario}
+        onCadastroConcluido={
+          comunidadeCadastrada
+        }
         onSair={sair}
       />
     );
@@ -136,18 +179,16 @@ function App() {
 
   // ========================================
   // SEGURANÇA DE PERFIL
-  //
-  // Perfis desconhecidos não recebem acesso
-  // à tabela por padrão.
   // ========================================
 
-  const perfisPermitidosNoSistema = [
+  const perfisPermitidos = [
     "SUPER_ADMIN",
+    "ADMIN_PAROQUIA",
     "ADMIN_COMUNIDADE",
   ];
 
   if (
-    !perfisPermitidosNoSistema.includes(
+    !perfisPermitidos.includes(
       usuario.perfil
     )
   ) {
@@ -181,13 +222,106 @@ function App() {
             marginTop: "16px",
           }}
         >
-          <h2>Acesso não autorizado</h2>
+          <h2>
+            Acesso não autorizado
+          </h2>
 
           <p>
-            O perfil deste usuário não possui uma
-            área liberada no sistema.
+            O perfil deste usuário não possui
+            uma área liberada no sistema.
           </p>
         </div>
+      </div>
+    );
+  }
+
+  // ========================================
+  // ADMIN_PAROQUIA
+  // ========================================
+  //
+  // Possui duas áreas:
+  //
+  // 1. Painel da Paróquia
+  //    -> trabalha com paroquiaId
+  //
+  // 2. Minha Comunidade
+  //    -> trabalha com comunidadeId
+  //
+  // ========================================
+
+  if (
+    usuario.perfil ===
+    "ADMIN_PAROQUIA"
+  ) {
+    return (
+      <div className="container">
+        <div className="topo-sistema">
+          <div>
+            <h1 className="titulo-sistema">
+              Sistema de Dízimo
+            </h1>
+
+            <p className="usuario-logado">
+              Usuário: {usuario.nome}
+            </p>
+
+            {usuario.paroquiaNome && (
+              <p className="usuario-logado">
+                Paróquia:{" "}
+                {usuario.paroquiaNome}
+              </p>
+            )}
+
+            {usuario.comunidadeNome && (
+              <p className="usuario-logado">
+                Comunidade:{" "}
+                {usuario.comunidadeNome}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <button
+              type="button"
+              onClick={() =>
+                setTelaLogada(
+                  telaLogada ===
+                    "paroquia"
+                    ? "sistema"
+                    : "paroquia"
+                )
+              }
+            >
+              {telaLogada ===
+                "paroquia"
+                ? "Minha Comunidade"
+                : "Painel da Paróquia"}
+            </button>
+
+            <button
+              type="button"
+              className="btn-sair"
+              onClick={sair}
+            >
+              Sair
+            </button>
+          </div>
+        </div>
+
+        {telaLogada ===
+          "paroquia" && (
+            <PainelParoquia
+              usuario={usuario}
+              onSair={sair}
+            />
+          )}
+
+        {telaLogada ===
+          "sistema" && (
+            <Tabela
+              usuario={usuario}
+            />
+          )}
       </div>
     );
   }
@@ -207,25 +341,35 @@ function App() {
           <p className="usuario-logado">
             Usuário: {usuario.nome}
           </p>
+
+          {usuario.comunidadeNome && (
+            <p className="usuario-logado">
+              Comunidade:{" "}
+              {usuario.comunidadeNome}
+            </p>
+          )}
         </div>
 
         <div>
-          {usuario.perfil === "SUPER_ADMIN" && (
-            <button
-              type="button"
-              onClick={() =>
-                setTelaLogada(
-                  telaLogada === "admin"
-                    ? "sistema"
-                    : "admin"
-                )
-              }
-            >
-              {telaLogada === "admin"
-                ? "Voltar ao Sistema"
-                : "Painel Administrativo"}
-            </button>
-          )}
+          {usuario.perfil ===
+            "SUPER_ADMIN" && (
+              <button
+                type="button"
+                onClick={() =>
+                  setTelaLogada(
+                    telaLogada ===
+                      "admin"
+                      ? "sistema"
+                      : "admin"
+                  )
+                }
+              >
+                {telaLogada ===
+                  "admin"
+                  ? "Voltar ao Sistema"
+                  : "Painel Administrativo"}
+              </button>
+            )}
 
           <button
             type="button"
@@ -237,12 +381,17 @@ function App() {
         </div>
       </div>
 
-      {telaLogada === "sistema" && (
-        <Tabela usuario={usuario} />
-      )}
+      {telaLogada ===
+        "sistema" && (
+          <Tabela
+            usuario={usuario}
+          />
+        )}
 
-      {telaLogada === "admin" &&
-        usuario.perfil === "SUPER_ADMIN" && (
+      {telaLogada ===
+        "admin" &&
+        usuario.perfil ===
+        "SUPER_ADMIN" && (
           <AdminDashboard />
         )}
     </div>

@@ -38,6 +38,10 @@ export const cadastrarUsuario = async (req, res) => {
       });
     }
 
+    // ========================================
+    // VALIDAR PERFIL
+    // ========================================
+
     const perfisPermitidos = [
       "ADMIN_COMUNIDADE",
       "ADMIN_PAROQUIA",
@@ -49,9 +53,14 @@ export const cadastrarUsuario = async (req, res) => {
       });
     }
 
+    // ========================================
+    // VALIDAR SENHA
+    // ========================================
+
     if (senha.length < 6) {
       return res.status(400).json({
-        erro: "A senha deve ter pelo menos 6 caracteres.",
+        erro:
+          "A senha deve ter pelo menos 6 caracteres.",
       });
     }
 
@@ -59,29 +68,33 @@ export const cadastrarUsuario = async (req, res) => {
     // VALIDAR PARÓQUIA DO NOVO USUÁRIO
     // ========================================
     //
-    // Tanto ADMIN_PAROQUIA quanto
-    // ADMIN_COMUNIDADE precisam nascer
-    // vinculados a uma paróquia.
+    // ADMIN_COMUNIDADE:
+    // nasce vinculado à paróquia e depois
+    // cadastra sua própria comunidade.
     //
-    // O ADMIN_COMUNIDADE usará esse vínculo
-    // para cadastrar a própria comunidade
-    // dentro da paróquia correta.
+    // ADMIN_PAROQUIA:
+    // nasce vinculado à paróquia e depois
+    // cadastra sua comunidade-sede.
+    //
     // ========================================
 
-    const paroquiaIdNumero = Number(paroquiaId);
+    const paroquiaIdNumero =
+      Number(paroquiaId);
 
     if (
       !Number.isInteger(paroquiaIdNumero) ||
       paroquiaIdNumero <= 0
     ) {
       return res.status(400).json({
-        erro: "A paróquia é obrigatória para o usuário",
+        erro:
+          "A paróquia é obrigatória para o usuário",
       });
     }
 
-    const paroquia = await Paroquia.findByPk(
-      paroquiaIdNumero
-    );
+    const paroquia =
+      await Paroquia.findByPk(
+        paroquiaIdNumero
+      );
 
     if (!paroquia) {
       return res.status(404).json({
@@ -99,15 +112,17 @@ export const cadastrarUsuario = async (req, res) => {
     // VERIFICAR EMAIL DUPLICADO
     // ========================================
 
-    const usuarioExistente = await Usuario.findOne({
-      where: {
-        email: emailLimpo,
-      },
-    });
+    const usuarioExistente =
+      await Usuario.findOne({
+        where: {
+          email: emailLimpo,
+        },
+      });
 
     if (usuarioExistente) {
       return res.status(409).json({
-        erro: "Já existe um usuário cadastrado com este email",
+        erro:
+          "Já existe um usuário cadastrado com este email",
       });
     }
 
@@ -115,43 +130,50 @@ export const cadastrarUsuario = async (req, res) => {
     // CRIPTOGRAFAR SENHA
     // ========================================
 
-    const senhaCriptografada = await bcrypt.hash(
-      senha,
-      10
-    );
+    const senhaCriptografada =
+      await bcrypt.hash(
+        senha,
+        10
+      );
 
     // ========================================
     // CRIAR USUÁRIO LICENCIADO
     // ========================================
     //
-    // ADMIN_COMUNIDADE nasce sem comunidade,
-    // mas já vinculado à paróquia correta.
+    // Ambos os perfis comerciais nascem:
     //
-    // ADMIN_PAROQUIA também nasce vinculado
-    // à paróquia que irá administrar.
+    // paroquiaId   -> já definido
+    // comunidadeId -> null
     //
-    // SUPER_ADMIN não pode ser criado por
-    // esta função.
+    // No primeiro acesso, cadastram a
+    // própria comunidade.
+    //
+    // Para ADMIN_PAROQUIA essa comunidade
+    // será sua comunidade-sede.
+    //
     // ========================================
 
-    const novoUsuario = await Usuario.create({
-      nome: nomeLimpo,
-      email: emailLimpo,
-      senha: senhaCriptografada,
+    const novoUsuario =
+      await Usuario.create({
+        nome: nomeLimpo,
+        email: emailLimpo,
+        senha: senhaCriptografada,
 
-      perfil,
+        perfil,
 
-      paroquiaId: paroquiaIdNumero,
+        paroquiaId:
+          paroquiaIdNumero,
 
-      comunidadeId: null,
+        comunidadeId: null,
 
-      ativo: true,
+        ativo: true,
 
-      licencaStatus: "ATIVA",
-    });
+        licencaStatus: "ATIVA",
+      });
 
     return res.status(201).json({
-      mensagem: "Usuário licenciado cadastrado com sucesso",
+      mensagem:
+        "Usuário licenciado cadastrado com sucesso",
 
       usuario: {
         id: novoUsuario.id,
@@ -159,18 +181,27 @@ export const cadastrarUsuario = async (req, res) => {
         email: novoUsuario.email,
         perfil: novoUsuario.perfil,
 
-        paroquiaId: novoUsuario.paroquiaId,
-        paroquiaNome: paroquia.nome,
-        paroquiaCidade: paroquia.cidade || null,
+        paroquiaId:
+          novoUsuario.paroquiaId,
 
-        comunidadeId: novoUsuario.comunidadeId,
+        paroquiaNome:
+          paroquia.nome,
+
+        paroquiaCidade:
+          paroquia.cidade || null,
+
+        comunidadeId:
+          novoUsuario.comunidadeId,
+
         comunidadeNome: null,
 
         possuiComunidade: false,
 
-        ativo: novoUsuario.ativo,
+        ativo:
+          novoUsuario.ativo,
 
-        licencaStatus: novoUsuario.licencaStatus,
+        licencaStatus:
+          novoUsuario.licencaStatus,
       },
     });
   } catch (error) {
@@ -189,8 +220,23 @@ export const cadastrarUsuario = async (req, res) => {
 // CADASTRAR COMUNIDADE
 // USUÁRIO LICENCIADO CADASTRA A PRÓPRIA
 // ========================================
+//
+// ADMIN_COMUNIDADE:
+// cadastra sua comunidade.
+//
+// ADMIN_PAROQUIA:
+// cadastra sua comunidade-sede.
+//
+// A paróquia nunca é escolhida livremente
+// pelo frontend.
+// O backend usa a paroquiaId do usuário.
+//
+// ========================================
 
-export const cadastrarComunidade = async (req, res) => {
+export const cadastrarComunidade = async (
+  req,
+  res
+) => {
   let transaction;
 
   try {
@@ -198,11 +244,16 @@ export const cadastrarComunidade = async (req, res) => {
     // IDENTIFICAR USUÁRIO PELO TOKEN
     // ========================================
 
-    const usuarioId = req.usuario?.usuarioId;
+    const usuarioId =
+      Number(req.usuario?.usuarioId);
 
-    if (!usuarioId) {
+    if (
+      !Number.isInteger(usuarioId) ||
+      usuarioId <= 0
+    ) {
       return res.status(401).json({
-        erro: "Usuário não identificado pelo token",
+        erro:
+          "Usuário não identificado pelo token",
       });
     }
 
@@ -227,7 +278,8 @@ export const cadastrarComunidade = async (req, res) => {
 
     if (!nomeComunidadeLimpo) {
       return res.status(400).json({
-        erro: "Nome da comunidade é obrigatório",
+        erro:
+          "Nome da comunidade é obrigatório",
       });
     }
 
@@ -235,9 +287,10 @@ export const cadastrarComunidade = async (req, res) => {
     // BUSCAR USUÁRIO LOGADO
     // ========================================
 
-    const usuario = await Usuario.findByPk(
-      usuarioId
-    );
+    const usuario =
+      await Usuario.findByPk(
+        usuarioId
+      );
 
     if (!usuario) {
       return res.status(404).json({
@@ -249,12 +302,19 @@ export const cadastrarComunidade = async (req, res) => {
     // GARANTIR PERFIL PERMITIDO
     // ========================================
 
+    const perfisPermitidos = [
+      "ADMIN_COMUNIDADE",
+      "ADMIN_PAROQUIA",
+    ];
+
     if (
-      usuario.perfil !== "ADMIN_COMUNIDADE"
+      !perfisPermitidos.includes(
+        usuario.perfil
+      )
     ) {
       return res.status(403).json({
         erro:
-          "Somente administradores de comunidade podem cadastrar uma comunidade",
+          "Este perfil não pode cadastrar uma comunidade",
       });
     }
 
@@ -272,9 +332,12 @@ export const cadastrarComunidade = async (req, res) => {
     // VERIFICAR LICENÇA
     // ========================================
 
-    if (usuario.licencaStatus !== "ATIVA") {
+    if (
+      usuario.licencaStatus !== "ATIVA"
+    ) {
       return res.status(403).json({
-        erro: "Licença de uso não está ativa",
+        erro:
+          "Licença de uso não está ativa",
       });
     }
 
@@ -282,15 +345,22 @@ export const cadastrarComunidade = async (req, res) => {
     // VERIFICAR VÍNCULO COM PARÓQUIA
     // ========================================
 
-    if (!usuario.paroquiaId) {
+    const paroquiaId =
+      Number(usuario.paroquiaId);
+
+    if (
+      !Number.isInteger(paroquiaId) ||
+      paroquiaId <= 0
+    ) {
       return res.status(403).json({
-        erro: "Usuário não vinculado a uma paróquia",
+        erro:
+          "Usuário não vinculado a uma paróquia",
       });
     }
 
     const paroquiaVinculada =
       await Paroquia.findByPk(
-        usuario.paroquiaId
+        paroquiaId
       );
 
     if (!paroquiaVinculada) {
@@ -321,31 +391,38 @@ export const cadastrarComunidade = async (req, res) => {
     // INICIAR TRANSAÇÃO
     // ========================================
 
-    transaction = await sequelize.transaction();
+    transaction =
+      await sequelize.transaction();
 
     // ========================================
     // CRIAR COMUNIDADE
     // ========================================
     //
-    // A paróquia não é escolhida pelo
-    // frontend. O backend usa sempre a
-    // paróquia vinculada ao usuário logado.
+    // SEGURANÇA:
     //
-    // O campo textual "paroquia" é mantido
-    // temporariamente por compatibilidade.
-    // O vínculo oficial passa a ser paroquiaId.
+    // O frontend não define paroquiaId.
+    //
+    // A comunidade sempre nasce vinculada
+    // à mesma paróquia do usuário logado.
+    //
     // ========================================
 
     const novaComunidade =
       await Comunidade.create(
         {
-          nome: nomeComunidadeLimpo,
+          nome:
+            nomeComunidadeLimpo,
 
-          paroquia: paroquiaVinculada.nome,
+          // Campo textual antigo mantido
+          // temporariamente por compatibilidade.
+          paroquia:
+            paroquiaVinculada.nome,
 
-          paroquiaId: usuario.paroquiaId,
+          // Vínculo oficial.
+          paroquiaId,
 
-          cidade: cidadeLimpa,
+          cidade:
+            cidadeLimpa,
 
           ativa: true,
         },
@@ -355,12 +432,22 @@ export const cadastrarComunidade = async (req, res) => {
       );
 
     // ========================================
-    // VINCULAR A COMUNIDADE AO USUÁRIO
+    // VINCULAR COMUNIDADE AO USUÁRIO
+    // ========================================
+    //
+    // ADMIN_COMUNIDADE:
+    // comunidade que administra.
+    //
+    // ADMIN_PAROQUIA:
+    // comunidade-sede onde administrará
+    // seus próprios dizimistas.
+    //
     // ========================================
 
     await usuario.update(
       {
-        comunidadeId: novaComunidade.id,
+        comunidadeId:
+          novaComunidade.id,
       },
       {
         transaction,
@@ -374,41 +461,68 @@ export const cadastrarComunidade = async (req, res) => {
     await transaction.commit();
 
     // ========================================
-    // RESPOSTA DO CADASTRO DA COMUNIDADE
+    // RESPOSTA
     // ========================================
 
     return res.status(201).json({
-      mensagem: "Comunidade cadastrada com sucesso",
+      mensagem:
+        usuario.perfil ===
+          "ADMIN_PAROQUIA"
+          ? "Comunidade-sede cadastrada com sucesso"
+          : "Comunidade cadastrada com sucesso",
 
       comunidade: {
-        id: novaComunidade.id,
-        nome: novaComunidade.nome,
+        id:
+          novaComunidade.id,
 
-        paroquia: novaComunidade.paroquia,
-        paroquiaId: novaComunidade.paroquiaId,
+        nome:
+          novaComunidade.nome,
 
-        cidade: novaComunidade.cidade,
-        ativa: novaComunidade.ativa,
+        paroquia:
+          novaComunidade.paroquia,
+
+        paroquiaId:
+          novaComunidade.paroquiaId,
+
+        cidade:
+          novaComunidade.cidade,
+
+        ativa:
+          novaComunidade.ativa,
       },
 
       usuario: {
-        id: usuario.id,
-        nome: usuario.nome,
-        email: usuario.email,
-        perfil: usuario.perfil,
+        id:
+          usuario.id,
 
-        paroquiaId: usuario.paroquiaId,
-        paroquiaNome: paroquiaVinculada.nome,
-        paroquiaCidade: paroquiaVinculada.cidade || null,
+        nome:
+          usuario.nome,
 
-        comunidadeId: novaComunidade.id,
+        email:
+          usuario.email,
+
+        perfil:
+          usuario.perfil,
+
+        paroquiaId,
+
+        paroquiaNome:
+          paroquiaVinculada.nome,
+
+        paroquiaCidade:
+          paroquiaVinculada.cidade ||
+          null,
+
+        comunidadeId:
+          novaComunidade.id,
 
         comunidadeNome:
           novaComunidade.nome,
 
         possuiComunidade: true,
 
-        ativo: usuario.ativo,
+        ativo:
+          usuario.ativo,
 
         licencaStatus:
           usuario.licencaStatus,
@@ -416,7 +530,7 @@ export const cadastrarComunidade = async (req, res) => {
     });
   } catch (error) {
     // ========================================
-    // DESFAZER TRANSAÇÃO EM CASO DE ERRO
+    // DESFAZER TRANSAÇÃO
     // ========================================
 
     if (
@@ -432,7 +546,8 @@ export const cadastrarComunidade = async (req, res) => {
     );
 
     return res.status(500).json({
-      erro: "Erro ao cadastrar comunidade",
+      erro:
+        "Erro ao cadastrar comunidade",
     });
   }
 };
@@ -441,7 +556,10 @@ export const cadastrarComunidade = async (req, res) => {
 // LOGIN
 // ========================================
 
-export const login = async (req, res) => {
+export const login = async (
+  req,
+  res
+) => {
   try {
     const {
       email,
@@ -454,25 +572,37 @@ export const login = async (req, res) => {
 
     if (!email || !senha) {
       return res.status(400).json({
-        erro: "Email e senha são obrigatórios",
+        erro:
+          "Email e senha são obrigatórios",
       });
     }
+
+    // ========================================
+    // NORMALIZAR EMAIL
+    // ========================================
+
+    const emailLimpo =
+      email
+        .trim()
+        .toLowerCase();
 
     // ========================================
     // BUSCAR USUÁRIO
     // ========================================
 
-    const usuario = await Usuario.findOne({
-      where: {
-        email,
-      },
-    });
+    const usuario =
+      await Usuario.findOne({
+        where: {
+          email: emailLimpo,
+        },
+      });
 
     // Mesma mensagem para usuário inexistente
-    // ou senha errada.
+    // ou senha incorreta.
     if (!usuario) {
       return res.status(401).json({
-        erro: "Email ou senha inválidos",
+        erro:
+          "Email ou senha inválidos",
       });
     }
 
@@ -489,13 +619,24 @@ export const login = async (req, res) => {
     // ========================================
     // VERIFICAR LICENÇA
     // ========================================
+    //
+    // SUPER_ADMIN não depende da licença
+    // comercial.
+    //
+    // ADMIN_PAROQUIA e ADMIN_COMUNIDADE
+    // precisam possuir licença ATIVA.
+    //
+    // ========================================
 
     if (
-      usuario.perfil !== "SUPER_ADMIN" &&
-      usuario.licencaStatus !== "ATIVA"
+      usuario.perfil !==
+      "SUPER_ADMIN" &&
+      usuario.licencaStatus !==
+      "ATIVA"
     ) {
       return res.status(403).json({
-        erro: "Licença de uso bloqueada",
+        erro:
+          "Licença de uso bloqueada",
       });
     }
 
@@ -511,43 +652,9 @@ export const login = async (req, res) => {
 
     if (!senhaCorreta) {
       return res.status(401).json({
-        erro: "Email ou senha inválidos",
+        erro:
+          "Email ou senha inválidos",
       });
-    }
-
-    // ========================================
-    // BUSCAR COMUNIDADE
-    // ========================================
-    //
-    // Um novo cliente pode ainda não possuir
-    // comunidade. Nesse caso o login continua
-    // permitido para que ele possa cadastrá-la.
-    // ========================================
-
-    let comunidade = null;
-
-    if (usuario.comunidadeId) {
-      comunidade =
-        await Comunidade.findByPk(
-          usuario.comunidadeId
-        );
-
-      if (!comunidade) {
-        return res.status(404).json({
-          erro:
-            "Comunidade vinculada ao usuário não encontrada",
-        });
-      }
-
-      // ========================================
-      // VERIFICAR COMUNIDADE ATIVA
-      // ========================================
-
-      if (!comunidade.ativa) {
-        return res.status(403).json({
-          erro: "Comunidade desativada",
-        });
-      }
     }
 
     // ========================================
@@ -557,9 +664,10 @@ export const login = async (req, res) => {
     let paroquia = null;
 
     if (usuario.paroquiaId) {
-      paroquia = await Paroquia.findByPk(
-        usuario.paroquiaId
-      );
+      paroquia =
+        await Paroquia.findByPk(
+          usuario.paroquiaId
+        );
 
       if (!paroquia) {
         return res.status(404).json({
@@ -570,9 +678,76 @@ export const login = async (req, res) => {
 
       if (!paroquia.ativa) {
         return res.status(403).json({
-          erro: "Paróquia desativada",
+          erro:
+            "Paróquia desativada",
         });
       }
+    }
+
+    // ========================================
+    // BUSCAR COMUNIDADE
+    // ========================================
+    //
+    // ADMIN_COMUNIDADE:
+    // comunidade administrada.
+    //
+    // ADMIN_PAROQUIA:
+    // comunidade-sede.
+    //
+    // Um usuário recém-criado pode ainda não
+    // possuir comunidade.
+    //
+    // ========================================
+
+    let comunidade = null;
+
+    if (usuario.comunidadeId) {
+      comunidade =
+        await Comunidade.findOne({
+          where: {
+            id:
+              usuario.comunidadeId,
+
+            // Camada adicional de segurança:
+            // a comunidade também deve pertencer
+            // à mesma paróquia do usuário.
+            ...(usuario.paroquiaId
+              ? {
+                paroquiaId:
+                  usuario.paroquiaId,
+              }
+              : {}),
+          },
+        });
+
+      if (!comunidade) {
+        return res.status(404).json({
+          erro:
+            "Comunidade vinculada ao usuário não encontrada na paróquia informada",
+        });
+      }
+
+      if (!comunidade.ativa) {
+        return res.status(403).json({
+          erro:
+            "Comunidade desativada",
+        });
+      }
+    }
+
+    // ========================================
+    // VERIFICAR JWT_SECRET
+    // ========================================
+
+    if (!process.env.JWT_SECRET) {
+      console.error(
+        "JWT_SECRET não configurado no servidor."
+      );
+
+      return res.status(500).json({
+        erro:
+          "Erro interno de autenticação",
+      });
     }
 
     // ========================================
@@ -581,7 +756,8 @@ export const login = async (req, res) => {
 
     const token = jwt.sign(
       {
-        usuarioId: usuario.id,
+        usuarioId:
+          usuario.id,
 
         paroquiaId:
           usuario.paroquiaId,
@@ -589,7 +765,8 @@ export const login = async (req, res) => {
         comunidadeId:
           usuario.comunidadeId,
 
-        perfil: usuario.perfil,
+        perfil:
+          usuario.perfil,
       },
 
       process.env.JWT_SECRET,
@@ -604,15 +781,24 @@ export const login = async (req, res) => {
     // ========================================
 
     return res.json({
-      mensagem: "Login realizado com sucesso",
+      mensagem:
+        "Login realizado com sucesso",
 
       token,
 
       usuario: {
-        id: usuario.id,
-        nome: usuario.nome,
-        email: usuario.email,
-        perfil: usuario.perfil,
+        id:
+          usuario.id,
+
+        nome:
+          usuario.nome,
+
+        email:
+          usuario.email,
+
+        perfil:
+          usuario.perfil,
+
         paroquiaId:
           usuario.paroquiaId,
 
@@ -629,9 +815,12 @@ export const login = async (req, res) => {
           comunidade?.nome || null,
 
         possuiComunidade:
-          Boolean(usuario.comunidadeId),
+          Boolean(
+            usuario.comunidadeId
+          ),
 
-        ativo: usuario.ativo,
+        ativo:
+          usuario.ativo,
 
         licencaStatus:
           usuario.licencaStatus,
@@ -644,7 +833,8 @@ export const login = async (req, res) => {
     );
 
     return res.status(500).json({
-      erro: "Erro ao realizar login",
+      erro:
+        "Erro ao realizar login",
     });
   }
 };
