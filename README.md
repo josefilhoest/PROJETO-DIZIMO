@@ -1,384 +1,337 @@
-# 💰 Sistema de Dízimo
+# Sistema de Dízimo
 
-![React](https://img.shields.io/badge/React-Frontend-61DAFB?logo=react&logoColor=black)
-![Vite](https://img.shields.io/badge/Vite-Build-646CFF?logo=vite&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-Backend-339933?logo=node.js&logoColor=white)
-![Express](https://img.shields.io/badge/Express-API-000000?logo=express&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-Database-4479A1?logo=mysql&logoColor=white)
-![Sequelize](https://img.shields.io/badge/Sequelize-ORM-52B0E7?logo=sequelize&logoColor=white)
-![Render](https://img.shields.io/badge/Render-Backend-46E3B7?logo=render&logoColor=black)
-![Hostinger](https://img.shields.io/badge/Hostinger-Frontend-673DE6)
-![PWA](https://img.shields.io/badge/PWA-Instal%C3%A1vel-5A0FC8?logo=pwa&logoColor=white)
-![Version](https://img.shields.io/badge/Vers%C3%A3o-1.1.0-blue)
-![Status](https://img.shields.io/badge/Status-Online-success)
+Sistema web para gestão de dízimos de comunidades e paróquias, com suporte a múltiplas paróquias, múltiplas comunidades, perfis administrativos, histórico mensal, importação de dizimistas por PDF, exportação CSV, backups e impressão.
 
-Sistema web desenvolvido para auxiliar no controle mensal de dízimos da **Paróquia Nossa Senhora da Penha - Sucatinga**.
+## Status atual
 
-O projeto permite organizar dizimistas por comunidade, registrar valores mensais, calcular totais automaticamente, gerar ficha para impressão A4, importar e exportar dados, realizar fechamento mensal com histórico e administrar usuários, comunidades e licenças por meio de um painel protegido.
+A estrutura multi-paróquia está concluída e publicada em produção.
 
----
+- Frontend: React + Vite
+- Backend: Node.js + Express
+- ORM: Sequelize
+- Banco de dados: MySQL
+- Autenticação: JWT
+- Backend em produção: Render
+- Frontend em produção: Hostinger
+- Banco de produção: MySQL Hostinger
+- Monitoramento externo: UptimeRobot
 
-## 🌐 Projeto online
+### Produção
 
-### Aplicação
+- Frontend: `https://dizimo.jrsite.com`
+- API: `https://projeto-dizimo.onrender.com/api`
 
-[🔗 Acessar Sistema de Dízimo](https://dizimo.jrfsite.com)
-
-### API
-
-[🔗 Acessar API](https://projeto-dizimo.onrender.com)
-
-> As rotas internas da API são protegidas por autenticação JWT. O acesso direto a endpoints administrativos ou de dados exige um usuário autenticado e autorizado.
+> Nunca publique arquivos `.env`, senhas, chaves JWT ou credenciais do banco no GitHub.
 
 ---
 
-## ✨ Funcionalidades
+## Principais recursos
 
-### 👥 Dizimistas
+### Gestão de dizimistas
 
-- Cadastro de dizimistas.
-- Edição de nome, número e valor.
-- Exclusão de registros.
-- Organização automática por folhas.
-- Numeração por comunidade.
-- Índice único por `comunidadeId + numero`.
-- Cálculo de total por folha.
-- Cálculo do total geral.
-- Cálculo da divisão:
-  - 50% Paróquia.
-  - 50% Comunidade.
+- Cadastro de dizimistas
+- Edição
+- Exclusão
+- Numeração por comunidade
+- Cálculo automático da folha
+- Totais por folha
+- Total geral
+- Divisão automática: 50% Paróquia / 50% Comunidade
+- Impressão em formato A4
 
-### 📄 Importação por PDF
+### Importação por PDF
 
-- Leitura do PDF localmente no navegador.
-- Nenhum dado é enviado ao servidor durante a leitura inicial.
-- Reconstrução automática das linhas do documento.
-- Prévia antes da importação.
-- Edição dos dados reconhecidos.
-- Remoção de linhas antes da confirmação.
-- Detecção de:
-  - números duplicados no PDF;
-  - números já cadastrados;
-  - dados inválidos.
-- Importação em lote somente após confirmação.
-- Isolamento por comunidade no backend.
+O sistema permite importar listas de dizimistas a partir de PDF.
 
-### 📤 Exportação CSV
+A leitura é feita no frontend e apresenta uma prévia antes da gravação.
 
-- Exportação dos dizimistas da comunidade autenticada.
-- Arquivo UTF-8.
-- Colunas:
-  - Número;
-  - Folha;
-  - Nome;
-  - Valor.
-- Proteção contra fórmulas maliciosas em planilhas.
-- Download automático pelo navegador.
+Validações incluídas:
 
-### 💾 Backup da comunidade
+- número inválido
+- nome vazio
+- valor inválido
+- duplicidade dentro do PDF
+- número já existente na comunidade
+- prévia editável antes da confirmação
 
-- Geração de backup dos dados da comunidade.
-- Recurso acessível diretamente no sistema.
-- Isolamento dos dados conforme a comunidade autenticada.
+A importação é gravada pelo backend somente após validação.
 
-### 🔒 Fechamento mensal / Nova contagem
+### Exportação CSV
 
-- Fechamento do mês por comunidade.
-- Histórico preservado antes de zerar os valores.
-- Snapshot de todos os dizimistas e respectivos valores.
-- Total mensal salvo.
-- Bloqueio de fechamento duplicado para o mesmo mês/ano.
-- Operação executada em transação no banco.
-- Em caso de erro, nenhuma alteração parcial é mantida.
-- Após o fechamento:
-  - nomes permanecem;
-  - números permanecem;
-  - folhas permanecem;
-  - valores atuais são zerados para iniciar uma nova contagem.
+Cada comunidade pode exportar sua lista de dizimistas em CSV.
 
-### 📊 Histórico mensal
+Características:
 
-- Listagem dos fechamentos mensais.
-- Visualização por mês e ano.
-- Total do mês.
-- Total de 50% da Paróquia.
-- Total de 50% da Comunidade.
-- Detalhamento dos dizimistas registrados no fechamento.
-- Layout responsivo para desktop e dispositivos móveis.
+- UTF-8
+- compatível com Excel e WPS
+- proteção contra fórmulas maliciosas
+- isolamento por comunidade
 
-### 🖨️ Impressão
+### Histórico mensal
 
-- Ficha preparada para impressão em A4.
-- Layout específico com `@media print`.
-- Cabeçalho da paróquia.
-- Nome da comunidade.
-- Data.
-- Equipe da comunidade.
-- Conferência.
-- Responsável pela paróquia.
-- Ocultação de botões e controles durante a impressão.
+O sistema possui fechamento e histórico mensal.
+
+Cada fechamento pode manter uma fotografia dos dados daquele período, permitindo consultar registros anteriores mesmo se os dados atuais forem alterados posteriormente.
+
+Tabelas relacionadas:
+
+- `registros_mensais`
+- `registro_mensal_itens`
+
+### Backup da comunidade
+
+O sistema permite gerar backup dos dados da comunidade para fins administrativos e de segurança.
 
 ---
 
-## 🏘️ Multi-comunidade
+# Estrutura multi-paróquia
 
-O sistema possui isolamento entre comunidades.
+A versão atual trabalha com três níveis principais:
 
-Cada usuário de comunidade acessa somente os dados vinculados ao seu próprio `comunidadeId`.
+```text
+SUPER_ADMIN
+    |
+    +-- Paróquias
+          |
+          +-- ADMIN_PAROQUIA
+          |
+          +-- Comunidades
+                 |
+                 +-- ADMIN_COMUNIDADE
+```
 
-O backend utiliza a comunidade do usuário autenticado, obtida pelo middleware de autenticação, evitando confiar em um `comunidadeId` enviado livremente pelo frontend.
-
-Principais dados isolados:
-
-- Dizimistas.
-- Registros mensais.
-- Histórico mensal.
-- Importações.
-- Exportações.
-- Backup da comunidade.
-
----
-
-## 🔐 Autenticação e segurança
-
-O sistema utiliza autenticação JWT e regras de autorização por perfil.
-
-### Perfis
-
-#### `SUPER_ADMIN`
+## SUPER_ADMIN
 
 Responsável pela administração geral do sistema.
 
 Pode:
 
-- visualizar o dashboard administrativo;
-- listar comunidades;
-- visualizar indicadores das comunidades;
-- editar dados cadastrais de comunidades;
-- cadastrar usuários;
-- editar usuários permitidos;
-- redefinir senhas de usuários permitidos;
-- ativar/desativar usuários;
-- controlar licenças;
-- ativar/desativar comunidades permitidas;
-- excluir comunidades permitidas.
+- cadastrar paróquias
+- visualizar paróquias
+- editar paróquias
+- excluir paróquias
+- visualizar comunidades
+- editar comunidades
+- ativar/desativar comunidades
+- excluir comunidades
+- cadastrar usuários
+- editar usuários
+- bloquear/desbloquear usuários
+- controlar licenças
+- redefinir senhas
+- vincular usuário a uma comunidade existente
+- acompanhar indicadores gerais
 
-Proteções adicionais impedem alterações destrutivas sobre o próprio `SUPER_ADMIN` e sua comunidade protegida.
+O `SUPER_ADMIN` não precisa possuir `comunidadeId` nem `paroquiaId`.
 
-#### `ADMIN_COMUNIDADE`
+Exemplo de estrutura correta:
 
-Administrador responsável por uma comunidade.
+```text
+perfil = SUPER_ADMIN
+comunidadeId = NULL
+paroquiaId = NULL
+```
+
+## ADMIN_PAROQUIA
+
+Responsável por uma paróquia.
+
+Possui `paroquiaId` e pode também possuir `comunidadeId` quando administra sua comunidade-sede.
+
+O perfil possui duas áreas:
+
+### Painel da Paróquia
+
+Permite visualizar as comunidades pertencentes à paróquia.
+
+Recursos disponíveis incluem:
+
+- listar comunidades
+- visualizar detalhes
+- exportar CSV
+- gerar backup
+- consultar histórico mensal
+- visualizar dizimistas
+- imprimir tabela
+
+### Minha Comunidade
+
+Quando o administrador paroquial também possui uma comunidade-sede, ele pode utilizar o sistema normalmente como administrador daquela comunidade.
+
+## ADMIN_COMUNIDADE
+
+Responsável por uma comunidade específica.
+
+Estrutura:
+
+```text
+perfil = ADMIN_COMUNIDADE
+comunidadeId = ID_DA_COMUNIDADE
+paroquiaId = ID_DA_PAROQUIA
+```
 
 Pode:
 
-- acessar os dizimistas da própria comunidade;
-- cadastrar e editar dizimistas;
-- importar PDF;
-- exportar CSV;
-- gerar backup;
-- registrar informações mensais;
-- realizar fechamento mensal;
-- consultar o histórico da própria comunidade.
-
-### Outras proteções
-
-- JWT validado no backend.
-- Usuário autenticado é consultado novamente no banco.
-- Usuário desativado é bloqueado.
-- Licença bloqueada impede acesso do administrador da comunidade.
-- Rotas administrativas usam `autenticar + somenteSuperAdmin`.
-- `Helmet` para cabeçalhos de segurança.
-- `express-rate-limit` no login.
-- CORS restrito aos endereços autorizados.
-- Senhas armazenadas com hash usando `bcrypt`.
-- Variáveis sensíveis armazenadas fora do código por meio de `.env`.
-- Proteção contra acesso cruzado entre comunidades.
+- visualizar sua comunidade
+- cadastrar dizimistas
+- editar dizimistas
+- excluir dizimistas
+- importar por PDF
+- exportar CSV
+- gerar backup
+- consultar histórico
+- imprimir fichas
+- realizar fechamento mensal
 
 ---
 
-## 🧑‍💼 Painel Administrativo
+# Fluxo de cadastro de clientes
 
-O painel do `SUPER_ADMIN` possui três áreas principais:
+O sistema suporta dois fluxos.
 
-### Visão Geral
+## Nova comunidade
 
-Exibe indicadores como:
-
-- total de comunidades;
-- comunidades ativas;
-- total de usuários;
-- usuários ativos;
-- total de dizimistas.
-
-### Comunidades
-
-Permite:
-
-- pesquisar por nome, paróquia ou cidade;
-- visualizar detalhes;
-- editar nome, paróquia e cidade;
-- consultar quantidade de usuários;
-- consultar quantidade de dizimistas;
-- acompanhar valor atual registrado;
-- consultar registros mensais;
-- visualizar última movimentação;
-- ativar/desativar comunidades permitidas;
-- excluir comunidades permitidas.
-
-O painel administrativo trabalha com indicadores agregados e não exibe os dados individuais dos dizimistas.
-
-### Usuários / Licenças
-
-Permite:
-
-- cadastrar novos usuários;
-- editar nome e e-mail;
-- redefinir senha;
-- ativar/desativar usuário;
-- ativar/bloquear licença;
-- excluir usuários ainda sem comunidade;
-- pesquisar por nome, e-mail ou comunidade.
-
----
-
-## 🆕 Primeiro acesso de um novo cliente
-
-Fluxo atual:
-
-1. O `SUPER_ADMIN` cadastra o novo usuário.
-2. O usuário nasce como `ADMIN_COMUNIDADE`, sem comunidade vinculada.
-3. O usuário recebe uma licença.
-4. No primeiro login, o sistema identifica que ele ainda não possui comunidade.
-5. O usuário é direcionado para o cadastro da própria comunidade.
-6. A comunidade é criada.
-7. O usuário é automaticamente vinculado a ela.
-8. Nos próximos logins, o usuário entra diretamente no sistema da comunidade.
-
----
-
-## 📱 PWA
-
-O frontend funciona como **Progressive Web App**.
-
-Recursos:
-
-- `manifest.webmanifest`;
-- Service Worker;
-- ícones 192x192 e 512x512;
-- favicon personalizado;
-- instalação pelo navegador;
-- abertura em modo de aplicativo;
-- atualização de cache para arquivos JS/CSS;
-- estratégia de cache revisada para evitar versões antigas do frontend.
-
----
-
-## 🗄️ Banco de dados
-
-Banco relacional MySQL.
-
-### Principais tabelas
-
-#### `usuarios`
-
-Armazena:
-
-- nome;
-- e-mail;
-- senha;
-- perfil;
-- comunidade;
-- status do usuário;
-- status da licença.
-
-#### `comunidades`
-
-Armazena:
-
-- nome;
-- paróquia;
-- cidade;
-- status.
-
-#### `dizimistas`
-
-Armazena:
-
-- número;
-- folha;
-- nome;
-- valor;
-- comunidade.
-
-#### `registros_mensais`
-
-Armazena informações do fechamento e registro mensal:
-
-- comunidade;
-- data;
-- mês;
-- ano;
-- total;
-- equipe da comunidade;
-- conferência;
-- responsável pela paróquia.
-
-Existe restrição única para impedir duplicidade de fechamento no mesmo:
+O `SUPER_ADMIN` cria o usuário e seleciona:
 
 ```text
-comunidadeId + ano + mes
+Criará uma nova comunidade no primeiro acesso
 ```
 
-#### `registro_mensal_itens`
+No primeiro login, o usuário é direcionado para a tela de cadastro da comunidade.
 
-Armazena o snapshot de cada fechamento mensal:
+Após concluir o cadastro, o usuário é vinculado automaticamente à nova comunidade.
 
-- fechamento relacionado;
-- comunidade;
-- ID original do dizimista, quando disponível;
-- número;
-- folha;
-- nome;
-- valor.
+## Comunidade já existente
 
-O snapshot preserva o histórico mesmo que o cadastro atual do dizimista seja alterado posteriormente.
+O `SUPER_ADMIN` pode criar um usuário e selecionar:
 
----
+```text
+Vincular a uma comunidade existente
+```
 
-## 🧰 Tecnologias utilizadas
+Depois escolhe:
 
-### Frontend
+1. Paróquia
+2. Comunidade existente
 
-- React
-- Vite
-- Axios
-- pdfjs-dist
-- JavaScript
-- CSS
-- PWA / Service Worker
+O usuário já é criado com os vínculos corretos e entra diretamente na comunidade.
 
-### Backend
-
-- Node.js
-- Express
-- Sequelize
-- MySQL
-- JSON Web Token
-- bcrypt
-- Helmet
-- express-rate-limit
-- CORS
-
-### Infraestrutura
-
-- **Frontend:** Hostinger
-- **Backend/API:** Render
-- **Banco de dados:** MySQL
-- **Versionamento:** Git + GitHub
+Esse fluxo é utilizado, por exemplo, quando uma comunidade já possui dados históricos e dizimistas cadastrados.
 
 ---
 
-## 📁 Estrutura geral do projeto
+# Segurança
+
+O projeto possui várias camadas de proteção.
+
+## Autenticação JWT
+
+Todas as rotas privadas utilizam token JWT.
+
+O middleware de autenticação consulta o usuário atual no banco e valida:
+
+- existência do usuário
+- status ativo
+- perfil atual
+- comunidade atual
+- paróquia atual
+- situação da licença
+
+## Controle por perfil
+
+Rotas administrativas são protegidas por middleware.
+
+Exemplos:
+
+```text
+somenteSuperAdmin
+somenteAdminParoquia
+```
+
+## Rate limit no login
+
+O endpoint de login possui limitação de tentativas para reduzir ataques de força bruta.
+
+## Helmet
+
+O backend utiliza `helmet` para adicionar cabeçalhos HTTP de segurança.
+
+## CORS
+
+O backend utiliza CORS restrito às origens autorizadas.
+
+## Logout automático por inatividade
+
+O frontend encerra automaticamente a sessão após período prolongado sem atividade.
+
+Configuração atual:
+
+```text
+Aviso: aproximadamente 28 minutos
+Logout automático: aproximadamente 30 minutos
+```
+
+Atividades que renovam a sessão incluem clique, teclado, movimento do mouse, rolagem e toque.
+
+O usuário pode escolher **Continuar conectado** quando o aviso aparecer.
+
+---
+
+# Banco de dados
+
+Principais tabelas:
+
+```text
+paroquias
+comunidades
+usuarios
+dizimistas
+registros_mensais
+registro_mensal_itens
+```
+
+## Relações principais
+
+```text
+Paroquia
+  hasMany Comunidade
+
+Comunidade
+  belongsTo Paroquia
+
+Paroquia
+  hasMany Usuario
+
+Usuario
+  belongsTo Paroquia
+
+Comunidade
+  hasMany Usuario
+
+Usuario
+  belongsTo Comunidade
+```
+
+Campos principais da estrutura multi-paróquia:
+
+### comunidades
+
+```text
+paroquiaId
+```
+
+### usuarios
+
+```text
+paroquiaId
+comunidadeId
+```
+
+As chaves estrangeiras utilizam integridade referencial no MySQL.
+
+---
+
+# Estrutura do projeto
 
 ```text
 PROJETO-DIZIMO/
@@ -389,8 +342,8 @@ PROJETO-DIZIMO/
 │   ├── middlewares/
 │   ├── models/
 │   ├── routes/
-│   ├── server.js
-│   └── package.json
+│   ├── package.json
+│   └── server.js
 │
 ├── app/
 │   ├── public/
@@ -399,6 +352,7 @@ PROJETO-DIZIMO/
 │   │   ├── assets/
 │   │   ├── components/
 │   │   ├── App.jsx
+│   │   ├── App.css
 │   │   └── main.jsx
 │   ├── package.json
 │   └── vite.config.js
@@ -409,25 +363,23 @@ PROJETO-DIZIMO/
 
 ---
 
-## ▶️ Executar localmente
+# Backend
 
-### 1. Clonar o repositório
+## Instalação
 
-```bash
-git clone SEU_REPOSITORIO
-cd PROJETO-DIZIMO
-```
-
-### 2. Instalar dependências do backend
+Entre na pasta:
 
 ```bash
 cd api
+```
+
+Instale as dependências:
+
+```bash
 npm install
 ```
 
-### 3. Configurar variáveis de ambiente
-
-Crie o arquivo `.env` na pasta da API com as variáveis necessárias.
+Crie o arquivo `api/.env`.
 
 Exemplo:
 
@@ -437,207 +389,313 @@ DB_PORT=3306
 DB_NAME=seu_banco
 DB_USER=seu_usuario
 DB_PASSWORD=sua_senha
-JWT_SECRET=uma_chave_segura
+JWT_SECRET=uma_chave_forte
 ```
 
-> Nunca envie o arquivo `.env` para o GitHub.
+Nunca envie esse arquivo para o Git.
 
-### 4. Iniciar a API
-
-```bash
-npm start
-```
-
-A API local utiliza normalmente:
-
-```text
-http://localhost:8080
-```
-
-### 5. Instalar dependências do frontend
-
-Em outro terminal:
-
-```bash
-cd app
-npm install
-```
-
-### 6. Para desenvolvimento local
-
-Durante testes locais, configure temporariamente o `baseURL` da API para:
-
-```text
-http://localhost:8080/api
-```
-
-Depois execute:
+## Executar
 
 ```bash
 npm run dev
 ```
 
-O Vite utiliza normalmente:
+ou, conforme o script configurado:
+
+```bash
+npm start
+```
+
+---
+
+# Frontend
+
+Entre na pasta:
+
+```bash
+cd app
+```
+
+Instale:
+
+```bash
+npm install
+```
+
+Execute localmente:
+
+```bash
+npm run dev
+```
+
+Endereço padrão do Vite:
 
 ```text
 http://localhost:5173
 ```
 
-### 7. Antes do build de produção
+## API utilizada pelo frontend
 
-Restaure o `baseURL` para:
+Arquivo:
 
 ```text
-https://projeto-dizimo.onrender.com/api
+app/src/api/api.js
 ```
 
-Depois execute:
+Produção:
+
+```js
+baseURL: "https://projeto-dizimo.onrender.com/api"
+```
+
+Para desenvolvimento local, pode ser alterado temporariamente para:
+
+```js
+baseURL: "http://localhost:8080/api"
+```
+
+> Antes de gerar o build de produção, confirme sempre que o frontend está apontando para a API do Render.
+
+---
+
+# Build do frontend
+
+Dentro de `app`:
 
 ```bash
 npm run build
 ```
 
-O Vite criará a pasta:
+O Vite gera:
 
 ```text
 app/dist
 ```
 
+Para publicação na Hostinger, envie o **conteúdo** de `dist` para:
+
+```text
+public_html/dizimo
+```
+
+Sempre atualize `index.html` e a pasta `assets` juntos.
+
 ---
 
-## 🚀 Deploy
+# Deploy
 
-### Backend
+## Backend — Render
 
-O backend é publicado no **Render**.
+O Render utiliza o código enviado para a branch principal do GitHub.
 
-O deploy é realizado a partir do repositório Git, com variáveis de ambiente configuradas no serviço.
+Antes do deploy, confirme as variáveis:
+
+```text
+DB_HOST
+DB_PORT
+DB_NAME
+DB_USER
+DB_PASSWORD
+JWT_SECRET
+```
+
+Banco de produção atual:
+
+```text
+u741448239_projeto_dizimo
+```
+
+Logs esperados após inicialização:
+
+```text
+Banco de dados conectado com sucesso!
+Tabelas sincronizadas com sucesso!
+Servidor rodando na porta ...
+```
+
+## Frontend — Hostinger
+
+Fluxo:
+
+```text
+npm run build
+        ↓
+app/dist
+        ↓
+public_html/dizimo
+```
+
+---
+
+# PWA
+
+O frontend possui suporte a Progressive Web App.
+
+Inclui:
+
+- manifest
+- service worker
+- ícones
+- instalação no desktop
+- atualização de cache
+
+O sistema pode ser instalado como aplicativo pelo navegador compatível.
+
+---
+
+# Monitoramento
+
+O projeto utiliza monitoramento externo para verificar disponibilidade do frontend e backend.
+
+Monitoramento atual: UptimeRobot.
+
+---
+
+# Backup e manutenção
+
+Antes de alterações importantes em produção:
+
+1. exporte o banco MySQL em SQL;
+2. confirme que o backup foi baixado;
+3. mantenha uma cópia fora do servidor;
+4. faça a alteração;
+5. teste o backend;
+6. teste o frontend;
+7. confira usuários e dados principais.
+
+O backup do banco pode ser feito pelo phpMyAdmin da Hostinger.
+
+---
+
+# Migração multi-paróquia
+
+A produção foi migrada da estrutura antiga para a nova estrutura multi-paróquia preservando os dados existentes.
+
+A comunidade **Palmeira** foi mantida no mesmo registro e vinculada à sua paróquia, sem recriação dos dizimistas.
+
+Estrutura atual:
+
+```text
+Paróquia Nossa Senhora da Penha
+└── Palmeira
+```
+
+A administração foi separada em:
+
+```text
+SUPER_ADMIN
+→ Administração Geral
+
+ADMIN_COMUNIDADE
+→ Palmeira
+```
+
+Os dados existentes da comunidade foram preservados durante a migração.
+
+---
+
+# Tecnologias
 
 ### Frontend
 
-O frontend é compilado com:
+- React
+- Vite
+- Axios
+- JavaScript
+- CSS
+- PWA
+
+### Backend
+
+- Node.js
+- Express
+- Sequelize
+- JWT
+- bcrypt
+- Helmet
+- express-rate-limit
+- CORS
+
+### Banco
+
+- MySQL
+
+### Infraestrutura
+
+- Render
+- Hostinger
+- GitHub
+- UptimeRobot
+
+---
+
+# Versionamento
+
+O projeto utiliza Git e GitHub.
+
+Fluxo recomendado:
 
 ```bash
-npm run build
+git status
+git add .
+git commit -m "descricao da alteracao"
+git push
 ```
 
-O conteúdo da pasta `dist` é publicado na **Hostinger**.
+Antes de qualquer commit:
 
-Domínio atual:
+```bash
+git status
+```
+
+Ao final:
 
 ```text
-https://dizimo.jrfsite.com
+nothing to commit, working tree clean
 ```
 
 ---
 
-## 💾 Backup
+# Boas práticas
 
-Antes de alterações estruturais, exclusões importantes ou manutenção do banco de dados, é recomendado gerar um backup completo.
-
-O backup SQL deve incluir:
-
-- estrutura;
-- dados;
-- tabelas;
-- índices;
-- chaves;
-- `AUTO_INCREMENT`.
-
-Também existe um recurso de **Backup da comunidade** diretamente no frontend para uso administrativo.
+- nunca versionar `.env`
+- nunca publicar credenciais
+- sempre testar em banco separado antes da produção
+- sempre fazer backup antes de migrações
+- evitar alterações manuais no banco sem backup
+- validar o ambiente antes do deploy
+- confirmar a URL da API antes do build do frontend
+- testar cada perfil depois de mudanças de autenticação
+- manter o Git limpo depois de cada etapa
 
 ---
 
-## ✅ Status atual
+# Situação atual da versão
 
-Versão **1.1.0** validada em produção.
+A versão atual possui:
 
-Testes finais realizados:
-
-- login;
-- autenticação;
-- painel `SUPER_ADMIN`;
-- isolamento de comunidades;
-- listagem de dizimistas;
-- cadastro e edição;
-- impressão;
-- importação por PDF;
-- exportação CSV;
-- backup da comunidade;
-- histórico mensal;
-- fechamento mensal;
-- edição de comunidade;
-- PWA;
-- deploy do backend;
-- deploy do frontend.
-
----
-
-## 📝 Histórico de versões
-
-### v1.1.0
-
-- Importação de dizimistas por PDF.
-- Prévia e validação antes da importação.
-- Exportação CSV.
-- Backup da comunidade.
-- Fechamento mensal com transação.
-- Snapshot dos valores no fechamento.
-- Histórico mensal detalhado.
-- Divisão 50% Paróquia / 50% Comunidade no histórico.
-- Layout responsivo do histórico.
-- Edição de comunidades no painel administrativo.
-- Melhorias no Service Worker e atualização de cache/PWA.
-- Revisões adicionais de segurança.
-- Limpeza dos dados de teste em produção.
-- Validação final do sistema em produção.
-
-### v1.0.0
-
-- Primeira versão estável.
-- CRUD de dizimistas.
-- Organização por folhas.
-- Totais e divisão 50/50.
-- Impressão A4.
-- Autenticação JWT.
-- Multi-comunidade.
-- Painel `SUPER_ADMIN`.
-- Controle de usuários e licenças.
-- Fluxo de primeiro acesso.
-- PWA.
-- Deploy inicial em produção.
+- arquitetura multi-paróquia
+- múltiplas comunidades
+- `SUPER_ADMIN`
+- `ADMIN_PAROQUIA`
+- `ADMIN_COMUNIDADE`
+- vínculo com comunidade existente
+- criação de comunidade no primeiro acesso
+- controle de licenças
+- cadastro e edição de paróquias
+- gerenciamento de comunidades
+- importação de PDF
+- exportação CSV
+- backup
+- histórico mensal
+- impressão
+- PWA
+- logout por inatividade
+- deploy de frontend e backend
+- banco de produção migrado para a estrutura multi-paróquia
 
 ---
 
-## 👨‍💻 Desenvolvimento
+## Autor
 
-Projeto desenvolvido como aplicação full stack com foco em:
-
-- aprendizado prático;
-- organização de código;
-- segurança;
-- isolamento de dados;
-- manutenção;
-- evolução contínua do sistema.
-
----
-
-## 📌 Observações
-
-Este sistema contém dados administrativos e financeiros de comunidades.
-
-Ao evoluir o projeto:
-
-- faça backup antes de alterações importantes;
-- teste localmente antes de publicar;
-- evite alterações diretas no banco sem necessidade;
-- mantenha as rotas administrativas protegidas;
-- nunca exponha senhas, tokens ou variáveis de ambiente;
-- mantenha o repositório e a versão de produção sincronizados.
-
----
-
-## 📄 Licença
-
-Uso interno e administrativo.
-
+**José Filho**
