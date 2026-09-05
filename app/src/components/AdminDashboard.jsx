@@ -105,6 +105,11 @@ function AdminDashboard() {
         setSalvandoEdicaoParoquia,
     ] = useState(false);
 
+    const [
+        paroquiaExcluindo,
+        setParoquiaExcluindo,
+    ] = useState(null);
+
     const [buscaUsuario, setBuscaUsuario] =
         useState("");
 
@@ -166,6 +171,8 @@ function AdminDashboard() {
             confirmarSenha: "",
             perfil: "ADMIN_COMUNIDADE",
             paroquiaId: "",
+            modoComunidade: "NOVA",
+            comunidadeId: "",
             licencaStatus: "ATIVA",
         });
 
@@ -265,7 +272,7 @@ function AdminDashboard() {
         setDadosEdicaoComunidade,
     ] = useState({
         nome: "",
-        paroquia: "",
+        paroquiaId: "",
         cidade: "",
     });
 
@@ -352,6 +359,7 @@ function AdminDashboard() {
 
         carregarUsuarios();
         carregarParoquias();
+        carregarComunidades();
     }, [aba]);
 
     // ========================================
@@ -390,6 +398,7 @@ function AdminDashboard() {
         }
 
         carregarComunidades();
+        carregarParoquias();
     }, [aba]);
 
     // ========================================
@@ -784,6 +793,104 @@ function AdminDashboard() {
     };
 
     // ========================================
+    // EXCLUIR PARÓQUIA PERMANENTEMENTE
+    // SOMENTE SUPER_ADMIN
+    // ========================================
+
+    const excluirParoquia = async (paroquia) => {
+        const totalComunidades =
+            paroquia.totalComunidades ?? 0;
+
+        const confirmar = window.confirm(
+            `Deseja realmente excluir permanentemente a paróquia "${paroquia.nome}"?\n\n` +
+            `Comunidades vinculadas: ${totalComunidades}\n\n` +
+            "ATENÇÃO: esta ação excluirá também todas as comunidades da paróquia, " +
+            "os usuários vinculados, dizimistas, registros mensais e itens de histórico.\n\n" +
+            "Esta operação não poderá ser desfeita."
+        );
+
+        if (!confirmar) {
+            return;
+        }
+
+        try {
+            setParoquiaExcluindo(paroquia.id);
+            setErroParoquias("");
+            setMensagemParoquias("");
+
+            const resposta = await api.delete(
+                `/admin/paroquias/${paroquia.id}`
+            );
+
+            if (
+                Number(
+                    paroquiaDetalhada?.paroquia?.id
+                ) === Number(paroquia.id)
+            ) {
+                fecharDetalhesParoquia();
+            }
+
+            if (
+                Number(paroquiaEmEdicao?.id) ===
+                Number(paroquia.id)
+            ) {
+                cancelarEdicaoParoquia();
+            }
+
+            // Recarrega as fontes oficiais do backend.
+            // A exclusão de uma paróquia pode remover
+            // comunidades e usuários ao mesmo tempo.
+            await Promise.all([
+                carregarParoquias(),
+                carregarComunidades(),
+                carregarUsuarios(),
+            ]);
+
+            try {
+                const respostaResumo = await api.get(
+                    "/admin/dashboard"
+                );
+
+                setResumo(respostaResumo.data);
+            } catch (erroResumo) {
+                console.error(
+                    "Erro ao atualizar resumo após excluir paróquia:",
+                    erroResumo
+                );
+            }
+
+            const dadosExcluidos =
+                resposta.data?.paroquia;
+
+            const resumoExclusao = dadosExcluidos
+                ? ` Comunidades: ${dadosExcluidos.totalComunidades ?? 0}; ` +
+                  `usuários: ${dadosExcluidos.totalUsuarios ?? 0}; ` +
+                  `dizimistas: ${dadosExcluidos.totalDizimistas ?? 0}; ` +
+                  `registros mensais: ${dadosExcluidos.totalRegistrosMensais ?? 0}.`
+                : "";
+
+            setMensagemParoquias(
+                (resposta.data?.mensagem ||
+                    "Paróquia excluída com sucesso.") +
+                resumoExclusao
+            );
+        } catch (error) {
+            console.error(
+                "Erro ao excluir paróquia:",
+                error
+            );
+
+            const mensagem =
+                error.response?.data?.erro ||
+                "Não foi possível excluir a paróquia.";
+
+            setErroParoquias(mensagem);
+        } finally {
+            setParoquiaExcluindo(null);
+        }
+    };
+
+    // ========================================
     // CARREGAR COMUNIDADES
     // ========================================
 
@@ -818,10 +925,29 @@ function AdminDashboard() {
     const alterarCampoNovoUsuario = (event) => {
         const { name, value } = event.target;
 
-        setNovoUsuario((dadosAtuais) => ({
-            ...dadosAtuais,
-            [name]: value,
-        }));
+        setNovoUsuario((dadosAtuais) => {
+            const proximosDados = {
+                ...dadosAtuais,
+                [name]: value,
+            };
+
+            // Ao trocar a paróquia, nenhuma comunidade
+            // selecionada anteriormente pode permanecer.
+            if (name === "paroquiaId") {
+                proximosDados.comunidadeId = "";
+            }
+
+            // Ao voltar para o fluxo de nova comunidade,
+            // removemos qualquer comunidade já selecionada.
+            if (
+                name === "modoComunidade" &&
+                value === "NOVA"
+            ) {
+                proximosDados.comunidadeId = "";
+            }
+
+            return proximosDados;
+        });
 
         // Limpa mensagens enquanto o usuário corrige o formulário
         if (erroUsuarios) {
@@ -886,6 +1012,57 @@ function AdminDashboard() {
             return;
         }
 
+        let comunidadeIdNumero = null;
+
+        if (
+            novoUsuario.modoComunidade ===
+            "EXISTENTE"
+        ) {
+            comunidadeIdNumero =
+                Number(novoUsuario.comunidadeId);
+
+            if (
+                !Number.isInteger(comunidadeIdNumero) ||
+                comunidadeIdNumero <= 0
+            ) {
+                setErroUsuarios(
+                    "Selecione a comunidade existente que será administrada."
+                );
+                return;
+            }
+
+            const comunidadeSelecionada =
+                comunidades.find(
+                    (comunidade) =>
+                        Number(comunidade.id) ===
+                        comunidadeIdNumero
+                );
+
+            if (!comunidadeSelecionada) {
+                setErroUsuarios(
+                    "A comunidade selecionada não foi encontrada."
+                );
+                return;
+            }
+
+            if (!comunidadeSelecionada.ativa) {
+                setErroUsuarios(
+                    "A comunidade selecionada está desativada."
+                );
+                return;
+            }
+
+            if (
+                Number(comunidadeSelecionada.paroquiaId) !==
+                paroquiaIdNumero
+            ) {
+                setErroUsuarios(
+                    "A comunidade selecionada não pertence à paróquia escolhida."
+                );
+                return;
+            }
+        }
+
         try {
             setCadastrandoUsuario(true);
             setErroUsuarios("");
@@ -901,6 +1078,8 @@ function AdminDashboard() {
                     senha: novoUsuario.senha,
                     perfil: novoUsuario.perfil,
                     paroquiaId: paroquiaIdNumero,
+                    comunidadeId:
+                        comunidadeIdNumero,
                     licencaStatus:
                         novoUsuario.licencaStatus,
                 }
@@ -913,6 +1092,8 @@ function AdminDashboard() {
                 confirmarSenha: "",
                 perfil: "ADMIN_COMUNIDADE",
                 paroquiaId: "",
+                modoComunidade: "NOVA",
+                comunidadeId: "",
                 licencaStatus: "ATIVA",
             });
 
@@ -1196,7 +1377,10 @@ function AdminDashboard() {
 
         setDadosEdicaoComunidade({
             nome: comunidade.nome || "",
-            paroquia: comunidade.paroquia || "",
+            paroquiaId:
+                comunidade.paroquiaId
+                    ? String(comunidade.paroquiaId)
+                    : "",
             cidade: comunidade.cidade || "",
         });
 
@@ -1234,7 +1418,7 @@ function AdminDashboard() {
 
         setDadosEdicaoComunidade({
             nome: "",
-            paroquia: "",
+            paroquiaId: "",
             cidade: "",
         });
 
@@ -1253,10 +1437,11 @@ function AdminDashboard() {
         }
 
         const nome = dadosEdicaoComunidade.nome.trim();
-        const paroquia =
-            dadosEdicaoComunidade.paroquia.trim();
         const cidade =
             dadosEdicaoComunidade.cidade.trim();
+
+        const paroquiaIdNumero =
+            Number(dadosEdicaoComunidade.paroquiaId);
 
         if (!nome) {
             setErroComunidades(
@@ -1274,6 +1459,17 @@ function AdminDashboard() {
             return;
         }
 
+        if (
+            !Number.isInteger(paroquiaIdNumero) ||
+            paroquiaIdNumero <= 0
+        ) {
+            setErroComunidades(
+                "Selecione a paróquia oficial da comunidade."
+            );
+
+            return;
+        }
+
         try {
             setSalvandoEdicaoComunidade(true);
             setErroComunidades("");
@@ -1283,7 +1479,7 @@ function AdminDashboard() {
                 `/admin/comunidades/${comunidadeEmEdicao.id}`,
                 {
                     nome,
-                    paroquia,
+                    paroquiaId: paroquiaIdNumero,
                     cidade,
                 }
             );
@@ -2823,7 +3019,9 @@ function AdminDashboard() {
                                                                 }
                                                                 disabled={
                                                                     carregandoDetalhesParoquia ||
-                                                                    salvandoEdicaoParoquia
+                                                                    salvandoEdicaoParoquia ||
+                                                                    paroquiaExcluindo ===
+                                                                        paroquia.id
                                                                 }
                                                             >
                                                                 Ver detalhes
@@ -2838,10 +3036,32 @@ function AdminDashboard() {
                                                                     )
                                                                 }
                                                                 disabled={
-                                                                    salvandoEdicaoParoquia
+                                                                    salvandoEdicaoParoquia ||
+                                                                    paroquiaExcluindo ===
+                                                                        paroquia.id
                                                                 }
                                                             >
                                                                 Editar
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                className="btn-excluir-usuario"
+                                                                onClick={() =>
+                                                                    excluirParoquia(
+                                                                        paroquia
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    paroquiaExcluindo ===
+                                                                        paroquia.id ||
+                                                                    salvandoEdicaoParoquia
+                                                                }
+                                                            >
+                                                                {paroquiaExcluindo ===
+                                                                paroquia.id
+                                                                    ? "Excluindo..."
+                                                                    : "Excluir"}
                                                             </button>
                                                         </div>
                                                     </td>
@@ -2911,22 +3131,44 @@ function AdminDashboard() {
                                         Paróquia
                                     </label>
 
-                                    <input
+                                    <select
                                         id="editar-comunidade-paroquia"
-                                        name="paroquia"
-                                        type="text"
-                                        placeholder="Nome da paróquia"
+                                        name="paroquiaId"
                                         value={
-                                            dadosEdicaoComunidade.paroquia
+                                            dadosEdicaoComunidade.paroquiaId
                                         }
                                         onChange={
                                             alterarCampoEdicaoComunidade
                                         }
                                         disabled={
-                                            salvandoEdicaoComunidade
+                                            salvandoEdicaoComunidade ||
+                                            carregandoParoquias
                                         }
-                                        maxLength={150}
-                                    />
+                                        required
+                                    >
+                                        <option value="">
+                                            {carregandoParoquias
+                                                ? "Carregando paróquias..."
+                                                : "Selecione a paróquia oficial"}
+                                        </option>
+
+                                        {paroquias
+                                            .filter(
+                                                (paroquia) =>
+                                                    paroquia.ativa
+                                            )
+                                            .map((paroquia) => (
+                                                <option
+                                                    key={paroquia.id}
+                                                    value={paroquia.id}
+                                                >
+                                                    {paroquia.nome}
+                                                    {paroquia.cidade
+                                                        ? ` - ${paroquia.cidade}`
+                                                        : ""}
+                                                </option>
+                                            ))}
+                                    </select>
                                 </div>
 
                                 <div className="admin-form-campo">
@@ -3961,6 +4203,104 @@ function AdminDashboard() {
                                             ))}
                                     </select>
                                 </div>
+
+                                <div className="admin-form-campo">
+                                    <label htmlFor="novo-usuario-modo-comunidade">
+                                        Comunidade
+                                    </label>
+
+                                    <select
+                                        id="novo-usuario-modo-comunidade"
+                                        name="modoComunidade"
+                                        value={
+                                            novoUsuario.modoComunidade
+                                        }
+                                        onChange={
+                                            alterarCampoNovoUsuario
+                                        }
+                                        disabled={cadastrandoUsuario}
+                                    >
+                                        <option value="NOVA">
+                                            Criará uma nova comunidade no primeiro acesso
+                                        </option>
+                                        <option value="EXISTENTE">
+                                            Vincular a uma comunidade existente
+                                        </option>
+                                    </select>
+                                </div>
+
+                                {novoUsuario.modoComunidade ===
+                                    "EXISTENTE" && (
+                                    <div className="admin-form-campo">
+                                        <label htmlFor="novo-usuario-comunidade">
+                                            Comunidade existente
+                                        </label>
+
+                                        <select
+                                            id="novo-usuario-comunidade"
+                                            name="comunidadeId"
+                                            value={
+                                                novoUsuario.comunidadeId
+                                            }
+                                            onChange={
+                                                alterarCampoNovoUsuario
+                                            }
+                                            disabled={
+                                                cadastrandoUsuario ||
+                                                !novoUsuario.paroquiaId ||
+                                                carregandoComunidades
+                                            }
+                                            required
+                                        >
+                                            <option value="">
+                                                {!novoUsuario.paroquiaId
+                                                    ? "Selecione primeiro a paróquia"
+                                                    : carregandoComunidades
+                                                        ? "Carregando comunidades..."
+                                                        : "Selecione uma comunidade"}
+                                            </option>
+
+                                            {comunidades
+                                                .filter(
+                                                    (comunidade) =>
+                                                        comunidade.ativa &&
+                                                        Number(
+                                                            comunidade.paroquiaId
+                                                        ) ===
+                                                            Number(
+                                                                novoUsuario.paroquiaId
+                                                            )
+                                                )
+                                                .map((comunidade) => (
+                                                    <option
+                                                        key={comunidade.id}
+                                                        value={comunidade.id}
+                                                    >
+                                                        {comunidade.nome}
+                                                        {comunidade.cidade
+                                                            ? ` - ${comunidade.cidade}`
+                                                            : ""}
+                                                    </option>
+                                                ))}
+                                        </select>
+
+                                        {novoUsuario.paroquiaId &&
+                                            comunidades.filter(
+                                                (comunidade) =>
+                                                    comunidade.ativa &&
+                                                    Number(
+                                                        comunidade.paroquiaId
+                                                    ) ===
+                                                        Number(
+                                                            novoUsuario.paroquiaId
+                                                        )
+                                            ).length === 0 && (
+                                                <small>
+                                                    Nenhuma comunidade ativa e estruturalmente vinculada a esta paróquia.
+                                                </small>
+                                            )}
+                                    </div>
+                                )}
 
                                 <div className="admin-form-campo">
                                     <label htmlFor="novo-usuario-licenca">

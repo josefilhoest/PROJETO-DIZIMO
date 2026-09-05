@@ -22,6 +22,7 @@ import {
   listarParoquias,
   detalharParoquia,
   editarParoquia,
+  excluirParoquia,
   listarComunidades,
   detalharComunidade,
   editarComunidadeAdmin,
@@ -98,6 +99,17 @@ router.patch(
   autenticar,
   somenteSuperAdmin,
   editarParoquia
+);
+
+// ========================================
+// EXCLUIR UMA PARÓQUIA
+// ========================================
+
+router.delete(
+  "/paroquias/:id",
+  autenticar,
+  somenteSuperAdmin,
+  excluirParoquia
 );
 
 // ========================================

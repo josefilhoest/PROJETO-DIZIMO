@@ -1,8 +1,10 @@
 import bcrypt from "bcrypt";
+import { Op } from "sequelize";
 import Comunidade from "../models/Comunidade.js";
 import Usuario from "../models/Usuario.js";
 import Dizimista from "../models/Dizimista.js";
 import RegistroMensal from "../models/RegistroMensal.js";
+import RegistroMensalItem from "../models/RegistroMensalItem.js";
 import Paroquia from "../models/Paroquia.js";
 
 // ========================================
@@ -410,6 +412,283 @@ export const editarParoquia = async (req, res) => {
 };
 
 // ========================================
+// EXCLUIR PARÓQUIA PELO SUPER ADMIN
+// ========================================
+//
+// Remove permanentemente a paróquia e todos
+// os dados vinculados às suas comunidades.
+//
+// A operação é feita dentro de uma única
+// transação. Se alguma etapa falhar, nenhuma
+// exclusão é confirmada no banco.
+//
+// ========================================
+
+export const excluirParoquia = async (req, res) => {
+  let transaction = null;
+
+  try {
+    const { id } = req.params;
+    const paroquiaId = Number(id);
+
+    if (
+      !Number.isInteger(paroquiaId) ||
+      paroquiaId <= 0
+    ) {
+      return res.status(400).json({
+        erro: "ID da paróquia inválido.",
+      });
+    }
+
+    transaction =
+      await Paroquia.sequelize.transaction();
+
+    const paroquia = await Paroquia.findByPk(
+      paroquiaId,
+      {
+        transaction,
+      }
+    );
+
+    if (!paroquia) {
+      await transaction.rollback();
+
+      return res.status(404).json({
+        erro: "Paróquia não encontrada.",
+      });
+    }
+
+    // ========================================
+    // COMUNIDADES DA PARÓQUIA
+    // ========================================
+
+    const comunidades = await Comunidade.findAll({
+      where: {
+        paroquiaId,
+      },
+      attributes: ["id", "nome"],
+      transaction,
+    });
+
+    const comunidadeIds = comunidades.map(
+      (comunidade) => comunidade.id
+    );
+
+    // ========================================
+    // PROTEÇÕES DE SEGURANÇA
+    // ========================================
+
+    // Impede excluir a paróquia diretamente
+    // vinculada ao SUPER_ADMIN autenticado.
+    if (
+      req.usuario.paroquiaId &&
+      Number(req.usuario.paroquiaId) === paroquiaId
+    ) {
+      await transaction.rollback();
+
+      return res.status(403).json({
+        erro:
+          "Você não pode excluir a paróquia vinculada à sua própria conta SUPER_ADMIN.",
+      });
+    }
+
+    // Procura qualquer SUPER_ADMIN vinculado
+    // diretamente à paróquia ou a uma das
+    // comunidades pertencentes a ela.
+    const condicoesSuperAdmin = [
+      {
+        paroquiaId,
+        perfil: "SUPER_ADMIN",
+      },
+    ];
+
+    if (comunidadeIds.length > 0) {
+      condicoesSuperAdmin.push({
+        comunidadeId: {
+          [Op.in]: comunidadeIds,
+        },
+        perfil: "SUPER_ADMIN",
+      });
+    }
+
+    const superAdminVinculado =
+      await Usuario.findOne({
+        where: {
+          [Op.or]: condicoesSuperAdmin,
+        },
+        transaction,
+      });
+
+    if (superAdminVinculado) {
+      await transaction.rollback();
+
+      return res.status(403).json({
+        erro:
+          "Esta paróquia possui um SUPER_ADMIN protegido e não pode ser excluída.",
+      });
+    }
+
+    // ========================================
+    // RESUMO ANTES DA EXCLUSÃO
+    // ========================================
+
+    let totalDizimistas = 0;
+    let totalRegistrosMensais = 0;
+    let totalItensHistorico = 0;
+
+    if (comunidadeIds.length > 0) {
+      totalDizimistas = await Dizimista.count({
+        where: {
+          comunidadeId: {
+            [Op.in]: comunidadeIds,
+          },
+        },
+        transaction,
+      });
+
+      totalRegistrosMensais =
+        await RegistroMensal.count({
+          where: {
+            comunidadeId: {
+              [Op.in]: comunidadeIds,
+            },
+          },
+          transaction,
+        });
+
+      totalItensHistorico =
+        await RegistroMensalItem.count({
+          where: {
+            comunidadeId: {
+              [Op.in]: comunidadeIds,
+            },
+          },
+          transaction,
+        });
+    }
+
+    const condicoesUsuarios = [
+      {
+        paroquiaId,
+      },
+    ];
+
+    if (comunidadeIds.length > 0) {
+      condicoesUsuarios.push({
+        comunidadeId: {
+          [Op.in]: comunidadeIds,
+        },
+      });
+    }
+
+    const usuariosVinculados =
+      await Usuario.findAll({
+        where: {
+          [Op.or]: condicoesUsuarios,
+        },
+        attributes: ["id"],
+        transaction,
+      });
+
+    const totalUsuarios = new Set(
+      usuariosVinculados.map((usuario) => usuario.id)
+    ).size;
+
+    const paroquiaExcluida = {
+      id: paroquia.id,
+      nome: paroquia.nome,
+      cidade: paroquia.cidade,
+      totalComunidades: comunidades.length,
+      totalUsuarios,
+      totalDizimistas,
+      totalRegistrosMensais,
+      totalItensHistorico,
+    };
+
+    // ========================================
+    // EXCLUSÃO DOS DADOS VINCULADOS
+    // ========================================
+
+    if (comunidadeIds.length > 0) {
+      // Removemos explicitamente os itens do
+      // histórico antes dos registros mensais.
+      // Mesmo existindo CASCADE em registroMensalId,
+      // a exclusão administrativa não depende apenas
+      // dessa configuração do banco.
+      await RegistroMensalItem.destroy({
+        where: {
+          comunidadeId: {
+            [Op.in]: comunidadeIds,
+          },
+        },
+        transaction,
+      });
+
+      await RegistroMensal.destroy({
+        where: {
+          comunidadeId: {
+            [Op.in]: comunidadeIds,
+          },
+        },
+        transaction,
+      });
+
+      await Dizimista.destroy({
+        where: {
+          comunidadeId: {
+            [Op.in]: comunidadeIds,
+          },
+        },
+        transaction,
+      });
+    }
+
+    // Remove usuários vinculados à paróquia
+    // ou a qualquer uma de suas comunidades.
+    await Usuario.destroy({
+      where: {
+        [Op.or]: condicoesUsuarios,
+      },
+      transaction,
+    });
+
+    // Remove todas as comunidades da paróquia.
+    await Comunidade.destroy({
+      where: {
+        paroquiaId,
+      },
+      transaction,
+    });
+
+    // A paróquia é removida por último.
+    await paroquia.destroy({
+      transaction,
+    });
+
+    await transaction.commit();
+
+    return res.status(200).json({
+      mensagem:
+        "Paróquia e todos os seus dados vinculados foram excluídos com sucesso.",
+      paroquia: paroquiaExcluida,
+    });
+  } catch (error) {
+    if (transaction && !transaction.finished) {
+      await transaction.rollback();
+    }
+
+    console.error(
+      "Erro ao excluir paróquia:",
+      error
+    );
+
+    return res.status(500).json({
+      erro: "Erro ao excluir paróquia.",
+    });
+  }
+};
+
+// ========================================
 // LISTAR TODAS AS COMUNIDADES
 // ========================================
 
@@ -433,10 +712,37 @@ export const listarComunidades = async (req, res) => {
           },
         });
 
+        const paroquiaDados = comunidade.paroquiaId
+          ? await Paroquia.findByPk(
+            comunidade.paroquiaId,
+            {
+              attributes: [
+                "id",
+                "nome",
+                "cidade",
+                "ativa",
+              ],
+            }
+          )
+          : null;
+
         return {
           id: comunidade.id,
           nome: comunidade.nome,
-          paroquia: comunidade.paroquia,
+
+          // Vínculo estrutural oficial.
+          paroquiaId: comunidade.paroquiaId,
+
+          // Mantemos o campo textual legado por
+          // compatibilidade com telas antigas.
+          paroquia: paroquiaDados
+            ? paroquiaDados.nome
+            : comunidade.paroquia,
+
+          paroquiaNome: paroquiaDados
+            ? paroquiaDados.nome
+            : comunidade.paroquia,
+
           cidade: comunidade.cidade,
           ativa: comunidade.ativa,
           totalUsuarios,
@@ -595,7 +901,9 @@ export const detalharComunidade = async (
       comunidade: {
         id: comunidade.id,
         nome: comunidade.nome,
+        paroquiaId: comunidade.paroquiaId,
         paroquia: comunidade.paroquia,
+        paroquiaNome: comunidade.paroquia,
         cidade: comunidade.cidade,
         ativa: comunidade.ativa,
         createdAt: comunidade.createdAt,
@@ -648,6 +956,8 @@ export const editarComunidadeAdmin = async (
   req,
   res
 ) => {
+  let transaction = null;
+
   try {
     const { id } = req.params;
 
@@ -664,13 +974,11 @@ export const editarComunidadeAdmin = async (
 
     const {
       nome,
-      paroquia,
+      paroquiaId,
       cidade,
     } = req.body;
 
     const nomeLimpo = nome?.trim();
-    const paroquiaLimpa =
-      paroquia?.trim() || null;
     const cidadeLimpa =
       cidade?.trim() || null;
 
@@ -688,13 +996,10 @@ export const editarComunidadeAdmin = async (
       });
     }
 
-    if (
-      paroquiaLimpa &&
-      paroquiaLimpa.length > 150
-    ) {
+    if (nomeLimpo.length > 150) {
       return res.status(400).json({
         erro:
-          "O nome da paróquia deve ter no máximo 150 caracteres.",
+          "O nome da comunidade deve ter no máximo 150 caracteres.",
       });
     }
 
@@ -708,25 +1013,137 @@ export const editarComunidadeAdmin = async (
       });
     }
 
+    transaction =
+      await Comunidade.sequelize.transaction();
+
     const comunidade =
       await Comunidade.findByPk(
-        comunidadeId
+        comunidadeId,
+        {
+          transaction,
+        }
       );
 
     if (!comunidade) {
+      await transaction.rollback();
+
       return res.status(404).json({
         erro:
           "Comunidade não encontrada.",
       });
     }
 
-    comunidade.nome = nomeLimpo;
-    comunidade.paroquia =
-      paroquiaLimpa;
-    comunidade.cidade =
-      cidadeLimpa;
+    // ========================================
+    // VALIDAR VÍNCULO COM A PARÓQUIA
+    // ========================================
+    //
+    // paroquiaId é opcional para manter
+    // compatibilidade com chamadas antigas.
+    //
+    // Quando informado, passa a ser a fonte
+    // oficial do vínculo estrutural.
+    // O nome textual legado é sincronizado
+    // pelo backend e não pelo frontend.
+    //
+    // ========================================
 
-    await comunidade.save();
+    let paroquiaDestino = null;
+
+    if (
+      paroquiaId !== undefined &&
+      paroquiaId !== null &&
+      paroquiaId !== ""
+    ) {
+      const paroquiaIdNumero =
+        Number(paroquiaId);
+
+      if (
+        !Number.isInteger(paroquiaIdNumero) ||
+        paroquiaIdNumero <= 0
+      ) {
+        await transaction.rollback();
+
+        return res.status(400).json({
+          erro: "ID da paróquia inválido.",
+        });
+      }
+
+      paroquiaDestino =
+        await Paroquia.findByPk(
+          paroquiaIdNumero,
+          {
+            transaction,
+          }
+        );
+
+      if (!paroquiaDestino) {
+        await transaction.rollback();
+
+        return res.status(404).json({
+          erro: "Paróquia não encontrada.",
+        });
+      }
+
+      if (!paroquiaDestino.ativa) {
+        await transaction.rollback();
+
+        return res.status(403).json({
+          erro:
+            "A comunidade não pode ser vinculada a uma paróquia desativada.",
+        });
+      }
+
+      comunidade.paroquiaId =
+        paroquiaDestino.id;
+
+      // Mantém o campo textual antigo sincronizado
+      // com a entidade oficial da paróquia.
+      comunidade.paroquia =
+        paroquiaDestino.nome;
+    }
+
+    comunidade.nome = nomeLimpo;
+    comunidade.cidade = cidadeLimpa;
+
+    await comunidade.save({
+      transaction,
+    });
+
+    // ========================================
+    // SINCRONIZAR USUÁRIOS DA COMUNIDADE
+    // ========================================
+    //
+    // Se a comunidade mudou de paróquia,
+    // ADMIN_COMUNIDADE e ADMIN_PAROQUIA já
+    // vinculados a ela devem acompanhar o
+    // mesmo paroquiaId.
+    //
+    // SUPER_ADMIN não é alterado, pois sua
+    // conta administrativa é independente.
+    //
+    // ========================================
+
+    if (paroquiaDestino) {
+      await Usuario.update(
+        {
+          paroquiaId: paroquiaDestino.id,
+        },
+        {
+          where: {
+            comunidadeId: comunidade.id,
+            perfil: {
+              [Op.in]: [
+                "ADMIN_COMUNIDADE",
+                "ADMIN_PAROQUIA",
+              ],
+            },
+          },
+          transaction,
+        }
+      );
+    }
+
+    await transaction.commit();
 
     return res.status(200).json({
       mensagem:
@@ -735,19 +1152,20 @@ export const editarComunidadeAdmin = async (
       comunidade: {
         id: comunidade.id,
         nome: comunidade.nome,
-        paroquia:
-          comunidade.paroquia,
-        cidade:
-          comunidade.cidade,
-        ativa:
-          comunidade.ativa,
-        createdAt:
-          comunidade.createdAt,
-        updatedAt:
-          comunidade.updatedAt,
+        paroquiaId: comunidade.paroquiaId,
+        paroquia: comunidade.paroquia,
+        paroquiaNome: comunidade.paroquia,
+        cidade: comunidade.cidade,
+        ativa: comunidade.ativa,
+        createdAt: comunidade.createdAt,
+        updatedAt: comunidade.updatedAt,
       },
     });
   } catch (error) {
+    if (transaction && !transaction.finished) {
+      await transaction.rollback();
+    }
+
     console.error(
       "Erro ao editar comunidade:",
       error
@@ -932,19 +1350,36 @@ export const excluirComunidadeAdmin = async (req, res) => {
         transaction,
       });
 
+    const totalItensHistorico =
+      await RegistroMensalItem.count({
+        where: {
+          comunidadeId,
+        },
+        transaction,
+      });
+
     const comunidadeExcluida = {
       id: comunidade.id,
       nome: comunidade.nome,
       totalUsuarios,
       totalDizimistas,
       totalRegistrosMensais,
+      totalItensHistorico,
     };
 
     // ========================================
     // EXCLUSÃO DOS DADOS VINCULADOS
     // ========================================
 
-    // Primeiro removemos os dados dependentes.
+    // Remove explicitamente os itens do
+    // histórico antes dos registros mensais.
+    await RegistroMensalItem.destroy({
+      where: {
+        comunidadeId,
+      },
+      transaction,
+    });
+
     await RegistroMensal.destroy({
       where: {
         comunidadeId,
@@ -994,6 +1429,7 @@ export const excluirComunidadeAdmin = async (req, res) => {
     });
   }
 };
+
 
 // ========================================
 // LISTAR TODOS OS USUÁRIOS
@@ -1089,6 +1525,7 @@ export const cadastrarUsuarioAdmin = async (
       senha,
       perfil = "ADMIN_COMUNIDADE",
       paroquiaId,
+      comunidadeId = null,
       licencaStatus = "ATIVA",
     } = req.body;
 
@@ -1157,11 +1594,6 @@ export const cadastrarUsuarioAdmin = async (
     // ========================================
     // VALIDAR PARÓQUIA
     // ========================================
-    //
-    // Tanto ADMIN_COMUNIDADE quanto
-    // ADMIN_PAROQUIA precisam nascer
-    // vinculados a uma paróquia.
-    // ========================================
 
     const paroquiaIdNumero = Number(paroquiaId);
 
@@ -1170,7 +1602,8 @@ export const cadastrarUsuarioAdmin = async (
       paroquiaIdNumero <= 0
     ) {
       return res.status(400).json({
-        erro: "A paróquia é obrigatória para o usuário.",
+        erro:
+          "A paróquia é obrigatória para o usuário.",
       });
     }
 
@@ -1189,6 +1622,69 @@ export const cadastrarUsuarioAdmin = async (
         erro: "Paróquia desativada.",
       });
     }
+
+    // ========================================
+    // VALIDAR COMUNIDADE EXISTENTE (OPCIONAL)
+    // ========================================
+
+    let comunidade = null;
+    let comunidadeIdNumero = null;
+
+    const comunidadeFoiInformada =
+      comunidadeId !== undefined &&
+      comunidadeId !== null &&
+      comunidadeId !== "";
+
+    if (comunidadeFoiInformada) {
+      comunidadeIdNumero = Number(comunidadeId);
+
+      if (
+        !Number.isInteger(comunidadeIdNumero) ||
+        comunidadeIdNumero <= 0
+      ) {
+        return res.status(400).json({
+          erro: "ID da comunidade inválido.",
+        });
+      }
+
+      comunidade = await Comunidade.findByPk(
+        comunidadeIdNumero
+      );
+
+      if (!comunidade) {
+        return res.status(404).json({
+          erro: "Comunidade não encontrada.",
+        });
+      }
+
+      if (!comunidade.ativa) {
+        return res.status(403).json({
+          erro:
+            "Não é possível vincular o usuário a uma comunidade desativada.",
+        });
+      }
+
+      if (!comunidade.paroquiaId) {
+        return res.status(409).json({
+          erro:
+            "Esta comunidade ainda não possui vínculo estrutural com uma paróquia. Vincule a comunidade à paróquia antes de criar o usuário.",
+        });
+      }
+
+      if (
+        Number(comunidade.paroquiaId) !==
+        Number(paroquia.id)
+      ) {
+        return res.status(409).json({
+          erro:
+            "A comunidade selecionada não pertence à paróquia escolhida.",
+        });
+      }
+    }
+
+    // ========================================
+    // IMPEDIR E-MAIL DUPLICADO
+    // ========================================
 
     const usuarioExistente =
       await Usuario.findOne({
@@ -1213,27 +1709,17 @@ export const cadastrarUsuarioAdmin = async (
       nome: nomeLimpo,
       email: emailLimpo,
       senha: senhaHash,
-
-      // O SUPER_ADMIN do sistema não é criado
-      // através deste formulário.
       perfil,
-
       paroquiaId: paroquiaIdNumero,
-
-      // ADMIN_COMUNIDADE e ADMIN_PAROQUIA
-      // nascem sem comunidade. No primeiro
-      // acesso, cada perfil cadastra a própria
-      // comunidade. Para ADMIN_PAROQUIA, ela
-      // será a comunidade-sede.
-      comunidadeId: null,
-
+      comunidadeId: comunidadeIdNumero,
       ativo: true,
       licencaStatus,
     });
 
     return res.status(201).json({
-      mensagem:
-        "Usuário cadastrado com sucesso.",
+      mensagem: comunidade
+        ? "Usuário cadastrado e vinculado à comunidade com sucesso."
+        : "Usuário cadastrado com sucesso.",
 
       usuario: {
         id: novoUsuario.id,
@@ -1247,7 +1733,9 @@ export const cadastrarUsuarioAdmin = async (
         comunidadeId:
           novoUsuario.comunidadeId,
 
-        comunidadeNome: null,
+        comunidadeNome: comunidade
+          ? comunidade.nome
+          : null,
 
         ativo: novoUsuario.ativo,
 
