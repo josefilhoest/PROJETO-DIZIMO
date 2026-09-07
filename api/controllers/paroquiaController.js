@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import Comunidade from "../models/Comunidade.js";
 import Usuario from "../models/Usuario.js";
 import Dizimista from "../models/Dizimista.js";
@@ -108,6 +109,118 @@ const normalizarNomeArquivo = (texto) => {
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "")
     .toLowerCase();
+};
+
+// ========================================
+// RESUMO MENSAL DA PARÓQUIA LOGADA
+// ADMIN_PAROQUIA
+// ========================================
+
+export const resumoMensalParoquia = async (
+  req,
+  res
+) => {
+  try {
+    const paroquiaId =
+      obterParoquiaIdUsuario(req);
+
+    if (!paroquiaId) {
+      return res.status(403).json({
+        erro:
+          "Usuário não vinculado a uma paróquia",
+      });
+    }
+
+    const agora = new Date();
+
+    const mesInformado = Number(req.query?.mes);
+    const anoInformado = Number(req.query?.ano);
+
+    const mes =
+      Number.isInteger(mesInformado) &&
+      mesInformado >= 1 &&
+      mesInformado <= 12
+        ? mesInformado
+        : agora.getMonth() + 1;
+
+    const ano =
+      Number.isInteger(anoInformado) &&
+      anoInformado >= 2000 &&
+      anoInformado <= 2100
+        ? anoInformado
+        : agora.getFullYear();
+
+    /*
+     * Primeiro buscamos apenas os IDs das comunidades
+     * pertencentes à paróquia autenticada. Isso mantém
+     * o mesmo isolamento por paroquiaId usado no restante
+     * do controller.
+     */
+    const comunidades = await Comunidade.findAll({
+      where: {
+        paroquiaId,
+      },
+      attributes: ["id"],
+      raw: true,
+    });
+
+    const comunidadeIds = comunidades.map(
+      (comunidade) => comunidade.id
+    );
+
+    if (comunidadeIds.length === 0) {
+      return res.status(200).json({
+        mes,
+        ano,
+        totalArrecadado: 0,
+        comunidadesComFechamento: 0,
+        totalComunidades: 0,
+      });
+    }
+
+    const whereFechamento = {
+      comunidadeId: {
+        [Op.in]: comunidadeIds,
+      },
+      mes,
+      ano,
+    };
+
+    const [
+      totalArrecadado,
+      comunidadesComFechamento,
+    ] = await Promise.all([
+      RegistroMensal.sum("total", {
+        where: whereFechamento,
+      }),
+
+      RegistroMensal.count({
+        where: whereFechamento,
+        distinct: true,
+        col: "comunidadeId",
+      }),
+    ]);
+
+    return res.status(200).json({
+      mes,
+      ano,
+      totalArrecadado: Number(
+        Number(totalArrecadado || 0).toFixed(2)
+      ),
+      comunidadesComFechamento,
+      totalComunidades: comunidadeIds.length,
+    });
+  } catch (error) {
+    console.error(
+      "Erro ao carregar resumo mensal da paróquia:",
+      error
+    );
+
+    return res.status(500).json({
+      erro:
+        "Erro ao carregar o resumo mensal da paróquia",
+    });
+  }
 };
 
 // ========================================

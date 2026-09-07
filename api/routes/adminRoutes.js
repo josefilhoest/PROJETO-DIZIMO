@@ -8,6 +8,7 @@ import {
 } from "../middlewares/adminMiddleware.js";
 
 import {
+  resumoMensalParoquia,
   listarComunidadesParoquia,
   detalharComunidadeParoquia,
   exportarDizimistasComunidadeParoquia,
@@ -22,7 +23,6 @@ import {
   listarParoquias,
   detalharParoquia,
   editarParoquia,
-  excluirParoquia,
   listarComunidades,
   detalharComunidade,
   editarComunidadeAdmin,
@@ -99,17 +99,6 @@ router.patch(
   autenticar,
   somenteSuperAdmin,
   editarParoquia
-);
-
-// ========================================
-// EXCLUIR UMA PARÓQUIA
-// ========================================
-
-router.delete(
-  "/paroquias/:id",
-  autenticar,
-  somenteSuperAdmin,
-  excluirParoquia
 );
 
 // ========================================
@@ -253,6 +242,18 @@ router.get(
   autenticar,
   somenteSuperAdmin,
   resumoDashboard
+);
+
+// ========================================
+// RESUMO MENSAL DA PARÓQUIA LOGADA
+// ADMIN_PAROQUIA
+// ========================================
+
+router.get(
+  "/paroquia/resumo-mensal",
+  autenticar,
+  somenteAdminParoquia,
+  resumoMensalParoquia
 );
 
 // ========================================

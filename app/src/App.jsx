@@ -611,6 +611,14 @@ function App() {
   // ========================================
   // ADMIN_PAROQUIA
   // ========================================
+  //
+  // O PainelParoquia agora possui sua própria
+  // navegação, cabeçalho e acesso à comunidade-sede.
+  // Por isso não usamos o topo-sistema antigo aqui.
+  // Isso elimina o espaço branco acima do painel e
+  // evita duplicar os controles de navegação.
+  //
+  // ========================================
 
   if (
     usuario.perfil ===
@@ -620,75 +628,10 @@ function App() {
       <>
         {avisoSessao}
 
-        <div className="container">
-          <div className="topo-sistema">
-            <div>
-              <h1 className="titulo-sistema">
-                Sistema de Dízimo
-              </h1>
-
-              <p className="usuario-logado">
-                Usuário: {usuario.nome}
-              </p>
-
-              {usuario.paroquiaNome && (
-                <p className="usuario-logado">
-                  Paróquia:{" "}
-                  {usuario.paroquiaNome}
-                </p>
-              )}
-
-              {usuario.comunidadeNome && (
-                <p className="usuario-logado">
-                  Comunidade:{" "}
-                  {usuario.comunidadeNome}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <button
-                type="button"
-                onClick={() =>
-                  setTelaLogada(
-                    telaLogada ===
-                      "paroquia"
-                      ? "sistema"
-                      : "paroquia"
-                  )
-                }
-              >
-                {telaLogada ===
-                  "paroquia"
-                  ? "Minha Comunidade"
-                  : "Painel da Paróquia"}
-              </button>
-
-              <button
-                type="button"
-                className="btn-sair"
-                onClick={sair}
-              >
-                Sair
-              </button>
-            </div>
-          </div>
-
-          {telaLogada ===
-            "paroquia" && (
-              <PainelParoquia
-                usuario={usuario}
-                onSair={sair}
-              />
-            )}
-
-          {telaLogada ===
-            "sistema" && (
-              <Tabela
-                usuario={usuario}
-              />
-            )}
-        </div>
+        <PainelParoquia
+          usuario={usuario}
+          onSair={sair}
+        />
       </>
     );
   }
