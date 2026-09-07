@@ -5,6 +5,42 @@ import api from "../api/api";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
+function IconeAcaoTabela({ tipo }) {
+    const props = {
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: 2,
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+        focusable: "false",
+        "aria-hidden": "true",
+    };
+
+    if (tipo === "editar") {
+        return (
+            <svg {...props}>
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
+            </svg>
+        );
+    }
+
+    if (tipo === "excluir") {
+        return (
+            <svg {...props}>
+                <path d="M3 6h18" />
+                <path d="M8 6V4h8v2" />
+                <path d="M19 6l-1 15H6L5 6" />
+                <path d="M10 11v6" />
+                <path d="M14 11v6" />
+            </svg>
+        );
+    }
+
+    return null;
+}
+
 function Tabela({ usuario }) {
     // =====================================================
     // ESTADOS
@@ -2267,30 +2303,30 @@ function Tabela({ usuario }) {
                                         <td>
                                             <button
                                                 type="button"
-                                                className="btn-editar"
-                                                title="Editar"
-                                                aria-label="Editar"
+                                                className="btn-editar btn-acao-dizimista btn-acao-dizimista-editar"
+                                                title="Editar dizimista"
+                                                aria-label="Editar dizimista"
                                                 onClick={() =>
                                                     editarDizimista(
                                                         dizimista
                                                     )
                                                 }
                                             >
-                                                ✏️
+                                                <IconeAcaoTabela tipo="editar" />
                                             </button>
 
                                             <button
                                                 type="button"
-                                                className="btn-excluir"
-                                                title="Excluir"
-                                                aria-label="Excluir"
+                                                className="btn-excluir btn-acao-dizimista btn-acao-dizimista-excluir"
+                                                title="Excluir dizimista"
+                                                aria-label="Excluir dizimista"
                                                 onClick={() =>
                                                     excluirDizimista(
                                                         dizimista.id
                                                     )
                                                 }
                                             >
-                                                🗑️
+                                                <IconeAcaoTabela tipo="excluir" />
                                             </button>
                                         </td>
                                     </tr>

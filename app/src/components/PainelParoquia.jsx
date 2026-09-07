@@ -3,6 +3,79 @@ import { useEffect, useMemo, useState } from "react";
 import api from "../api/api";
 import Tabela from "./Tabela";
 
+function IconePainel({ tipo, className = "" }) {
+  const props = {
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    className,
+    focusable: "false",
+    "aria-hidden": "true",
+  };
+
+  if (tipo === "inicio") {
+    return (
+      <svg {...props}>
+        <path d="M3 10.5 12 3l9 7.5" />
+        <path d="M5.5 9.5V21h13V9.5" />
+        <path d="M9.5 21v-6h5v6" />
+      </svg>
+    );
+  }
+
+  if (tipo === "igreja") {
+    return (
+      <svg {...props}>
+        <path d="M12 2v4" />
+        <path d="M10 4h4" />
+        <path d="M5 10.5 12 6l7 4.5V21H5Z" />
+        <path d="M9 21v-6h6v6" />
+        <path d="M3 12.5 5 11" />
+        <path d="m19 11 2 1.5" />
+      </svg>
+    );
+  }
+
+  if (tipo === "comunidades") {
+    return (
+      <svg {...props}>
+        <circle cx="9" cy="8" r="3" />
+        <circle cx="17" cy="9" r="2.5" />
+        <path d="M3.5 20c.3-4 2.4-6 5.5-6s5.2 2 5.5 6" />
+        <path d="M14.5 14.5c3.4-.8 5.8 1.1 6 4.5" />
+      </svg>
+    );
+  }
+
+  if (tipo === "relatorios") {
+    return (
+      <svg {...props}>
+        <path d="M4 20V10" />
+        <path d="M10 20V4" />
+        <path d="M16 20v-7" />
+        <path d="M22 20H2" />
+      </svg>
+    );
+  }
+
+  if (tipo === "minha-comunidade") {
+    return (
+      <svg {...props}>
+        <path d="M4 21V7l8-4 8 4v14" />
+        <path d="M8 21v-5h8v5" />
+        <path d="M8 10h.01" />
+        <path d="M12 10h.01" />
+        <path d="M16 10h.01" />
+      </svg>
+    );
+  }
+
+  return null;
+}
+
 function PainelParoquia({ usuario, onSair }) {
   // ========================================
   // ESTADOS
@@ -1030,9 +1103,16 @@ function PainelParoquia({ usuario, onSair }) {
           display: grid;
           place-items: center;
           flex: 0 0 42px;
+          border: 1px solid rgba(255, 255, 255, 0.20);
           border-radius: 12px;
-          background: rgba(255, 255, 255, 0.16);
-          font-size: 1.25rem;
+          background: rgba(255, 255, 255, 0.14);
+          color: #ffffff;
+        }
+
+        .painel-paroquia-marca-svg {
+          width: 25px;
+          height: 25px;
+          display: block;
         }
 
         .painel-paroquia-marca strong {
@@ -1084,9 +1164,22 @@ function PainelParoquia({ usuario, onSair }) {
         }
 
         .painel-paroquia-menu-icone {
-          width: 22px;
-          text-align: center;
-          font-size: 1rem;
+          width: 24px;
+          height: 24px;
+          display: grid;
+          place-items: center;
+          flex: 0 0 24px;
+          color: rgba(255, 255, 255, 0.94);
+        }
+
+        .painel-paroquia-menu-icone svg {
+          width: 20px;
+          height: 20px;
+          display: block;
+        }
+
+        .painel-paroquia-menu-item-ativo .painel-paroquia-menu-icone {
+          color: #ffffff;
         }
 
         .painel-paroquia-sidebar-rodape {
@@ -1210,6 +1303,12 @@ function PainelParoquia({ usuario, onSair }) {
           border-radius: 10px;
           background: #f3faf6;
           color: #0b7148;
+        }
+
+        .painel-paroquia-topbar-svg {
+          width: 22px;
+          height: 22px;
+          display: block;
         }
 
         .painel-paroquia-topbar-texto {
@@ -2112,7 +2211,7 @@ function PainelParoquia({ usuario, onSair }) {
           <div className="painel-paroquia-marca">
             <div className="painel-paroquia-marca-linha">
               <div className="painel-paroquia-marca-icone" aria-hidden="true">
-                ⛪
+                <IconePainel tipo="igreja" className="painel-paroquia-marca-svg" />
               </div>
 
               <div>
@@ -2128,7 +2227,9 @@ function PainelParoquia({ usuario, onSair }) {
               className={`painel-paroquia-menu-item ${secaoAtiva === "inicio" ? "painel-paroquia-menu-item-ativo" : ""}`}
               onClick={() => navegarPainel("inicio", "inicio-painel-paroquia")}
             >
-              <span className="painel-paroquia-menu-icone" aria-hidden="true">🏠</span>
+              <span className="painel-paroquia-menu-icone" aria-hidden="true">
+                <IconePainel tipo="inicio" />
+              </span>
               <span>Início</span>
             </button>
 
@@ -2137,7 +2238,9 @@ function PainelParoquia({ usuario, onSair }) {
               className={`painel-paroquia-menu-item ${secaoAtiva === "paroquia" ? "painel-paroquia-menu-item-ativo" : ""}`}
               onClick={() => navegarPainel("paroquia", "dados-paroquia")}
             >
-              <span className="painel-paroquia-menu-icone" aria-hidden="true">⛪</span>
+              <span className="painel-paroquia-menu-icone" aria-hidden="true">
+                <IconePainel tipo="igreja" />
+              </span>
               <span>Paróquia</span>
             </button>
 
@@ -2146,7 +2249,9 @@ function PainelParoquia({ usuario, onSair }) {
               className={`painel-paroquia-menu-item ${secaoAtiva === "comunidades" ? "painel-paroquia-menu-item-ativo" : ""}`}
               onClick={() => navegarPainel("comunidades", "comunidades-paroquia")}
             >
-              <span className="painel-paroquia-menu-icone" aria-hidden="true">👥</span>
+              <span className="painel-paroquia-menu-icone" aria-hidden="true">
+                <IconePainel tipo="comunidades" />
+              </span>
               <span>Comunidades</span>
             </button>
 
@@ -2155,7 +2260,9 @@ function PainelParoquia({ usuario, onSair }) {
               className={`painel-paroquia-menu-item ${secaoAtiva === "relatorios" ? "painel-paroquia-menu-item-ativo" : ""}`}
               onClick={() => navegarPainel("relatorios", "relatorios-paroquia")}
             >
-              <span className="painel-paroquia-menu-icone" aria-hidden="true">📊</span>
+              <span className="painel-paroquia-menu-icone" aria-hidden="true">
+                <IconePainel tipo="relatorios" />
+              </span>
               <span>Relatórios</span>
             </button>
 
@@ -2164,7 +2271,9 @@ function PainelParoquia({ usuario, onSair }) {
               className={`painel-paroquia-menu-item ${secaoAtiva === "minha-comunidade" ? "painel-paroquia-menu-item-ativo" : ""}`}
               onClick={() => navegarPainel("minha-comunidade")}
             >
-              <span className="painel-paroquia-menu-icone" aria-hidden="true">🏡</span>
+              <span className="painel-paroquia-menu-icone" aria-hidden="true">
+                <IconePainel tipo="minha-comunidade" />
+              </span>
               <span>Minha Comunidade</span>
             </button>
           </nav>
@@ -2180,7 +2289,9 @@ function PainelParoquia({ usuario, onSair }) {
 
           <header className="painel-paroquia-topbar">
             <div className="painel-paroquia-topbar-identidade">
-              <div className="painel-paroquia-topbar-igreja" aria-hidden="true">⛪</div>
+              <div className="painel-paroquia-topbar-igreja" aria-hidden="true">
+                <IconePainel tipo="igreja" className="painel-paroquia-topbar-svg" />
+              </div>
 
               <div className="painel-paroquia-topbar-texto">
                 <strong>
