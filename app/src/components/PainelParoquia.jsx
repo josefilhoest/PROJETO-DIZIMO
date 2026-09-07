@@ -92,6 +92,8 @@ function PainelParoquia({ usuario, onSair }) {
 
   const [resumoMensal, setResumoMensal] = useState({
     totalArrecadado: 0,
+    valorParoquia: 0,
+    valorComunidades: 0,
     comunidadesComFechamento: 0,
     totalComunidades: 0,
     mes: new Date().getMonth() + 1,
@@ -169,6 +171,16 @@ function PainelParoquia({ usuario, onSair }) {
     setCarregandoFechamento,
   ] = useState(false);
 
+  const [
+    gerandoBackupFechamentoId,
+    setGerandoBackupFechamentoId,
+  ] = useState(null);
+
+  const [
+    excluindoFechamentoId,
+    setExcluindoFechamentoId,
+  ] = useState(null);
+
 
   const [
     carregandoImpressaoComunidadeId,
@@ -200,6 +212,12 @@ function PainelParoquia({ usuario, onSair }) {
       setResumoMensal({
         totalArrecadado: Number(
           resposta.data?.totalArrecadado || 0
+        ),
+        valorParoquia: Number(
+          resposta.data?.valorParoquia || 0
+        ),
+        valorComunidades: Number(
+          resposta.data?.valorComunidades || 0
         ),
         comunidadesComFechamento: Number(
           resposta.data?.comunidadesComFechamento || 0
@@ -747,6 +765,200 @@ function PainelParoquia({ usuario, onSair }) {
 
   const fecharFechamento = () => {
     setFechamentoDetalhado(null);
+  };
+
+  // ========================================
+  // BACKUP DE UM FECHAMENTO MENSAL
+  // ========================================
+
+  const gerarBackupFechamento = async (
+    registro
+  ) => {
+    if (
+      !historicoComunidadeId ||
+      !registro?.id ||
+      gerandoBackupFechamentoId ||
+      excluindoFechamentoId
+    ) {
+      return;
+    }
+
+    try {
+      setGerandoBackupFechamentoId(
+        registro.id
+      );
+
+      const resposta = await api.get(
+        `/admin/paroquia/comunidades/${historicoComunidadeId}/historico/${registro.id}/backup`,
+        {
+          responseType: "blob",
+        }
+      );
+
+      const nomeArquivo =
+        obterNomeArquivo(
+          resposta.headers?.[
+          "content-disposition"
+          ],
+          `fechamento-${registro.ano}-${String(
+            registro.mes
+          ).padStart(2, "0")}.json`
+        );
+
+      const tipoConteudo =
+        resposta.headers?.[
+        "content-type"
+        ] ||
+        "application/json;charset=utf-8";
+
+      const blob = new Blob(
+        [resposta.data],
+        {
+          type: tipoConteudo,
+        }
+      );
+
+      baixarBlob(
+        blob,
+        nomeArquivo
+      );
+
+    } catch (error) {
+      console.error(
+        "Erro ao gerar backup do fechamento mensal:",
+        error
+      );
+
+      if (error.response?.status === 401) {
+        alert(
+          "Sua sessão expirou. Faça login novamente."
+        );
+        return;
+      }
+
+      if (error.response?.status === 403) {
+        alert(
+          error.response?.data?.erro ||
+          "Você não possui permissão para gerar este backup."
+        );
+        return;
+      }
+
+      if (error.response?.status === 404) {
+        alert(
+          error.response?.data?.erro ||
+          "Fechamento mensal não encontrado."
+        );
+        return;
+      }
+
+      alert(
+        "Não foi possível gerar o backup deste fechamento."
+      );
+
+    } finally {
+      setGerandoBackupFechamentoId(
+        null
+      );
+    }
+  };
+
+  // ========================================
+  // EXCLUIR UM FECHAMENTO MENSAL
+  // ========================================
+
+  const excluirFechamento = async (
+    registro
+  ) => {
+    if (
+      !historicoComunidadeId ||
+      !registro?.id ||
+      excluindoFechamentoId ||
+      gerandoBackupFechamentoId
+    ) {
+      return;
+    }
+
+    const periodo = formatarMesAno(
+      registro.mes,
+      registro.ano
+    );
+
+    const confirmou = window.confirm(
+      `Tem certeza que deseja excluir o fechamento de ${periodo}?\n\n` +
+      "Esta ação removerá o fechamento mensal e os itens históricos vinculados a ele."
+    );
+
+    if (!confirmou) {
+      return;
+    }
+
+    try {
+      setExcluindoFechamentoId(
+        registro.id
+      );
+
+      await api.delete(
+        `/admin/paroquia/comunidades/${historicoComunidadeId}/historico/${registro.id}`
+      );
+
+      if (
+        fechamentoDetalhado
+          ?.fechamento?.id === registro.id
+      ) {
+        setFechamentoDetalhado(null);
+      }
+
+      await Promise.all([
+        carregarResumoMensal(),
+        abrirHistoricoComunidade({
+          id: historicoComunidadeId,
+        }),
+      ]);
+
+      alert(
+        "Fechamento mensal excluído com sucesso."
+      );
+
+    } catch (error) {
+      console.error(
+        "Erro ao excluir fechamento mensal:",
+        error
+      );
+
+      if (error.response?.status === 401) {
+        alert(
+          "Sua sessão expirou. Faça login novamente."
+        );
+        return;
+      }
+
+      if (error.response?.status === 403) {
+        alert(
+          error.response?.data?.erro ||
+          "Você não possui permissão para excluir este fechamento."
+        );
+        return;
+      }
+
+      if (error.response?.status === 404) {
+        alert(
+          error.response?.data?.erro ||
+          "Fechamento mensal não encontrado."
+        );
+        return;
+      }
+
+      alert(
+        error.response?.data?.erro ||
+        "Não foi possível excluir este fechamento."
+      );
+
+    } finally {
+      setExcluindoFechamentoId(
+        null
+      );
+    }
   };
 
   // ========================================
@@ -1404,7 +1616,7 @@ function PainelParoquia({ usuario, onSair }) {
 
         .painel-paroquia-resumo {
           display: grid;
-          grid-template-columns: repeat(4, minmax(150px, 1fr));
+          grid-template-columns: repeat(3, minmax(170px, 1fr));
           gap: 14px;
           margin-bottom: 18px;
         }
@@ -1646,6 +1858,37 @@ function PainelParoquia({ usuario, onSair }) {
           align-items: center;
           gap: 12px;
           flex-wrap: wrap;
+        }
+
+        .painel-paroquia-historico-valores {
+          display: grid;
+          gap: 4px;
+          margin-top: 7px;
+          color: #566b62;
+          font-size: 0.84rem;
+        }
+
+        .painel-paroquia-historico-acoes {
+          display: flex;
+          gap: 7px;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+
+        .painel-paroquia-btn-backup {
+          background: #eef8f3;
+          border-color: #acd2c0;
+        }
+
+        .painel-paroquia-btn-excluir {
+          background: #fff4f4;
+          border-color: #e7bcbc;
+          color: #9f3535;
+        }
+
+        .painel-paroquia-btn-excluir:hover:not(:disabled) {
+          background: #fde8e8;
+          border-color: #d99797;
         }
 
         .painel-paroquia-fechamento {
@@ -2446,6 +2689,26 @@ function PainelParoquia({ usuario, onSair }) {
             </small>
           </div>
 
+          <div className="painel-paroquia-card painel-paroquia-card-arrecadado">
+            <span>Paróquia — 50%</span>
+            <strong>
+              {carregandoResumoMensal
+                ? "Carregando..."
+                : formatarMoeda(resumoMensal.valorParoquia)}
+            </strong>
+            <small>Parte mensal destinada à paróquia</small>
+          </div>
+
+          <div className="painel-paroquia-card painel-paroquia-card-arrecadado">
+            <span>Comunidades — 50%</span>
+            <strong>
+              {carregandoResumoMensal
+                ? "Carregando..."
+                : formatarMoeda(resumoMensal.valorComunidades)}
+            </strong>
+            <small>Parte mensal que permanece nas comunidades</small>
+          </div>
+
           <div className="painel-paroquia-card">
             <span>Comunidades ativas</span>
             <strong>{comunidadesAtivas}</strong>
@@ -2803,37 +3066,77 @@ function PainelParoquia({ usuario, onSair }) {
                               )}
                             </strong>
 
-                            <div>
-                              Total:{" "}
-                              {formatarMoeda(
-                                registro.total
-                              )}
-                            </div>
-
-                            <div>
-                              Data:{" "}
-                              {formatarData(
-                                registro.data
-                              )}
+                            <div className="painel-paroquia-historico-valores">
+                              <span>
+                                Total: {formatarMoeda(registro.total)}
+                              </span>
+                              <span>
+                                Paróquia (50%): {formatarMoeda(registro.valorParoquia)}
+                              </span>
+                              <span>
+                                Comunidade (50%): {formatarMoeda(registro.valorComunidade)}
+                              </span>
+                              <span>
+                                Data: {formatarData(registro.data)}
+                              </span>
                             </div>
                           </div>
 
-                          <button
-                            type="button"
-                            className="painel-paroquia-btn"
-                            onClick={() =>
-                              abrirFechamentoMensal(
-                                registro
-                              )
-                            }
-                            disabled={
-                              carregandoFechamento
-                            }
-                          >
-                            {carregandoFechamento
-                              ? "Carregando..."
-                              : "Ver fechamento"}
-                          </button>
+                          <div className="painel-paroquia-historico-acoes">
+                            <button
+                              type="button"
+                              className="painel-paroquia-btn"
+                              onClick={() =>
+                                abrirFechamentoMensal(
+                                  registro
+                                )
+                              }
+                              disabled={
+                                carregandoFechamento ||
+                                excluindoFechamentoId === registro.id
+                              }
+                            >
+                              {carregandoFechamento
+                                ? "Carregando..."
+                                : "Ver fechamento"}
+                            </button>
+
+                            <button
+                              type="button"
+                              className="painel-paroquia-btn painel-paroquia-btn-backup"
+                              onClick={() =>
+                                gerarBackupFechamento(
+                                  registro
+                                )
+                              }
+                              disabled={
+                                gerandoBackupFechamentoId === registro.id ||
+                                excluindoFechamentoId === registro.id
+                              }
+                            >
+                              {gerandoBackupFechamentoId === registro.id
+                                ? "Gerando..."
+                                : "Backup"}
+                            </button>
+
+                            <button
+                              type="button"
+                              className="painel-paroquia-btn painel-paroquia-btn-excluir"
+                              onClick={() =>
+                                excluirFechamento(
+                                  registro
+                                )
+                              }
+                              disabled={
+                                excluindoFechamentoId === registro.id ||
+                                gerandoBackupFechamentoId === registro.id
+                              }
+                            >
+                              {excluindoFechamentoId === registro.id
+                                ? "Excluindo..."
+                                : "Excluir"}
+                            </button>
+                          </div>
                         </div>
                       )
                     )}
@@ -2877,6 +3180,26 @@ function PainelParoquia({ usuario, onSair }) {
                         {formatarMoeda(
                           fechamentoDetalhado
                             .fechamento?.total
+                        )}
+                      </strong>
+                    </div>
+
+                    <div className="painel-paroquia-detalhe-item">
+                      <span>Paróquia — 50%</span>
+                      <strong>
+                        {formatarMoeda(
+                          fechamentoDetalhado
+                            .fechamento?.valorParoquia
+                        )}
+                      </strong>
+                    </div>
+
+                    <div className="painel-paroquia-detalhe-item">
+                      <span>Comunidade — 50%</span>
+                      <strong>
+                        {formatarMoeda(
+                          fechamentoDetalhado
+                            .fechamento?.valorComunidade
                         )}
                       </strong>
                     </div>

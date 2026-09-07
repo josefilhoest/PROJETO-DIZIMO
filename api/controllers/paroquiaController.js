@@ -1,4 +1,5 @@
 import { Op } from "sequelize";
+import sequelize from "../database/database.js";
 import Comunidade from "../models/Comunidade.js";
 import Usuario from "../models/Usuario.js";
 import Dizimista from "../models/Dizimista.js";
@@ -173,6 +174,8 @@ export const resumoMensalParoquia = async (
         mes,
         ano,
         totalArrecadado: 0,
+        valorParoquia: 0,
+        valorComunidades: 0,
         comunidadesComFechamento: 0,
         totalComunidades: 0,
       });
@@ -201,12 +204,24 @@ export const resumoMensalParoquia = async (
       }),
     ]);
 
+    const totalArrecadadoNumero = Number(
+      Number(totalArrecadado || 0).toFixed(2)
+    );
+
+    const valorParoquia = Number(
+      (totalArrecadadoNumero * 0.5).toFixed(2)
+    );
+
+    const valorComunidades = Number(
+      (totalArrecadadoNumero - valorParoquia).toFixed(2)
+    );
+
     return res.status(200).json({
       mes,
       ano,
-      totalArrecadado: Number(
-        Number(totalArrecadado || 0).toFixed(2)
-      ),
+      totalArrecadado: totalArrecadadoNumero,
+      valorParoquia,
+      valorComunidades,
       comunidadesComFechamento,
       totalComunidades: comunidadeIds.length,
     });
@@ -978,7 +993,18 @@ export const listarHistoricoComunidadeParoquia =
           fechamentos.length,
 
         historico:
-          fechamentos,
+          fechamentos.map((registro) => {
+            const dados = registro.toJSON();
+            const total = Number(dados.total || 0);
+            const valorParoquia = Number((total * 0.5).toFixed(2));
+            const valorComunidade = Number((total - valorParoquia).toFixed(2));
+
+            return {
+              ...dados,
+              valorParoquia,
+              valorComunidade,
+            };
+          }),
       });
 
     } catch (error) {
@@ -1126,6 +1152,15 @@ export const detalharHistoricoComunidadeParoquia =
           mes: registro.mes,
           ano: registro.ano,
           total: registro.total,
+          valorParoquia: Number(
+            (Number(registro.total || 0) * 0.5).toFixed(2)
+          ),
+          valorComunidade: Number(
+            (
+              Number(registro.total || 0) -
+              Number((Number(registro.total || 0) * 0.5).toFixed(2))
+            ).toFixed(2)
+          ),
           equipe_comunidade:
             registro.equipe_comunidade,
           conferido_em:
@@ -1151,6 +1186,364 @@ export const detalharHistoricoComunidadeParoquia =
       return res.status(500).json({
         erro:
           "Erro ao detalhar o histórico mensal da comunidade",
+      });
+    }
+  };
+
+// ========================================
+// BACKUP DE UM FECHAMENTO MENSAL
+// ADMIN_PAROQUIA
+// ========================================
+
+export const gerarBackupFechamentoMensalParoquia =
+  async (req, res) => {
+    try {
+      const paroquiaId =
+        obterParoquiaIdUsuario(req);
+
+      const comunidadeId =
+        obterComunidadeId(req);
+
+      const registroId = Number(
+        req.params.registroId
+      );
+
+      if (!paroquiaId) {
+        return res.status(403).json({
+          erro:
+            "Usuário não vinculado a uma paróquia",
+        });
+      }
+
+      if (!comunidadeId) {
+        return res.status(400).json({
+          erro:
+            "ID da comunidade inválido",
+        });
+      }
+
+      if (
+        !Number.isInteger(registroId) ||
+        registroId <= 0
+      ) {
+        return res.status(400).json({
+          erro:
+            "ID do fechamento mensal inválido",
+        });
+      }
+
+      const comunidade =
+        await buscarComunidadeDaParoquia(
+          comunidadeId,
+          paroquiaId
+        );
+
+      if (!comunidade) {
+        return res.status(404).json({
+          erro:
+            "Comunidade não encontrada nesta paróquia",
+        });
+      }
+
+      const registro =
+        await RegistroMensal.findOne({
+          where: {
+            id: registroId,
+            comunidadeId,
+          },
+        });
+
+      if (!registro) {
+        return res.status(404).json({
+          erro:
+            "Fechamento mensal não encontrado nesta comunidade",
+        });
+      }
+
+      if (
+        registro.mes === null ||
+        registro.ano === null
+      ) {
+        return res.status(404).json({
+          erro:
+            "Este registro não corresponde a um fechamento mensal",
+        });
+      }
+
+      const itens =
+        await RegistroMensalItem.findAll({
+          where: {
+            registroMensalId: registro.id,
+            comunidadeId,
+          },
+          attributes: [
+            "id",
+            "registroMensalId",
+            "comunidadeId",
+            "dizimistaId",
+            "numero",
+            "folha",
+            "nome",
+            "valor",
+            "createdAt",
+            "updatedAt",
+          ],
+          order: [
+            ["folha", "ASC"],
+            ["numero", "ASC"],
+          ],
+        });
+
+      const total = Number(
+        registro.total || 0
+      );
+
+      const valorParoquia = Number(
+        (total * 0.5).toFixed(2)
+      );
+
+      const valorComunidade = Number(
+        (total - valorParoquia).toFixed(2)
+      );
+
+      const backup = {
+        metadata: {
+          tipo:
+            "BACKUP_FECHAMENTO_MENSAL_ADMIN_PAROQUIA_V1",
+          versao: 1,
+          geradoEm:
+            new Date().toISOString(),
+          paroquiaId,
+          comunidadeId,
+          registroMensalId: registro.id,
+        },
+
+        paroquia: {
+          id: paroquiaId,
+          nome:
+            req.usuario?.paroquiaNome ||
+            comunidade.paroquia ||
+            null,
+        },
+
+        comunidade: {
+          id: comunidade.id,
+          nome: comunidade.nome,
+          cidade: comunidade.cidade,
+          paroquiaId:
+            comunidade.paroquiaId,
+        },
+
+        fechamento: {
+          ...registro.toJSON(),
+          partilha: {
+            percentualParoquia: 50,
+            percentualComunidade: 50,
+            valorParoquia,
+            valorComunidade,
+          },
+        },
+
+        quantidadeDizimistas:
+          itens.length,
+
+        itens: itens.map(
+          (item) => item.toJSON()
+        ),
+      };
+
+      const nomeComunidade =
+        normalizarNomeArquivo(
+          comunidade.nome
+        );
+
+      const mes = String(
+        registro.mes
+      ).padStart(2, "0");
+
+      const nomeArquivo =
+        `fechamento-${nomeComunidade}-${registro.ano}-${mes}.json`;
+
+      res.setHeader(
+        "Content-Type",
+        "application/json; charset=utf-8"
+      );
+
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${nomeArquivo}"`
+      );
+
+      res.setHeader(
+        "Cache-Control",
+        "no-store"
+      );
+
+      return res
+        .status(200)
+        .send(
+          JSON.stringify(
+            backup,
+            null,
+            2
+          )
+        );
+
+    } catch (error) {
+      console.error(
+        "Erro ao gerar backup do fechamento mensal pela paróquia:",
+        error
+      );
+
+      return res.status(500).json({
+        erro:
+          "Erro ao gerar backup do fechamento mensal",
+      });
+    }
+  };
+
+// ========================================
+// EXCLUIR UM FECHAMENTO MENSAL
+// ADMIN_PAROQUIA
+// ========================================
+
+export const excluirFechamentoMensalParoquia =
+  async (req, res) => {
+    let transaction = null;
+
+    try {
+      transaction =
+        await sequelize.transaction();
+
+      const paroquiaId =
+        obterParoquiaIdUsuario(req);
+
+      const comunidadeId =
+        obterComunidadeId(req);
+
+      const registroId = Number(
+        req.params.registroId
+      );
+
+      if (!paroquiaId) {
+        await transaction.rollback();
+
+        return res.status(403).json({
+          erro:
+            "Usuário não vinculado a uma paróquia",
+        });
+      }
+
+      if (!comunidadeId) {
+        await transaction.rollback();
+
+        return res.status(400).json({
+          erro:
+            "ID da comunidade inválido",
+        });
+      }
+
+      if (
+        !Number.isInteger(registroId) ||
+        registroId <= 0
+      ) {
+        await transaction.rollback();
+
+        return res.status(400).json({
+          erro:
+            "ID do fechamento mensal inválido",
+        });
+      }
+
+      const comunidade =
+        await Comunidade.findOne({
+          where: {
+            id: comunidadeId,
+            paroquiaId,
+          },
+          transaction,
+        });
+
+      if (!comunidade) {
+        await transaction.rollback();
+
+        return res.status(404).json({
+          erro:
+            "Comunidade não encontrada nesta paróquia",
+        });
+      }
+
+      const registro =
+        await RegistroMensal.findOne({
+          where: {
+            id: registroId,
+            comunidadeId,
+          },
+          transaction,
+        });
+
+      if (!registro) {
+        await transaction.rollback();
+
+        return res.status(404).json({
+          erro:
+            "Fechamento mensal não encontrado nesta comunidade",
+        });
+      }
+
+      if (
+        registro.mes === null ||
+        registro.ano === null
+      ) {
+        await transaction.rollback();
+
+        return res.status(400).json({
+          erro:
+            "Este registro não corresponde a um fechamento mensal",
+        });
+      }
+
+      await RegistroMensalItem.destroy({
+        where: {
+          registroMensalId: registro.id,
+          comunidadeId,
+        },
+        transaction,
+      });
+
+      await RegistroMensal.destroy({
+        where: {
+          id: registro.id,
+          comunidadeId,
+        },
+        transaction,
+      });
+
+      await transaction.commit();
+
+      return res.status(200).json({
+        mensagem:
+          "Fechamento mensal excluído com sucesso",
+        registroId,
+        comunidadeId,
+      });
+
+    } catch (error) {
+      if (
+        transaction &&
+        !transaction.finished
+      ) {
+        await transaction.rollback();
+      }
+
+      console.error(
+        "Erro ao excluir fechamento mensal pela paróquia:",
+        error
+      );
+
+      return res.status(500).json({
+        erro:
+          "Erro ao excluir o fechamento mensal",
       });
     }
   };

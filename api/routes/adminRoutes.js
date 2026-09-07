@@ -15,6 +15,8 @@ import {
   gerarBackupComunidadeParoquia,
   listarHistoricoComunidadeParoquia,
   detalharHistoricoComunidadeParoquia,
+  gerarBackupFechamentoMensalParoquia,
+  excluirFechamentoMensalParoquia,
   listarDizimistasComunidadeParoquia,
 } from "../controllers/paroquiaController.js";
 
@@ -324,6 +326,30 @@ router.get(
   autenticar,
   somenteAdminParoquia,
   detalharHistoricoComunidadeParoquia
+);
+
+// ========================================
+// BACKUP DE UM FECHAMENTO MENSAL
+// ADMIN_PAROQUIA
+// ========================================
+
+router.get(
+  "/paroquia/comunidades/:id/historico/:registroId/backup",
+  autenticar,
+  somenteAdminParoquia,
+  gerarBackupFechamentoMensalParoquia
+);
+
+// ========================================
+// EXCLUIR UM FECHAMENTO MENSAL
+// ADMIN_PAROQUIA
+// ========================================
+
+router.delete(
+  "/paroquia/comunidades/:id/historico/:registroId",
+  autenticar,
+  somenteAdminParoquia,
+  excluirFechamentoMensalParoquia
 );
 
 // ========================================
