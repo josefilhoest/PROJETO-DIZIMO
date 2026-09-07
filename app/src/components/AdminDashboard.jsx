@@ -1,6 +1,70 @@
 import { useEffect, useState } from "react";
 import api from "../api/api";
 
+
+function AdminIcon({ nome, tamanho = 20 }) {
+    const props = {
+        width: tamanho,
+        height: tamanho,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: 1.8,
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+        "aria-hidden": "true",
+        focusable: "false",
+    };
+
+    const icones = {
+        painel: (
+            <>
+                <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                <rect x="14" y="14" width="7" height="7" rx="1.5" />
+            </>
+        ),
+        paroquia: (
+            <>
+                <path d="M12 3v3" />
+                <path d="M10.5 4.5h3" />
+                <path d="M5 21V10l7-4 7 4v11" />
+                <path d="M9 21v-5a3 3 0 0 1 6 0v5" />
+                <path d="M3 21h18" />
+            </>
+        ),
+        comunidades: (
+            <>
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </>
+        ),
+        usuarios: (
+            <>
+                <circle cx="9" cy="8" r="4" />
+                <path d="M3 21v-2a6 6 0 0 1 12 0v2" />
+                <path d="M16 11h5" />
+                <path d="M18.5 8.5v5" />
+            </>
+        ),
+        escudo: (
+            <>
+                <path d="M12 3 5 6v5c0 4.6 2.9 8.5 7 10 4.1-1.5 7-5.4 7-10V6l-7-3Z" />
+                <path d="m9.5 12 1.7 1.7 3.7-4" />
+            </>
+        ),
+    };
+
+    return (
+        <svg {...props}>
+            {icones[nome] || icones.painel}
+        </svg>
+    );
+}
+
 function AdminDashboard() {
     // ========================================
     // USUÁRIO LOGADO
@@ -2298,48 +2362,89 @@ function AdminDashboard() {
     return (
         <div className="admin-dashboard">
 
-            <h2>Painel Administrativo</h2>
+            <div className="admin-dashboard-cabecalho">
+                <div className="admin-dashboard-titulo">
+                    <div className="admin-dashboard-icone">
+                        <AdminIcon nome="escudo" tamanho={24} />
+                    </div>
+
+                    <div>
+                        <span className="admin-dashboard-legenda">
+                            SUPER ADMIN
+                        </span>
+
+                        <h2>Painel Administrativo</h2>
+
+                        <p>
+                            Gestão geral de paróquias, comunidades,
+                            usuários e licenças.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="admin-dashboard-usuario">
+                    <span>Administrador do sistema</span>
+                    <strong>
+                        {usuarioLogado?.nome || "Super Admin"}
+                    </strong>
+                    {usuarioLogado?.email && (
+                        <small>{usuarioLogado.email}</small>
+                    )}
+                </div>
+            </div>
 
             {/* =====================================
           MENU
       ===================================== */}
 
-            <div className="admin-menu">
+            <div className="admin-menu" role="navigation" aria-label="Navegação administrativa">
 
                 <button
                     type="button"
+                    className={`admin-menu-item ${aba === "visao-geral" ? "ativo" : ""}`}
+                    aria-current={aba === "visao-geral" ? "page" : undefined}
                     onClick={() =>
                         setAba("visao-geral")
                     }
                 >
-                    Visão Geral
+                    <AdminIcon nome="painel" />
+                    <span>Visão Geral</span>
                 </button>
 
                 <button
                     type="button"
+                    className={`admin-menu-item ${aba === "paroquias" ? "ativo" : ""}`}
+                    aria-current={aba === "paroquias" ? "page" : undefined}
                     onClick={() =>
                         setAba("paroquias")
                     }
                 >
-                    Paróquias
+                    <AdminIcon nome="paroquia" />
+                    <span>Paróquias</span>
                 </button>
 
                 <button
                     type="button"
+                    className={`admin-menu-item ${aba === "comunidades" ? "ativo" : ""}`}
+                    aria-current={aba === "comunidades" ? "page" : undefined}
                     onClick={() =>
                         setAba("comunidades")
                     }
                 >
-                    Comunidades
+                    <AdminIcon nome="comunidades" />
+                    <span>Comunidades</span>
                 </button>
 
                 <button
                     type="button"
+                    className={`admin-menu-item ${aba === "usuarios" ? "ativo" : ""}`}
+                    aria-current={aba === "usuarios" ? "page" : undefined}
                     onClick={() =>
                         setAba("usuarios")
                     }
                 >
-                    Usuários / Licenças
+                    <AdminIcon nome="usuarios" />
+                    <span>Usuários / Licenças</span>
                 </button>
 
             </div>
@@ -2362,7 +2467,7 @@ function AdminDashboard() {
 
                     <div className="admin-cards">
 
-                        <div className="admin-card">
+                        <div className="admin-card admin-card-paroquias">
                             <h3>Paróquias</h3>
                             <strong>
                                 {totalParoquias}
@@ -2375,7 +2480,7 @@ function AdminDashboard() {
                             </span>
                         </div>
 
-                        <div className="admin-card">
+                        <div className="admin-card admin-card-comunidades">
                             <h3>Comunidades</h3>
                             <strong>
                                 {resumo?.totalComunidades ?? 0}
@@ -2385,7 +2490,7 @@ function AdminDashboard() {
                             </span>
                         </div>
 
-                        <div className="admin-card">
+                        <div className="admin-card admin-card-usuarios">
                             <h3>Usuários</h3>
                             <strong>
                                 {resumo?.totalUsuarios ?? usuarios.length}
@@ -2395,7 +2500,7 @@ function AdminDashboard() {
                             </span>
                         </div>
 
-                        <div className="admin-card">
+                        <div className="admin-card admin-card-admin-paroquia">
                             <h3>Admin Paróquia</h3>
                             <strong>
                                 {totalAdminParoquia}
@@ -2405,7 +2510,7 @@ function AdminDashboard() {
                             </span>
                         </div>
 
-                        <div className="admin-card">
+                        <div className="admin-card admin-card-admin-comunidade">
                             <h3>Admin Comunidade</h3>
                             <strong>
                                 {totalAdminComunidade}
@@ -2415,7 +2520,7 @@ function AdminDashboard() {
                             </span>
                         </div>
 
-                        <div className="admin-card">
+                        <div className="admin-card admin-card-licencas-ativas">
                             <h3>Licenças Ativas</h3>
                             <strong>
                                 {licencasAtivas}
@@ -2425,7 +2530,7 @@ function AdminDashboard() {
                             </span>
                         </div>
 
-                        <div className="admin-card">
+                        <div className="admin-card admin-card-licencas-bloqueadas">
                             <h3>Licenças Bloqueadas</h3>
                             <strong>
                                 {licencasBloqueadas}
@@ -2435,7 +2540,7 @@ function AdminDashboard() {
                             </span>
                         </div>
 
-                        <div className="admin-card">
+                        <div className="admin-card admin-card-usuarios-inativos">
                             <h3>Usuários Inativos</h3>
                             <strong>
                                 {usuariosInativos}
@@ -2445,7 +2550,7 @@ function AdminDashboard() {
                             </span>
                         </div>
 
-                        <div className="admin-card">
+                        <div className="admin-card admin-card-dizimistas">
                             <h3>Dizimistas</h3>
                             <strong>
                                 {resumo?.totalDizimistas ?? 0}
