@@ -4472,3 +4472,75 @@ tfoot td:nth-child(3) {
     grid-template-columns: 1fr;
   }
 }
+
+/* =====================================================
+   CORREÇÃO FINAL - IMPRESSÃO DA MINHA COMUNIDADE
+   NO PAINEL DA PARÓQUIA
+
+   Motivo:
+   o painel administrativo usa .admin-dashboard e havia
+   uma regra de impressão que ocultava esse contêiner
+   inteiro. Quando a Tabela fica dentro dele, a ficha
+   também desaparece e a prévia fica em branco.
+
+   Esta regra mantém o SUPER_ADMIN protegido pela regra
+   antiga quando não existe uma ficha .registro na tela,
+   mas libera e isola somente a ficha quando a Tabela
+   estiver aberta dentro do painel da paróquia.
+   ===================================================== */
+
+@media print {
+
+  /*
+    Se existe uma ficha de comunidade (.registro),
+    o contêiner pai não pode permanecer com display:none.
+  */
+  body:has(.registro) .admin-dashboard {
+    display: block !important;
+
+    width: 100% !important;
+    max-width: none !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    transform: none !important;
+
+    background: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /*
+    Na impressão da ficha, escondemos visualmente tudo
+    que pertence ao painel e liberamos somente a ficha.
+    Isso evita imprimir menu lateral, cabeçalhos e cards.
+  */
+  body:has(.registro) * {
+    visibility: hidden !important;
+  }
+
+  body:has(.registro) .registro,
+  body:has(.registro) .registro * {
+    visibility: visible !important;
+  }
+
+  /*
+    Retira a ficha do fluxo visual do painel para que
+    comece corretamente no topo da página A4.
+  */
+  body:has(.registro) .registro {
+    position: absolute !important;
+
+    top: 0 !important;
+    left: 0 !important;
+
+    width: 100% !important;
+    max-width: none !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: #ffffff !important;
+  }
+}
