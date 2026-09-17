@@ -4770,9 +4770,8 @@ tfoot td:nth-child(3) {
     height: auto;
     min-height: 100vh;
     background:
-      linear-gradient(135deg,
-        rgba(30, 82, 52, 0.58),
-        rgba(210, 203, 157, 0.22)),
+      linear-gradient(rgba(18, 72, 48, 0.74),
+        rgba(32, 88, 59, 0.68)),
       url("/fundo-paineis.jpg") center / cover fixed no-repeat;
   }
 
