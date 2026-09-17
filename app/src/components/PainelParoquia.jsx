@@ -2445,6 +2445,251 @@ function PainelParoquia({ usuario, onSair }) {
             margin-bottom: 2px;
           }
         }
+
+        /* ==============================================
+           V11 - FUNDO DA IGREJA + PAINÉIS DE VIDRO
+
+           Somente aparência em tela. As regras de
+           impressão acima permanecem independentes.
+           ============================================== */
+
+        @media screen {
+          .painel-paroquia-app {
+            position: relative;
+            isolation: isolate;
+            background:
+              linear-gradient(135deg, rgba(34, 85, 55, 0.58), rgba(220, 206, 151, 0.22)),
+              url("/fundo-paineis.jpg") center / cover fixed no-repeat;
+          }
+
+          .painel-paroquia-app::before {
+            content: "";
+            position: fixed;
+            z-index: -1;
+            inset: 0;
+            pointer-events: none;
+            background:
+              linear-gradient(180deg, rgba(226, 239, 222, 0.12), rgba(8, 57, 38, 0.18)),
+              rgba(34, 82, 52, 0.08);
+          }
+
+          .painel-paroquia-layout {
+            border-color: rgba(255, 255, 255, 0.55);
+            background: rgba(237, 246, 238, 0.20);
+            box-shadow:
+              0 18px 44px rgba(5, 45, 29, 0.24),
+              inset 0 1px 0 rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+          }
+
+          .painel-paroquia-sidebar {
+            border-right: 1px solid rgba(255, 255, 255, 0.24);
+            background: linear-gradient(180deg, rgba(7, 105, 66, 0.94), rgba(4, 73, 47, 0.94));
+            box-shadow: 10px 0 28px rgba(4, 54, 34, 0.13);
+            backdrop-filter: blur(16px) saturate(115%);
+            -webkit-backdrop-filter: blur(16px) saturate(115%);
+          }
+
+          .painel-paroquia-marca-icone,
+          .painel-paroquia-menu-item-ativo {
+            border-color: rgba(255, 255, 255, 0.30);
+            background: rgba(255, 255, 255, 0.17);
+          }
+
+          .painel-paroquia-menu-item:hover {
+            background: rgba(255, 255, 255, 0.13);
+          }
+
+          .painel-paroquia-area-principal {
+            background: rgba(231, 242, 233, 0.18);
+          }
+
+          .painel-paroquia-topbar {
+            border-bottom-color: rgba(255, 255, 255, 0.58);
+            background: linear-gradient(110deg, rgba(237, 247, 236, 0.84), rgba(255, 255, 255, 0.54));
+            box-shadow: 0 8px 26px rgba(7, 55, 37, 0.11);
+            backdrop-filter: blur(16px) saturate(118%);
+            -webkit-backdrop-filter: blur(16px) saturate(118%);
+          }
+
+          .painel-paroquia-topbar-igreja {
+            border-color: rgba(255, 255, 255, 0.72);
+            background: rgba(244, 251, 243, 0.72);
+          }
+
+          .painel-paroquia-avatar {
+            border: 1px solid rgba(255, 255, 255, 0.58);
+            background: linear-gradient(145deg, #11865a, #075c3b);
+            box-shadow: 0 6px 16px rgba(5, 76, 48, 0.20);
+          }
+
+          .painel-paroquia-sair,
+          .painel-paroquia-voltar,
+          .painel-paroquia-btn,
+          .painel-paroquia-fechar,
+          .painel-paroquia-ferramenta-aviso button {
+            border-color: rgba(255, 255, 255, 0.68);
+            background: rgba(246, 251, 245, 0.76);
+            box-shadow: 0 5px 14px rgba(8, 58, 39, 0.08);
+            backdrop-filter: blur(9px);
+            -webkit-backdrop-filter: blur(9px);
+          }
+
+          .painel-paroquia-secao-titulo,
+          .painel-paroquia-paroquia-info-card,
+          .painel-paroquia-card,
+          .painel-paroquia-relatorios,
+          .painel-paroquia-relatorio-card,
+          .painel-paroquia-conteudo,
+          .painel-paroquia-minha-comunidade-topo,
+          .painel-paroquia-detalhes,
+          .painel-paroquia-historico,
+          .painel-paroquia-historico-item,
+          .painel-paroquia-fechamento,
+          .painel-paroquia-detalhe-item,
+          .painel-paroquia-ferramenta-aviso {
+            border-color: rgba(255, 255, 255, 0.62);
+            background: linear-gradient(135deg, rgba(237, 246, 234, 0.76), rgba(255, 255, 255, 0.48));
+            box-shadow:
+              0 10px 28px rgba(7, 55, 37, 0.13),
+              inset 0 1px 0 rgba(255, 255, 255, 0.42);
+            backdrop-filter: blur(14px) saturate(116%);
+            -webkit-backdrop-filter: blur(14px) saturate(116%);
+          }
+
+          .painel-paroquia-card {
+            transition:
+              transform 0.18s ease,
+              border-color 0.18s ease,
+              box-shadow 0.18s ease,
+              background 0.18s ease;
+          }
+
+          .painel-paroquia-card:hover,
+          .painel-paroquia-relatorio-card:hover {
+            border-color: rgba(255, 255, 255, 0.84);
+            background: linear-gradient(135deg, rgba(246, 251, 243, 0.86), rgba(255, 255, 255, 0.62));
+            box-shadow: 0 14px 30px rgba(7, 55, 37, 0.18);
+            transform: translateY(-2px);
+          }
+
+          .painel-paroquia-busca {
+            border-color: rgba(255, 255, 255, 0.70);
+            background: rgba(255, 255, 255, 0.80);
+            box-shadow: 0 4px 12px rgba(7, 55, 37, 0.06);
+          }
+
+          .painel-paroquia-busca:focus {
+            border-color: #11865a;
+            box-shadow: 0 0 0 3px rgba(17, 134, 90, 0.14);
+            outline: none;
+          }
+
+          .painel-paroquia-tabela-wrapper,
+          .painel-paroquia-fechamento-tabela-wrapper {
+            border: 1px solid rgba(255, 255, 255, 0.62);
+            border-radius: 11px;
+            background: rgba(251, 253, 250, 0.58);
+          }
+
+          .painel-paroquia-tabela th {
+            background: rgba(219, 238, 227, 0.86);
+          }
+
+          .painel-paroquia-tabela td {
+            background: rgba(255, 255, 255, 0.46);
+            border-bottom-color: rgba(207, 224, 215, 0.76);
+          }
+
+          .painel-paroquia-tabela tbody tr:hover td {
+            background: rgba(229, 242, 234, 0.80);
+          }
+
+          .painel-paroquia-fechamento-tabela th {
+            background: rgba(12, 80, 53, 0.92);
+          }
+
+          .painel-paroquia-fechamento-tabela td {
+            background: rgba(255, 255, 255, 0.52);
+          }
+
+          .painel-paroquia-info,
+          .painel-paroquia-topbar-texto span,
+          .painel-paroquia-topbar-usuario-texto span,
+          .painel-paroquia-card span,
+          .painel-paroquia-card small,
+          .painel-paroquia-relatorio-card span {
+            color: #506b60;
+          }
+
+          .painel-paroquia-cabecalho h2,
+          .painel-paroquia-secao-titulo h2,
+          .painel-paroquia-relatorios h3,
+          .painel-paroquia-minha-comunidade-topo h2,
+          .painel-paroquia-card strong,
+          .painel-paroquia-paroquia-info-card strong {
+            color: #103d2c;
+          }
+        }
+
+        @media screen and (max-width: 700px) {
+          .painel-paroquia-app {
+            background-attachment: scroll;
+            background-position: center top;
+          }
+
+          .painel-paroquia-layout {
+            background: transparent;
+          }
+
+          .painel-paroquia-sidebar {
+            border-right: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+            box-shadow: 0 9px 24px rgba(4, 54, 34, 0.16);
+          }
+
+          .painel-paroquia-secao-titulo,
+          .painel-paroquia-paroquia-info-card,
+          .painel-paroquia-card,
+          .painel-paroquia-relatorios,
+          .painel-paroquia-conteudo,
+          .painel-paroquia-minha-comunidade-topo {
+            backdrop-filter: blur(11px) saturate(112%);
+            -webkit-backdrop-filter: blur(11px) saturate(112%);
+          }
+
+          .painel-paroquia-tabela tr {
+            border-color: rgba(255, 255, 255, 0.68);
+            background: rgba(247, 251, 246, 0.76);
+            box-shadow: 0 7px 18px rgba(7, 55, 37, 0.10);
+          }
+
+          .painel-paroquia-tabela td {
+            background: transparent;
+          }
+        }
+
+        @media screen and (max-width: 420px) {
+          .painel-paroquia-menu {
+            grid-template-columns: 1fr;
+          }
+
+          .painel-paroquia-menu-item {
+            justify-content: flex-start;
+            padding-left: 14px;
+            text-align: left;
+          }
+        }
+
+        @media screen and (prefers-reduced-motion: reduce) {
+          .painel-paroquia-app *,
+          .painel-paroquia-app *::before,
+          .painel-paroquia-app *::after {
+            scroll-behavior: auto !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
       `}</style>
 
       <div className="painel-paroquia-layout">

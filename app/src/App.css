@@ -23,9 +23,11 @@ body {
    ===================================================== */
 
 .container {
-  width: 94%;
-  max-width: 1200px;
-  margin: 35px auto;
+  width: 100vw;
+  height: 100vh;
+  /*max-width: 1200px;*/
+  margin: auto;
+  background-color: #05490579;
 }
 
 .registro {
@@ -3275,21 +3277,21 @@ tfoot td:nth-child(3) {
 }
 
 .btn-editar-usuario {
-  background: #2563eb;
+  background: #0c723f;
   color: #ffffff;
 }
 
 .btn-editar-usuario:hover {
-  background: #1d4ed8;
+  background: #2aeb91;
 }
 
 .btn-excluir-usuario {
-  background: #b91c1c;
+  background: #0c723f;
   color: #ffffff;
 }
 
 .btn-excluir-usuario:hover {
-  background: #991b1b;
+  background: #2aeb91;
 }
 
 .btn-desativar-usuario {
@@ -3935,9 +3937,12 @@ tfoot td:nth-child(3) {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 20px;
+  gap: 15px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
+  margin-bottom: 5px;
+  margin-left: 50px;
+  margin-right: 70px;
+
 }
 
 .topo-sistema>div:last-child {
@@ -3957,8 +3962,9 @@ tfoot td:nth-child(3) {
 }
 
 .btn-sair {
-  background-color: #dc3545;
+  background-color: #0f583c;
   color: #ffffff;
+
 }
 
 /* =====================================================
@@ -4542,5 +4548,203 @@ tfoot td:nth-child(3) {
     padding: 0 !important;
 
     background: #ffffff !important;
+  }
+}
+
+/* =====================================================
+   V10 - FUNDO DA IGREJA + EFEITO DE VIDRO
+
+   Esta camada fica no final para modernizar os painéis
+   sem substituir as regras funcionais e responsivas já
+   existentes. O bloco vale apenas para a tela; portanto,
+   não interfere na impressão da ficha de dizimistas.
+   ===================================================== */
+
+@media screen {
+  .container:has(.admin-dashboard) {
+    position: relative;
+    isolation: isolate;
+    width: 100%;
+    min-height: 100vh;
+    height: auto;
+    overflow-x: hidden;
+    background:
+      linear-gradient(135deg, rgba(40, 91, 59, 0.62), rgba(211, 202, 151, 0.25)),
+      url("/fundo-paineis.jpg") center / cover fixed no-repeat;
+  }
+
+  .container:has(.admin-dashboard)::before {
+    content: "";
+    position: fixed;
+    z-index: -1;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg, rgba(229, 240, 224, 0.18), rgba(10, 65, 43, 0.18)),
+      rgba(32, 85, 53, 0.12);
+  }
+
+  .container:has(.admin-dashboard) .topo-sistema {
+    position: relative;
+    z-index: 1;
+    padding-top: 18px;
+    color: #102e23;
+  }
+
+  .container:has(.admin-dashboard) .topo-sistema .titulo-sistema,
+  .container:has(.admin-dashboard) .topo-sistema .usuario-logado {
+    color: #102e23;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.35);
+  }
+
+  .container:has(.admin-dashboard) .btn-sair {
+    border: 1px solid rgba(255, 255, 255, 0.48);
+    background: rgba(7, 92, 59, 0.92);
+    box-shadow: 0 7px 18px rgba(7, 63, 45, 0.2);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .admin-dashboard {
+    --admin-borda: rgba(255, 255, 255, 0.58);
+    --admin-texto: #18392d;
+    --admin-texto-suave: #526c61;
+  }
+
+  .admin-dashboard-cabecalho,
+  .admin-dashboard .admin-menu,
+  .admin-dashboard .admin-secao,
+  .admin-dashboard .admin-card,
+  .admin-dashboard .admin-form-usuario,
+  .admin-dashboard .admin-detalhes-comunidade,
+  .admin-dashboard .admin-filtros-comunidades,
+  .admin-dashboard .admin-filtros-usuarios {
+    border-color: rgba(255, 255, 255, 0.62);
+    background: linear-gradient(135deg, rgba(238, 246, 236, 0.78), rgba(255, 255, 255, 0.53));
+    box-shadow:
+      0 12px 32px rgba(8, 54, 37, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.44);
+    backdrop-filter: blur(15px) saturate(118%);
+    -webkit-backdrop-filter: blur(15px) saturate(118%);
+  }
+
+  .admin-dashboard-cabecalho {
+    background:
+      linear-gradient(115deg, rgba(228, 242, 226, 0.82), rgba(255, 255, 255, 0.48));
+  }
+
+  .admin-dashboard .admin-menu {
+    background: rgba(240, 247, 237, 0.72);
+  }
+
+  .admin-dashboard .admin-menu .admin-menu-item {
+    color: #1f4537;
+  }
+
+  .admin-dashboard .admin-menu .admin-menu-item:hover {
+    border-color: rgba(255, 255, 255, 0.66);
+    background: rgba(245, 251, 243, 0.72);
+  }
+
+  .admin-dashboard .admin-menu .admin-menu-item.ativo {
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.46);
+    background: linear-gradient(135deg, rgba(14, 139, 91, 0.96), rgba(5, 94, 61, 0.96));
+    box-shadow:
+      0 8px 20px rgba(5, 75, 48, 0.24),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  .admin-dashboard .admin-secao {
+    background: rgba(235, 244, 232, 0.66);
+  }
+
+  .admin-dashboard .admin-card {
+    background: linear-gradient(135deg, rgba(236, 245, 233, 0.66), rgba(255, 255, 255, 0.42));
+  }
+
+  .admin-dashboard .admin-card:hover {
+    border-color: rgba(255, 255, 255, 0.82);
+    background: linear-gradient(135deg, rgba(244, 250, 241, 0.8), rgba(255, 255, 255, 0.58));
+    box-shadow: 0 14px 30px rgba(8, 54, 37, 0.19);
+  }
+
+  .admin-dashboard .admin-tabela-wrapper {
+    border-color: rgba(255, 255, 255, 0.68);
+    background: rgba(250, 252, 249, 0.74);
+    box-shadow: 0 8px 22px rgba(8, 54, 37, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .admin-dashboard .admin-tabela {
+    background: rgba(255, 255, 255, 0.36);
+  }
+
+  .admin-dashboard .admin-tabela th {
+    background: rgba(221, 238, 228, 0.82);
+  }
+
+  .admin-dashboard .admin-tabela td {
+    background: rgba(255, 255, 255, 0.48);
+  }
+
+  .admin-dashboard .admin-tabela tbody tr:nth-child(even),
+  .admin-dashboard .admin-tabela tbody tr:nth-child(even) td {
+    background: rgba(239, 247, 242, 0.56);
+  }
+
+  .admin-dashboard .admin-tabela tbody tr:hover,
+  .admin-dashboard .admin-tabela tbody tr:hover td {
+    background: rgba(225, 241, 231, 0.8);
+  }
+
+  .admin-dashboard .admin-form-campo input,
+  .admin-dashboard .admin-form-campo select,
+  .admin-dashboard .admin-busca input,
+  .admin-dashboard .admin-filtro-campo select {
+    background: rgba(255, 255, 255, 0.78);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .container:has(.admin-dashboard) {
+    background-attachment: scroll;
+    background-position: center top;
+  }
+
+  .container:has(.admin-dashboard) .topo-sistema {
+    margin-right: 14px;
+    margin-left: 14px;
+    padding-top: 12px;
+  }
+
+  .admin-dashboard-cabecalho,
+  .admin-dashboard .admin-menu,
+  .admin-dashboard .admin-secao,
+  .admin-dashboard .admin-card {
+    backdrop-filter: blur(11px) saturate(112%);
+    -webkit-backdrop-filter: blur(11px) saturate(112%);
+  }
+}
+
+@media screen and (max-width: 420px) {
+  .admin-dashboard-cabecalho,
+  .admin-dashboard .admin-menu,
+  .admin-dashboard .admin-secao {
+    border-radius: 13px;
+  }
+
+  .admin-dashboard .admin-menu .admin-menu-item {
+    justify-content: flex-start;
+  }
+}
+
+@media screen and (prefers-reduced-motion: reduce) {
+  .admin-dashboard *,
+  .admin-dashboard *::before,
+  .admin-dashboard *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
